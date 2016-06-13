@@ -1,0 +1,12 @@
+simply-modules/simply-core/target/
+simply-modules/simply-iqrf/target/
+simply-modules/simply-asynchrony/target/
+simply-modules/simply-iqrf-dpa-v22x/target/
+simply-modules/simply-iqrf-dpa-v22x-examples/target/
+simply-modules/simply-iqrf-dpa/target/
+simply-modules/simply-network-serial-v2/target/
+simply-modules/simply-network-spi/target/
+simply-modules/simply-network-udp/target/
+simply-modules/simply-network-usbcdc/target/
+simply-modules/simply-services/target/
+simply-modules/simply-demos/open-gateway/target/
