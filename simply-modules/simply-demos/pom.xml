@@ -24,6 +24,7 @@
     </licenses>
 
     <modules>
+        <module>auto-network</module>
         <module>open-gateway</module>
     </modules>
 </project>
