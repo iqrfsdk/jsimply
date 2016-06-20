@@ -23,7 +23,9 @@ import com.microrisc.simply.iqrf.dpa.broadcasting.BroadcastRequest;
 import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_Confirmation;
 import com.microrisc.simply.iqrf.RF_Mode;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.FRC;
+import com.microrisc.simply.iqrf.dpa.v22x.devices.UART;
 import com.microrisc.simply.iqrf.dpa.v22x.di_services.method_id_transformers.FRCStandardTransformer;
+import com.microrisc.simply.iqrf.dpa.v22x.di_services.method_id_transformers.UARTStandardTransformer;
 import com.microrisc.simply.iqrf.dpa.v22x.init.DeterminetedNetworkConfig;
 import com.microrisc.simply.iqrf.dpa.v22x.protocol.timing.FRC_TimingParams;
 import com.microrisc.simply.iqrf.dpa.v22x.protocol.timing.TimingParams;
@@ -233,10 +235,15 @@ final class ProtocolStateMachine implements ManageableObject {
     }
     
     
+    // indicates, that waiting timeout should be counted using procedure for 
+    // usual case
+    private static final int NO_SPECIAL_WAITING_TIMEOUT = -1;
+    
+    
     // base class for all waiting time for response counters 
     private static abstract class WaitingTimeForResponseCounter {
         
-       // counts and returns waiting time 
+       // counts and returns waiting time [in ms]
        public abstract long count(CallRequest request, TimingParams timingParams);
     } 
     
@@ -340,6 +347,57 @@ final class ProtocolStateMachine implements ManageableObject {
         }
     }
     
+    private static class UART_WaitingTimeForResponseCounter extends WaitingTimeForResponseCounter {
+        
+        // determines the called method from FRC Device Interface
+        private static UART.MethodID getCalledUARTMethod(String methodId) {
+            for ( UART.MethodID method : UART.MethodID.values() ) {
+                if ( UARTStandardTransformer.getInstance().transform(method).equals(methodId)) {
+                    return method;
+                }
+            }
+            return null;
+        }
+        
+        // return value of timeout argument from READ AND WRITE command
+        private int getTimeout(Object[] args) {
+            Integer lastIntArg = null;
+            for ( Object arg : args ) {
+                if ( arg instanceof Integer ) {
+                    lastIntArg = (Integer)arg;
+                }
+            }
+            return lastIntArg;
+        }
+        
+        @Override
+        public long count(CallRequest request, TimingParams timingParams) {
+            UART.MethodID calledMethod = getCalledUARTMethod(request.getMethodId());
+            if ( calledMethod == null ) {
+                throw new IllegalStateException("UART method not found.");
+            }
+            
+            if ( calledMethod != UART.MethodID.WRITE_AND_READ ) {
+                return NO_SPECIAL_WAITING_TIMEOUT; 
+            }
+            
+            return getTimeout(request.getArgs()) * 10;
+        }
+    }
+    
+    // counts and returns waiting timeout for response [in ms] for usual case
+    private long countWaitingTimeForResponseInUsualCase() {
+        long requestRoutingTime = 0;
+        if ( countWithConfirmation ) {
+            requestRoutingTime = (confirmation.getHops() + 1) * confirmation.getTimeslotLength() * 10;
+            return baseTimeToWaitForResponse + requestRoutingTime + 100;
+        }
+        
+        return baseTimeToWaitForResponse + 100;
+    }
+    
+    // counts and returns waiting timeout for response [in ms], including special
+    // cases, e.g. FRC or UART
     private long countWaitingTimeForResponse() {
          
         // counting for special cases
@@ -349,6 +407,9 @@ final class ProtocolStateMachine implements ManageableObject {
             long waitingTime = 0;
             try {
                 waitingTime = waitingTimeForRespCounter.count(request, timingParams);
+                if ( waitingTime == NO_SPECIAL_WAITING_TIMEOUT ) {
+                    return countWaitingTimeForResponseInUsualCase();
+                }
                 return waitingTime;
             } catch ( Exception e ) {
                 logger.error(
@@ -357,14 +418,7 @@ final class ProtocolStateMachine implements ManageableObject {
             }
         }
         
-        // usual case
-        long requestRoutingTime = 0;
-        if ( countWithConfirmation ) {
-            requestRoutingTime = (confirmation.getHops() + 1) * confirmation.getTimeslotLength() * 10;
-            return baseTimeToWaitForResponse + requestRoutingTime + 100;
-        }
-        
-        return baseTimeToWaitForResponse + 100;
+        return countWaitingTimeForResponseInUsualCase();
     }
     
     private long countWaitingTimeAfterResponse() {
@@ -683,6 +737,7 @@ final class ProtocolStateMachine implements ManageableObject {
     private void initWaitingTimeForResponseCounters() {
         waitingTimeForResponseCounters = new HashMap<>();
         waitingTimeForResponseCounters.put(FRC.class, new FRC_WaitingTimeForResponseCounter());
+        waitingTimeForResponseCounters.put(UART.class, new UART_WaitingTimeForResponseCounter());
     }
     
     

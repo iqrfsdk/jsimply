@@ -25,8 +25,6 @@ import com.microrisc.simply.iqrf.dpa.v22x.devices.FRC;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.PeripheralInfoGetter;
 import com.microrisc.simply.iqrf.dpa.v22x.di_services.method_id_transformers.FRCStandardTransformer;
 import com.microrisc.simply.iqrf.dpa.v22x.di_services.method_id_transformers.PeripheralInfoGetterStandardTransformer;
-import static com.microrisc.simply.iqrf.dpa.v22x.protocol.timing.FRC_TimingParams.DEFAULT_BONDED_NODES_NUM;
-import static com.microrisc.simply.iqrf.dpa.v22x.protocol.timing.FRC_TimingParams.DEFAULT_RF_MODE;
 import com.microrisc.simply.iqrf.dpa.v22x.types.BondedNode;
 import com.microrisc.simply.iqrf.dpa.v22x.types.BondedNodes;
 import com.microrisc.simply.iqrf.dpa.v22x.types.FRC_Configuration;
@@ -427,6 +425,7 @@ public final class TimingParamsStorage {
             }
         }
     }
+    
     
     // timing parameters updaters
     private Map<Class, TimingParamsUpdater> timingParamsUpdaters;
