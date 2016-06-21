@@ -97,8 +97,8 @@ public class OpenGateway {
     public static void main(String[] args) throws InterruptedException, MqttException {
         
         // DPA INIT
-        //String configFileDPA = "Simply.properties";
-        //DPASimply = getDPASimply(configFileDPA);
+        String configFileDPA = "Simply.properties";
+        DPASimply = getDPASimply(configFileDPA);
         
         // MQTT INIT
         String configFileMQTT = "Mqtt.json";
@@ -133,8 +133,7 @@ public class OpenGateway {
             }
 
         }));
-
-/*        
+        
         // REF TO DPA NET
         String netId = "1";
         DPANetwork = getDPANetwork(netId);
@@ -153,13 +152,13 @@ public class OpenGateway {
         
         // REF TO UART ON NODES
         DPAUARTs = getUARTOnNodes();
-*/        
+        
         int checkResponse = 0;
         
         // SENDING AND RECEIVING
         while( true ) {
             
-            //DPAUARTUUIDs = sendDPARequests();
+            DPAUARTUUIDs = sendDPARequests();
             
             // RECEIVING AND ACTING ON ASYNC AND WEB REQUESTS
             while (true) {
@@ -185,13 +184,13 @@ public class OpenGateway {
             }
             
             // GET RESPONSE DATA 
-            //DPADataOut = collectDPAResponses();
+            DPADataOut = collectDPAResponses();
 
             // PARSE RESPONSE DATA
-            //DPAParsedDataOut = parseDPAResponses();
+            DPAParsedDataOut = parseDPAResponses();
             
             // SEND DATA
-            //MQTTSendData();
+            MQTTSendData();
         }
     }
     
