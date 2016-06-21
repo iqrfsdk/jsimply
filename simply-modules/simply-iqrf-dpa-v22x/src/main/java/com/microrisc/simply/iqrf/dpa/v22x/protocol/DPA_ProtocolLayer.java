@@ -38,7 +38,6 @@ import com.microrisc.simply.iqrf.dpa.v22x.di_services.method_id_transformers.Coo
 import com.microrisc.simply.iqrf.dpa.v22x.di_services.method_id_transformers.FRCStandardTransformer;
 import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.DPA_ConfirmationConvertor;
 import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_Confirmation;
-import com.microrisc.simply.iqrf.dpa.v22x.init.DeterminetedNetworkConfig;
 import com.microrisc.simply.iqrf.dpa.v22x.protocol.timing.TimingParamsStorage;
 import com.microrisc.simply.network.BaseNetworkData;
 import com.microrisc.simply.protocol.AbstractProtocolLayer;
@@ -55,6 +54,7 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.microrisc.simply.iqrf.dpa.v22x.init.NetworkInfo;
 
 /**
  * Protocol layer based on DPA_ProtocolProperties of IQRF.
@@ -719,13 +719,12 @@ implements ProtocolStateMachineListener
     }
     
     /**
-     * Add configuration to protocol layer, which was determinted while init and 
-     * is depending on specific network.
-     * @param network network name
-     * @param config determineted network configuration
+     * Configures the protocol layer according to specified information about network.
+     * @param networkId ID of network which the information relate to
+     * @param info information about network
      */
-    public void addNetworkConfig(String network, DeterminetedNetworkConfig config){
-        this.protoMachine.addNetworkConfig(network, config);
+    public void configure(String networkId, NetworkInfo info){
+        this.protoMachine.configure(networkId, info);
     }
     
     /** Checks specified maximal time duration. */

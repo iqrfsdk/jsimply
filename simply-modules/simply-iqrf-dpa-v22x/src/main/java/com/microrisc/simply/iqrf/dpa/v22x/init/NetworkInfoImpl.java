@@ -19,11 +19,11 @@ import com.microrisc.simply.iqrf.RF_Mode;
 import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
 
 /**
- * Netwrok configuration depending on specific network.
+ * Simple implementation of {@link NetworkInfo} interface.
  * 
  * @author Martin Strouhal
  */
-public final class SimpleDeterminetedNetworkConfig implements DeterminetedNetworkConfig{
+public final class NetworkInfoImpl implements NetworkInfo{
 
     /** TR_TypeSeries used in network */
     private final OsInfo.TR_Type.TR_TypeSeries trSeries;
@@ -42,7 +42,7 @@ public final class SimpleDeterminetedNetworkConfig implements DeterminetedNetwor
         return rfMode;
     }
     
-    public SimpleDeterminetedNetworkConfig(OsInfo.TR_Type.TR_TypeSeries trSeries, RF_Mode rfMode) {
+    public NetworkInfoImpl(OsInfo.TR_Type.TR_TypeSeries trSeries, RF_Mode rfMode) {
         this.trSeries = trSeries;
         this.rfMode = checkRF_Mode(rfMode);
     }
@@ -59,6 +59,6 @@ public final class SimpleDeterminetedNetworkConfig implements DeterminetedNetwor
 
     @Override
     public String toString() {
-        return "SimpleDeterminetedNetworkConfig{" + "trSeries=" + trSeries + ", rfMode=" + rfMode + '}';
+        return "NetworkInfoImpl{" + "trSeries=" + trSeries + ", rfMode=" + rfMode + '}';
     }
 }

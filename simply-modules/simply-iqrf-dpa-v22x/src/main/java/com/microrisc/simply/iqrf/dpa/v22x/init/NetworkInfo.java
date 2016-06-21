@@ -19,11 +19,12 @@ import com.microrisc.simply.iqrf.RF_Mode;
 import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
 
 /**
- *  Network speicific configuration funcionality.
+ * Provides access to information about one concrete DPA network.
  * 
  * @author Martin Strouhal
+ * @author Michal Konopa
  */
-public interface DeterminetedNetworkConfig {
+public interface NetworkInfo {
     
     /**
      * Returns used TR_TypeSeries in network.

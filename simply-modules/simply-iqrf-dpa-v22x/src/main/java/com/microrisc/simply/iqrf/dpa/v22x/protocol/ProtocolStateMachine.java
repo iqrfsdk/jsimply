@@ -26,7 +26,6 @@ import com.microrisc.simply.iqrf.dpa.v22x.devices.FRC;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.UART;
 import com.microrisc.simply.iqrf.dpa.v22x.di_services.method_id_transformers.FRCStandardTransformer;
 import com.microrisc.simply.iqrf.dpa.v22x.di_services.method_id_transformers.UARTStandardTransformer;
-import com.microrisc.simply.iqrf.dpa.v22x.init.DeterminetedNetworkConfig;
 import com.microrisc.simply.iqrf.dpa.v22x.protocol.timing.FRC_TimingParams;
 import com.microrisc.simply.iqrf.dpa.v22x.protocol.timing.TimingParams;
 import com.microrisc.simply.iqrf.dpa.v22x.types.FRC_Command;
@@ -36,6 +35,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.LoggerFactory;
+import com.microrisc.simply.iqrf.dpa.v22x.init.NetworkInfo;
 
 /**
  * State machine for better handling of individual states within the process of 
@@ -57,8 +57,8 @@ final class ProtocolStateMachine implements ManageableObject {
     //currently used TR type series
     private TR_Type.TR_TypeSeries trTypeSeries = TR_Type.TR_TypeSeries.UNKNOWN;
     
-    //map of configuration for specific networks
-    private Map<String, DeterminetedNetworkConfig> networkConfigMap;
+    // map of info about each network
+    private Map<String, NetworkInfo> networkInfoMap;
     
     /**
      * Events, which occur during DPA protocol running, 
@@ -422,8 +422,20 @@ final class ProtocolStateMachine implements ManageableObject {
     }
     
     private long countWaitingTimeAfterResponse() {
-        long actualRespTimeslotLength = countTimeslotLength(trTypeSeries, 
-                rfMode, responseDataLength);                              
+        long actualRespTimeslotLength = 0;
+        
+        NetworkInfo networkConfig = this.networkInfoMap.get(request.getNetworkId());
+        if ( networkConfig != null ) {
+            actualRespTimeslotLength = countTimeslotLength(
+                networkConfig.getTRSeries(), networkConfig.getRFMode(), responseDataLength
+            );
+        } else {
+            logger.error(
+                "DPA Network configuration not found for network: {}. Default values will be used.", 
+                request.getNetworkId() 
+            );
+            actualRespTimeslotLength = countTimeslotLength(trTypeSeries, rfMode, responseDataLength); 
+        }                              
                
         if ( countWithConfirmation ) {
             if ( confirmation == null ) {
@@ -807,7 +819,7 @@ final class ProtocolStateMachine implements ManageableObject {
     public ProtocolStateMachine() {
         waitingTimeCounter = new WaitingTimeCounter();
         logger.info("Protocol machine successfully created.");
-        this.networkConfigMap = new HashMap<>();
+        this.networkInfoMap = new HashMap<>();
         initWaitingTimeForResponseCounters();
     }
     
@@ -887,17 +899,14 @@ final class ProtocolStateMachine implements ManageableObject {
     }
     
     /**
-     * Add configuration to protocol state machine, which was determinted while 
-     * init and is depending on specific network.
-     * 
-     * @param networkId network name
-     * @param config determineted network configuration
+     * Configures the machine according to specified information about network.
+     * @param networkId ID of network which the information relate to
+     * @param networkInfo information about network
      */
-    public void addNetworkConfig(String networkId, DeterminetedNetworkConfig config){
-        logger.debug("addNetworkConfig - start: networkId={}, config={}", 
-                networkId, config);
-        networkConfigMap.put(networkId, config);
-        logger.debug("addNetworkConfig - end");
+    public void configure(String networkId, NetworkInfo networkInfo){
+        logger.debug("configure - start: networkId={}, info={}", networkId, networkInfo);
+        networkInfoMap.put(networkId, networkInfo);
+        logger.debug("configure - end");
     }
     
     /**

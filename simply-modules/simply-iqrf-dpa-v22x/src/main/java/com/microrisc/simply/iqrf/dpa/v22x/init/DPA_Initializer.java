@@ -134,14 +134,13 @@ extends
             }            
         }        
               
-        DeterminetedNetworkConfig determinetedConfig = 
-                new SimpleDeterminetedNetworkConfig(trSeries, rfMode);
+        NetworkInfo networkInfo = new NetworkInfoImpl(trSeries, rfMode);
         
         if(initObjects.getConnectionStack().getProtocolLayer() instanceof DPA_ProtocolLayer){
             DPA_ProtocolLayer protocolLayer = (DPA_ProtocolLayer)
                     initObjects.getConnectionStack().getProtocolLayer();
             
-            protocolLayer.addNetworkConfig(networkId, determinetedConfig);
+            protocolLayer.configure(networkId, networkInfo);
         }        
     }
     
