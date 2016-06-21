@@ -410,7 +410,7 @@ final class ProtocolStateMachine implements ManageableObject {
                 if ( waitingTime == NO_SPECIAL_WAITING_TIMEOUT ) {
                     return countWaitingTimeForResponseInUsualCase();
                 }
-                return waitingTime;
+                return waitingTime + countWaitingTimeForResponseInUsualCase();
             } catch ( Exception e ) {
                 logger.error(
                     "Error during counting of waiting time for a response: {}. "
