@@ -23,6 +23,7 @@ import com.microrisc.simply.iqrf.RF_Mode;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.Coordinator;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.FRC;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.PeripheralInfoGetter;
+import com.microrisc.simply.iqrf.dpa.v22x.di_services.method_id_transformers.CoordinatorStandardTransformer;
 import com.microrisc.simply.iqrf.dpa.v22x.di_services.method_id_transformers.FRCStandardTransformer;
 import com.microrisc.simply.iqrf.dpa.v22x.di_services.method_id_transformers.PeripheralInfoGetterStandardTransformer;
 import com.microrisc.simply.iqrf.dpa.v22x.types.BondedNode;
@@ -207,7 +208,7 @@ public final class TimingParamsStorage {
         // determines the called method from Coordinator Device Interface
         private Coordinator.MethodID getCalledMethod(String methodId) {
             for ( Coordinator.MethodID method : Coordinator.MethodID.values() ) {
-                if ( FRCStandardTransformer.getInstance().transform(method).equals(methodId)) {
+                if ( CoordinatorStandardTransformer.getInstance().transform(method).equals(methodId)) {
                     return method;
                 }
             }
