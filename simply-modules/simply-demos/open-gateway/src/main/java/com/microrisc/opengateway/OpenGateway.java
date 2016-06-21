@@ -16,6 +16,7 @@
 package com.microrisc.opengateway;
 
 import com.microrisc.opengateway.app.APPConfig;
+import com.microrisc.opengateway.app.Device;
 import com.microrisc.opengateway.mqtt.MQTTConfig;
 import com.microrisc.opengateway.mqtt.MQTTTopics;
 import com.microrisc.opengateway.mqtt.MQTTCommunicator;
@@ -34,16 +35,26 @@ import com.microrisc.simply.iqrf.dpa.v22x.devices.UART;
 import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_AdditionalInfo;
 import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ContainerFactory;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /**
  * Sending Protronix values over MQTT in JSON SENML format .
@@ -58,6 +69,7 @@ public class OpenGateway {
     public static Map<String, Node> DPANodes = null;
     public static Map<String, OsInfo> DPAOSInfo = new LinkedHashMap<>();
     public static Map<String, UART> DPAUARTs = new LinkedHashMap<>();
+    public static Map<String, short[]> MODBUSes = new LinkedHashMap<>();
     public static Map<String, UUID> DPAUARTUUIDs = new LinkedHashMap<>();
     public static Map<String, short[]> DPADataOut = new LinkedHashMap<>();
     public static Map<String, List<String>> DPAParsedDataOut = new LinkedHashMap<>();
@@ -78,20 +90,22 @@ public class OpenGateway {
     
     // references for APP
     public static int pid = 0;
-    public static long numberOfSensors = 1;
+    public static long numberOfDevices = 1;
     public static long pollingPeriod = 60*1;
+    public static List<Device> devices = new LinkedList();
 
     public static void main(String[] args) throws InterruptedException, MqttException {
         
         // DPA INIT
-        String configFileDPA = "Simply.properties";
-        DPASimply = getDPASimply(configFileDPA);
+        //String configFileDPA = "Simply.properties";
+        //DPASimply = getDPASimply(configFileDPA);
         
         // MQTT INIT
         String configFileMQTT = "Mqtt.json";
         MQTTConfig configMQTT = new MQTTConfig();
         if( loadMQTTConfig(configFileMQTT, configMQTT) ) {
             mqttCommunicator = new MQTTCommunicator(configMQTT);
+            MQTTTopics.setCLIENT_ID(configMQTT.getGwId());
         } else {
             printMessageAndExit("Error in MQTT config loading", true);
         }
@@ -100,8 +114,9 @@ public class OpenGateway {
         String configFileAPP = "App.json";
         APPConfig configAPP = new APPConfig();
         if( loadAPPConfig(configFileAPP, configAPP) ) {
-            numberOfSensors = configAPP.getNumberOfSensors();
+            //numberOfDevices = configAPP.getNumberOfDevices();
             pollingPeriod = configAPP.getPollingPeriod();
+            devices = configAPP.getDevices();
         } else {
             printMessageAndExit("Error in APP config loading", true);
         }
@@ -119,6 +134,7 @@ public class OpenGateway {
 
         }));
 
+/*        
         // REF TO DPA NET
         String netId = "1";
         DPANetwork = getDPANetwork(netId);
@@ -137,13 +153,13 @@ public class OpenGateway {
         
         // REF TO UART ON NODES
         DPAUARTs = getUARTOnNodes();
-        
+*/        
         int checkResponse = 0;
         
         // SENDING AND RECEIVING
         while( true ) {
             
-            DPAUARTUUIDs = sendDPARequests();
+            //DPAUARTUUIDs = sendDPARequests();
             
             // RECEIVING AND ACTING ON ASYNC AND WEB REQUESTS
             while (true) {
@@ -169,13 +185,13 @@ public class OpenGateway {
             }
             
             // GET RESPONSE DATA 
-            DPADataOut = collectDPAResponses();
+            //DPADataOut = collectDPAResponses();
 
             // PARSE RESPONSE DATA
-            DPAParsedDataOut = parseDPAResponses();
+            //DPAParsedDataOut = parseDPAResponses();
             
             // SEND DATA
-            MQTTSendData();
+            //MQTTSendData();
         }
     }
     
@@ -226,7 +242,7 @@ public class OpenGateway {
             int key = Integer.parseInt(entry.getKey());
                 
             // node 1-NUMBEROFNODES
-            if(0 < key && numberOfSensors >= key) {
+            if(0 < key && numberOfDevices >= key) {
                 
                 System.out.println("Getting OsInfo on the node: " + entry.getKey());
 
@@ -269,7 +285,7 @@ public class OpenGateway {
             int key = Integer.parseInt(entry.getKey());
 
             // node 1-NUMBEROFNODES
-            if(0 < key && numberOfSensors >= key) {
+            if(0 < key && numberOfDevices >= key) {
                 
                 System.out.println("Getting UART on the node: " + entry.getKey());
                 
@@ -285,7 +301,8 @@ public class OpenGateway {
                     uart.setRequestHwProfile(protronixHWPID);
                     
                     // worst case: 3 * 50 * 2 + 1500 (uart timeout) + 2000 (reserve)
-                    uart.setDefaultWaitingTimeout(4000);
+                    // it is not needed any more, timing machine handles that since 06/2016 
+                    //uart.setDefaultWaitingTimeout(4000);
 
                     DPAUARTs.put(entry.getKey(), uart);
                 }
@@ -295,6 +312,51 @@ public class OpenGateway {
         return DPAUARTs;
     }
     
+    public static Map<String, short[]> setModbusFrameOnNodes() {
+        
+        Map<String, short[]> MODBUSes = new LinkedHashMap<>();
+        short[] modbusIn = null;
+        
+        for (Map.Entry<String, Node> entry : DPANodes.entrySet()) {
+            
+            int key = Integer.parseInt(entry.getKey());
+            
+            // node 1-NUMBEROFDEVICES
+            if(0 < key && numberOfDevices >= key) {
+                
+                System.out.println("Setting MODBUS frame on the node: " + entry.getKey());
+                
+                Device dev = devices.get(key);
+                
+                switch (dev.getType()) {
+                    case "co2-t-h":
+                        // 1B address, 1B function, 2B number of registers, 2B registers..., + 2B crc
+                        short[] modbusInCo2 = { 0x01, 0x42, 0x00, 0x03, 0x75, 0x31, 0x75, 0x33, 0x75, 0x32, 0x00, 0x00 };
+                        modbusIn = Arrays.copyOf(modbusInCo2, modbusInCo2.length);
+                    break;
+                    
+                    case "vco-t-h":
+                        // 1B address, 1B function, 2B number of registers, 2B registers..., + 2B crc   
+                        short[] modbusInVco = { 0x01, 0x42, 0x00, 0x03, 0x75, 0x34, 0x75, 0x33, 0x75, 0x32, 0x00, 0x00 };
+                        modbusIn = Arrays.copyOf(modbusInVco, modbusInVco.length);
+                    break;
+                        
+                    default:
+                        System.out.println("Device type not supported: " + dev.getType());
+                    break;    
+                }
+                
+                int crc = calculateModbusCrc(modbusIn);
+                modbusIn[modbusIn.length - 2] = (short) (crc & 0xFF);
+                modbusIn[modbusIn.length - 1] = (short) ((crc & 0xFF00) >> 8);
+        
+                MODBUSes.put(entry.getKey(), modbusIn);
+            }
+        }
+        
+        return MODBUSes;
+    }
+    
     // sends all requests and do not wait for response
     public static Map<String, UUID> sendDPARequests() {
 
@@ -302,11 +364,11 @@ public class OpenGateway {
         short uartTimeout = 0xFE;
         
         // 1B address, 1B function, 2B register, 2B number of registers + 2B crc
-        short[] modbusIn = { 0x01, 0x04, 0x75, 0x31, 0x00, 0x03, 0x00, 0x00 };
+        //short[] modbusIn = { 0x01, 0x04, 0x75, 0x31, 0x00, 0x03, 0x00, 0x00 };
         
-        int crc = calculateModbusCrc(modbusIn);
-        modbusIn[modbusIn.length - 2] = (short) (crc & 0xFF);
-        modbusIn[modbusIn.length - 1] = (short) ((crc & 0xFF00) >> 8);
+        //int crc = calculateModbusCrc(modbusIn);
+        //modbusIn[modbusIn.length - 2] = (short) (crc & 0xFF);
+        //modbusIn[modbusIn.length - 1] = (short) ((crc & 0xFF00) >> 8);
         
         Map<String, UUID> DPAUARTUUIDs = new LinkedHashMap<>();
         UUID uuidUART = null;
@@ -317,14 +379,14 @@ public class OpenGateway {
             int key = Integer.parseInt(entry.getKey());
 
             // node 1-NUMBEROFNODES
-            if(0 < key && numberOfSensors >= key) {
+            if(0 < key && numberOfDevices >= key) {
 
                 System.out.println("Issuing req for node: " + entry.getKey());
                 
-                if (null != entry.getValue()) {
+                if (null != entry.getValue() && null != MODBUSes.get(key)) {
 
                     // ASYNC DPA CALL - NO BLOCKING
-                    uuidUART = entry.getValue().async_writeAndRead(uartTimeout, modbusIn);
+                    uuidUART = entry.getValue().async_writeAndRead(uartTimeout, MODBUSes.get(key));
                     DPAUARTUUIDs.put(entry.getKey(), uuidUART);
                 }
             }
@@ -347,7 +409,7 @@ public class OpenGateway {
             int key = Integer.parseInt(entry.getKey());
 
             // node 1-NUMBEROFNODES
-            if(0 < key && numberOfSensors >= key) {
+            if(0 < key && numberOfDevices >= key) {
 
                 System.out.println("Collecting resp for node: " + entry.getKey());
 
@@ -415,7 +477,7 @@ public class OpenGateway {
             int key = Integer.parseInt(entry.getKey());
 
             // node 1-NUMBEROFNODES
-            if(0 < key && numberOfSensors >= key) {
+            if(0 < key && numberOfDevices >= key) {
 
                 System.out.println("Parsing resp for node: " + entry.getKey());
 
@@ -427,56 +489,75 @@ public class OpenGateway {
                         DPAParsedDataOut.put(entry.getKey(), null);
                     }
                     else {
+                        int co2, vco = 0;
+                        
+                        String mqttDataCO2 = null;
+                        String mqttDataVCO = null;
+                        String mqttDataTemperature = null;
+                        String mqttDataHumidity = null;
+                        
+                        // queue for mqtt
+                        List<String> mqttData = new LinkedList<>();  
+                        
                         pid++;
 
                         // getting additional info of the last call
                         DPA_AdditionalInfo dpaAddInfo = DPAUARTs.get(entry.getKey()).getDPA_AdditionalInfoOfLastCall();
-
-                        int co2 = (entry.getValue()[3] << 8) + entry.getValue()[4];
-                        float humidity = (entry.getValue()[5] << 8) + entry.getValue()[6];
-			humidity /= 10;
-                        float temperature = (entry.getValue()[7] << 8) + entry.getValue()[8];
-                        temperature /= 10;
-
-                        DecimalFormat df = new DecimalFormat("##.#");
-
+                        
                         if (DPAOSInfo.get(entry.getKey()) != null) {
                             moduleId = DPAOSInfo.get(entry.getKey()).getPrettyFormatedModuleId();
                         } else {
                             moduleId = "not-known";
                         }
-
-                        List<String> mqttData = new LinkedList<>();
                         
-                        // https://www.ietf.org/archive/id/draft-jennings-senml-10.txt
-                        String mqttDataTemperature
-                                = "{\"e\":["
-                                + "{\"n\":\"temperature\"," + "\"u\":\"Cel\"," + "\"v\":" + df.format(temperature) + "}"
-                                + "],"
-                                + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
-                                + "}";
-                        
-                        mqttData.add(mqttDataTemperature);
-                        
-                        String mqttDataHumidity
-                                = "{\"e\":["
-                                + "{\"n\":\"humidity\"," + "\"u\":\"%RH\"," + "\"v\":" + df.format(humidity) + "}"
-                                + "],"
-                                + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
-                                + "}";
-                        
-                        mqttData.add(mqttDataHumidity);
-                        
-                        String mqttDataCO2
+                        // type of devices from app conf file
+                        Device dev = devices.get(key);
+                
+                        switch (dev.getType().toLowerCase()) {
+                            case "co2-t-h":
+                                co2 = (entry.getValue()[3] << 8) + entry.getValue()[4];
+                                
+                                mqttDataCO2
                                 = "{\"e\":["
                                 + "{\"n\":\"co2\"," + "\"u\":\"PPM\"," + "\"v\":" + co2 + "}"
                                 + "],"
                                 + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
                                 + "}";
-                        
-                        mqttData.add(mqttDataCO2);
+                                
+                                mqttDataTemperature = prepareTemperature((entry.getValue()[5] << 8), entry.getValue()[6]);
+                                mqttDataHumidity = prepareHumidity((entry.getValue()[7] << 8), entry.getValue()[8]);
+                                
+                                mqttData.add(mqttDataCO2);
+                                mqttData.add(mqttDataTemperature);
+                                mqttData.add(mqttDataHumidity);
+                                
+                                DPAParsedDataOut.put(entry.getKey(), mqttData);
+                            break;
 
-                        DPAParsedDataOut.put(entry.getKey(), mqttData);
+                            case "vco-t-h":
+                                vco = (entry.getValue()[3] << 8) + entry.getValue()[4];
+                                
+                                mqttDataVCO
+                                = "{\"e\":["
+                                + "{\"n\":\"vco\"," + "\"u\":\"PPM\"," + "\"v\":" + vco + "}"
+                                + "],"
+                                + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
+                                + "}";
+                                
+                                mqttDataTemperature = prepareTemperature((entry.getValue()[5] << 8), entry.getValue()[6]);
+                                mqttDataHumidity = prepareHumidity((entry.getValue()[7] << 8), entry.getValue()[8]);
+                                
+                                mqttData.add(mqttDataVCO);
+                                mqttData.add(mqttDataTemperature);
+                                mqttData.add(mqttDataHumidity);
+                                
+                                DPAParsedDataOut.put(entry.getKey(), mqttData);
+                            break;
+
+                            default:
+                                System.out.println("Device type not supported: " + dev.getType());
+                            break;    
+                        }                      
                     }
                 } else {
                     System.out.println("Protronix result has not arrived.");
@@ -485,6 +566,40 @@ public class OpenGateway {
         }
         
         return DPAParsedDataOut;
+    }
+    
+    public static String prepareTemperature (int dataIn1, int dataIn2) {
+        
+        float temperature = dataIn1 + dataIn2;
+        temperature /= 10;
+
+        DecimalFormat df = new DecimalFormat("##.#");
+
+        String mqttDataTemperature
+                = "{\"e\":["
+                + "{\"n\":\"temperature\"," + "\"u\":\"Cel\"," + "\"v\":" + df.format(temperature) + "}"
+                + "],"
+                + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
+                + "}";
+     
+        return mqttDataTemperature;
+    }
+    
+    public static String prepareHumidity (int dataIn1, int dataIn2) {
+        
+        float humidity = dataIn1 + dataIn2;
+        humidity /= 10;
+
+        DecimalFormat df = new DecimalFormat("##.#");
+
+        String mqttDataHumidity
+                = "{\"e\":["
+                + "{\"n\":\"humidity\"," + "\"u\":\"%RH\"," + "\"v\":" + df.format(humidity) + "}"
+                + "],"
+                + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
+                + "}";
+
+        return mqttDataHumidity;
     }
     
     // sends parsed data 
@@ -496,11 +611,11 @@ public class OpenGateway {
             int key = Integer.parseInt(entry.getKey());
 
             // node 1-NUMBEROFNODES
-            if(0 < key && numberOfSensors >= key) {
+            if(0 < key && numberOfDevices >= key) {
 
                 if( null != entry.getValue() ) {
                     System.out.println("Sending parsed data for node: " + entry.getKey());
-                                    
+                    
                     for (String mqttData : entry.getValue()) {
                         try {
                             mqttCommunicator.publish(MQTTTopics.STD_SENSORS_PROTRONIX + entry.getKey(), 2, mqttData.getBytes());
@@ -527,6 +642,7 @@ public class OpenGateway {
             configMQTT.setBroker((String) jsonObject.get("broker"));
             configMQTT.setPort((long) jsonObject.get("port"));    
             configMQTT.setClientId((String) jsonObject.get("clientid"));
+            configMQTT.setGwId((String) jsonObject.get("gwid"));
             configMQTT.setCleanSession((boolean) jsonObject.get("cleansession"));
             configMQTT.setQuiteMode((boolean) jsonObject.get("quitemode"));
             configMQTT.setSsl((boolean) jsonObject.get("ssl"));
@@ -567,20 +683,59 @@ public class OpenGateway {
     // loads app params from file
     public static boolean loadAPPConfig(String configFile, APPConfig configAPP) {
         
-        JSONParser parser = new JSONParser();
-        
         try {
+            
+            JSONObject appJsonObjects = (JSONObject) JSONValue.parseWithException(new FileReader("config" + File.separator + "app" + File.separator + configFile));
+            
+            configAPP.setPollingPeriod((long) appJsonObjects.get("pollingPeriod"));
+            //System.out.println("polling: " + configAPP.getPollingPeriod());
+
+            // get the devices
+            JSONArray devicesArray = (JSONArray) appJsonObjects.get("devices");
+            numberOfDevices = devicesArray.size();
+            
+            List deviceList = new LinkedList();
+            for (int i = 0; i < numberOfDevices; i++) {
+                JSONObject deviceObjects = (JSONObject) devicesArray.get(i);
+                
+                Device device = new Device();
+                device.setId((long) deviceObjects.get("device"));
+                device.setManufacturer((String) deviceObjects.get("manufacturer"));
+                device.setType((String) deviceObjects.get("type"));
+                
+                deviceList.add(device);
+            }
+            configAPP.setDevices(deviceList);
+            
+            /*
+            for (Iterator iterator = deviceList.iterator(); iterator.hasNext();) {
+                Device nextDev = (Device) iterator.next();
+                System.out.println("each device: " + nextDev.getId() + nextDev.getManufacturer() + nextDev.getType());    
+            }
+            */
+        } catch (ParseException | FileNotFoundException ex) { 
+            System.out.println(ex);
+            return false;
+        } catch (IOException ex) {
+            System.out.println(ex);
+            return false;
+        } 
+
+        /*
+        try {
+            JSONParser parser = new JSONParser();
             Object obj = parser.parse(new FileReader("config" + File.separator + "app" + File.separator + configFile));
             
             JSONObject jsonObject = (JSONObject) obj;
         
-            configAPP.setNumberOfSensors((long) jsonObject.get("numberOfSensors"));
+            configAPP.setNumberOfDevices((long) jsonObject.get("numberOfDevices"));
             configAPP.setPollingPeriod((long) jsonObject.get("pollingPeriod"));
         }
         catch (Exception e) {
             e.printStackTrace();
             return false;
         }
+        */
         
         return true;
     }

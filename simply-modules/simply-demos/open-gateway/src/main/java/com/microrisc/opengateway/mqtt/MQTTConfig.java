@@ -27,6 +27,7 @@ public class MQTTConfig {
     private String broker;
     private long port;
     private String clientId;
+    private String gwId;
     private boolean cleanSession;
     private boolean quiteMode;
     private boolean ssl;
@@ -172,5 +173,19 @@ public class MQTTConfig {
      */
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    /**
+     * @return the gwId
+     */
+    public String getGwId() {
+        return gwId;
+    }
+
+    /**
+     * @param gwId the gwId to set
+     */
+    public void setGwId(String gwId) {
+        this.gwId = gwId;
     }
 }

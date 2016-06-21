@@ -28,12 +28,11 @@ import java.net.UnknownHostException;
 public class MQTTTopics {
     
     private static String CLIENT_ID;
-    
     public static String STD_SENSORS_PROTRONIX;
 
     static {
-        CLIENT_ID = getMac();
-        STD_SENSORS_PROTRONIX = CLIENT_ID + "/sensors/protronix/";
+        setCLIENT_ID("macid");
+        STD_SENSORS_PROTRONIX = getCLIENT_ID() + "/sensors/protronix/";
     }
     
     private static String getMac() {
@@ -64,5 +63,19 @@ public class MQTTTopics {
             e.printStackTrace();
             return "";
         }
+    }
+
+    /**
+     * @return the CLIENT_ID
+     */
+    public static String getCLIENT_ID() {
+        return CLIENT_ID;
+    }
+
+    /**
+     * @param aCLIENT_ID the CLIENT_ID to set
+     */
+    public static void setCLIENT_ID(String aCLIENT_ID) {
+        CLIENT_ID = aCLIENT_ID;
     }
 }

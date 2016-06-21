@@ -9,4 +9,5 @@ simply-modules/simply-network-spi/target/
 simply-modules/simply-network-udp/target/
 simply-modules/simply-network-usbcdc/target/
 simply-modules/simply-services/target/
+simply-modules/simply-demos/auto-network/target/
 simply-modules/simply-demos/open-gateway/target/

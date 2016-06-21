@@ -16,27 +16,30 @@
 
 package com.microrisc.opengateway.app;
 
+import java.util.List;
+
 /**
  * Holding APP params from JSON config file
  * 
  * @author Rostislav Spinar
  */
 public class APPConfig {
-    private long numberOfSensors;
     private long pollingPeriod;
+    private long numberOfDevices;
+    private List<Device> devices;
 
     /**
      * @return the numberOfSensors
      */
-    public long getNumberOfSensors() {
-        return numberOfSensors;
+    public long getNumberOfDevices() {
+        return numberOfDevices;
     }
 
     /**
-     * @param numberOfSensors the numberOfSensors to set
+     * @param numberOfDevices the numberOfDevices to set
      */
-    public void setNumberOfSensors(long numberOfSensors) {
-        this.numberOfSensors = numberOfSensors;
+    public void setNumberOfDevices(long numberOfDevices) {
+        this.numberOfDevices = numberOfDevices;
     }
 
     /**
@@ -51,6 +54,20 @@ public class APPConfig {
      */
     public void setPollingPeriod(long pullingPeriod) {
         this.pollingPeriod = pullingPeriod;
+    }
+
+    /**
+     * @return the devices
+     */
+    public List<Device> getDevices() {
+        return devices;
+    }
+
+    /**
+     * @param devices the devices to set
+     */
+    public void setDevices(List<Device> devices) {
+        this.devices = devices;
     }
     
 }
