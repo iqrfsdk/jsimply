@@ -1,3 +1,4 @@
+*.log
 simply-modules/simply-core/target/
 simply-modules/simply-iqrf/target/
 simply-modules/simply-asynchrony/target/

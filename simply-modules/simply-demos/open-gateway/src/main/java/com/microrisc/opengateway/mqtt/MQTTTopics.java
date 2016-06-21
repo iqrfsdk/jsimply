@@ -28,11 +28,39 @@ import java.net.UnknownHostException;
 public class MQTTTopics {
     
     private static String CLIENT_ID;
-    public static String STD_SENSORS_PROTRONIX;
+    private static String STD_SENSORS_PROTRONIX;
 
     static {
         setCLIENT_ID("macid");
-        STD_SENSORS_PROTRONIX = getCLIENT_ID() + "/sensors/protronix/";
+        setSTD_SENSORS_PROTRONIX(getCLIENT_ID() + "/sensors/protronix/");
+    }
+
+    /**
+     * @return the CLIENT_ID
+     */
+    public static String getCLIENT_ID() {
+        return CLIENT_ID;
+    }
+
+    /**
+     * @param aCLIENT_ID the CLIENT_ID to set
+     */
+    public static void setCLIENT_ID(String aCLIENT_ID) {
+        CLIENT_ID = aCLIENT_ID;
+    }
+
+    /**
+     * @return the STD_SENSORS_PROTRONIX
+     */
+    public static String getSTD_SENSORS_PROTRONIX() {
+        return STD_SENSORS_PROTRONIX;
+    }
+
+    /**
+     * @param aSTD_SENSORS_PROTRONIX the STD_SENSORS_PROTRONIX to set
+     */
+    public static void setSTD_SENSORS_PROTRONIX(String aSTD_SENSORS_PROTRONIX) {
+        STD_SENSORS_PROTRONIX = getCLIENT_ID() + aSTD_SENSORS_PROTRONIX;
     }
     
     private static String getMac() {
@@ -63,19 +91,5 @@ public class MQTTTopics {
             e.printStackTrace();
             return "";
         }
-    }
-
-    /**
-     * @return the CLIENT_ID
-     */
-    public static String getCLIENT_ID() {
-        return CLIENT_ID;
-    }
-
-    /**
-     * @param aCLIENT_ID the CLIENT_ID to set
-     */
-    public static void setCLIENT_ID(String aCLIENT_ID) {
-        CLIENT_ID = aCLIENT_ID;
     }
 }

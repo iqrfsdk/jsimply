@@ -57,7 +57,7 @@
         <dependency>
             <groupId>com.microrisc.simply.network.spi</groupId>
             <artifactId>simply-network-spi</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
+            <version>1.0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.microrisc.rpi</groupId>

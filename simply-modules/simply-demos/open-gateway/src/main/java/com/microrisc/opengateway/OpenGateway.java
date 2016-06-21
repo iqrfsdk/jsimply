@@ -40,6 +40,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -106,6 +107,7 @@ public class OpenGateway {
         if( loadMQTTConfig(configFileMQTT, configMQTT) ) {
             mqttCommunicator = new MQTTCommunicator(configMQTT);
             MQTTTopics.setCLIENT_ID(configMQTT.getGwId());
+            MQTTTopics.setSTD_SENSORS_PROTRONIX("/sensors/protronix/");
         } else {
             printMessageAndExit("Error in MQTT config loading", true);
         }
@@ -152,6 +154,9 @@ public class OpenGateway {
         
         // REF TO UART ON NODES
         DPAUARTs = getUARTOnNodes();
+        
+        // SET MODBUS FRAMES ACCORDING TO DEVICE TYPE
+        MODBUSes = setModbusFrameOnNodes();
         
         int checkResponse = 0;
         
@@ -325,19 +330,21 @@ public class OpenGateway {
                 
                 System.out.println("Setting MODBUS frame on the node: " + entry.getKey());
                 
-                Device dev = devices.get(key);
+                Device dev = devices.get(key-1);
                 
                 switch (dev.getType()) {
                     case "co2-t-h":
                         // 1B address, 1B function, 2B number of registers, 2B registers..., + 2B crc
                         short[] modbusInCo2 = { 0x01, 0x42, 0x00, 0x03, 0x75, 0x31, 0x75, 0x33, 0x75, 0x32, 0x00, 0x00 };
                         modbusIn = Arrays.copyOf(modbusInCo2, modbusInCo2.length);
+                        System.out.println("Device type: " + dev.getType());
                     break;
                     
                     case "vco-t-h":
                         // 1B address, 1B function, 2B number of registers, 2B registers..., + 2B crc   
                         short[] modbusInVco = { 0x01, 0x42, 0x00, 0x03, 0x75, 0x34, 0x75, 0x33, 0x75, 0x32, 0x00, 0x00 };
                         modbusIn = Arrays.copyOf(modbusInVco, modbusInVco.length);
+                        System.out.println("Device type: " + dev.getType());
                     break;
                         
                     default:
@@ -382,11 +389,16 @@ public class OpenGateway {
 
                 System.out.println("Issuing req for node: " + entry.getKey());
                 
-                if (null != entry.getValue() && null != MODBUSes.get(key)) {
+                short [] modbusIn = (short[]) MODBUSes.values().toArray()[key - 1];
+                
+                if (null != entry.getValue() && null != modbusIn) {
 
                     // ASYNC DPA CALL - NO BLOCKING
-                    uuidUART = entry.getValue().async_writeAndRead(uartTimeout, MODBUSes.get(key));
+                    uuidUART = entry.getValue().async_writeAndRead(uartTimeout, modbusIn);
                     DPAUARTUUIDs.put(entry.getKey(), uuidUART);
+                }
+                else {
+                    System.out.println("Issuing req for node: " + entry.getKey() + " failed");
                 }
             }
         }
@@ -510,11 +522,11 @@ public class OpenGateway {
                         }
                         
                         // type of devices from app conf file
-                        Device dev = devices.get(key);
+                        Device dev = devices.get(key-1);
                 
                         switch (dev.getType().toLowerCase()) {
                             case "co2-t-h":
-                                co2 = (entry.getValue()[3] << 8) + entry.getValue()[4];
+                                co2 = (entry.getValue()[6] << 8) + entry.getValue()[7];
                                 
                                 mqttDataCO2
                                 = "{\"e\":["
@@ -523,8 +535,8 @@ public class OpenGateway {
                                 + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
                                 + "}";
                                 
-                                mqttDataTemperature = prepareTemperature((entry.getValue()[5] << 8), entry.getValue()[6]);
-                                mqttDataHumidity = prepareHumidity((entry.getValue()[7] << 8), entry.getValue()[8]);
+                                mqttDataTemperature = prepareTemperature((entry.getValue()[10] << 8), entry.getValue()[11]);
+                                mqttDataHumidity = prepareHumidity((entry.getValue()[14] << 8), entry.getValue()[15]);
                                 
                                 mqttData.add(mqttDataCO2);
                                 mqttData.add(mqttDataTemperature);
@@ -534,7 +546,7 @@ public class OpenGateway {
                             break;
 
                             case "vco-t-h":
-                                vco = (entry.getValue()[3] << 8) + entry.getValue()[4];
+                                vco = (entry.getValue()[6] << 8) + entry.getValue()[7];
                                 
                                 mqttDataVCO
                                 = "{\"e\":["
@@ -543,8 +555,8 @@ public class OpenGateway {
                                 + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
                                 + "}";
                                 
-                                mqttDataTemperature = prepareTemperature((entry.getValue()[5] << 8), entry.getValue()[6]);
-                                mqttDataHumidity = prepareHumidity((entry.getValue()[7] << 8), entry.getValue()[8]);
+                                mqttDataTemperature = prepareTemperature((entry.getValue()[10] << 8), entry.getValue()[11]);
+                                mqttDataHumidity = prepareHumidity((entry.getValue()[14] << 8), entry.getValue()[15]);
                                 
                                 mqttData.add(mqttDataVCO);
                                 mqttData.add(mqttDataTemperature);
@@ -617,7 +629,7 @@ public class OpenGateway {
                     
                     for (String mqttData : entry.getValue()) {
                         try {
-                            mqttCommunicator.publish(MQTTTopics.STD_SENSORS_PROTRONIX + entry.getKey(), 2, mqttData.getBytes());
+                            mqttCommunicator.publish(MQTTTopics.getSTD_SENSORS_PROTRONIX() + entry.getKey(), 2, mqttData.getBytes());
                         } catch (MqttException ex) {
                             System.err.println("Error while publishing sync dpa message.");
                         }
