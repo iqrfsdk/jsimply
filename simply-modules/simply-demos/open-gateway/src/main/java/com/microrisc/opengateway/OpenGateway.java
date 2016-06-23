@@ -340,16 +340,16 @@ public class OpenGateway {
                         System.out.println("Device type: " + dev.getType());
                     break;
                     
-                    case "vco-t-h":
+                    case "voc-t-h":
                         // 1B address, 1B function, 2B number of registers, 2B registers..., + 2B crc   
-                        short[] modbusInVco = { 0x01, 0x42, 0x00, 0x03, 0x75, 0x34, 0x75, 0x33, 0x75, 0x32, 0x00, 0x00 };
-                        modbusIn = Arrays.copyOf(modbusInVco, modbusInVco.length);
+                        short[] modbusInVoc = { 0x01, 0x42, 0x00, 0x03, 0x75, 0x34, 0x75, 0x33, 0x75, 0x32, 0x00, 0x00 };
+                        modbusIn = Arrays.copyOf(modbusInVoc, modbusInVoc.length);
                         System.out.println("Device type: " + dev.getType());
                     break;
                         
                     default:
-                        System.out.println("Device type not supported: " + dev.getType());
-                    break;    
+                        printMessageAndExit("Device type not supported:" + dev.getType() , true);
+                    break;
                 }
                 
                 int crc = calculateModbusCrc(modbusIn);
@@ -500,10 +500,10 @@ public class OpenGateway {
                         DPAParsedDataOut.put(entry.getKey(), null);
                     }
                     else {
-                        int co2, vco = 0;
+                        int co2, voc = 0;
                         
                         String mqttDataCO2 = null;
-                        String mqttDataVCO = null;
+                        String mqttDataVOC = null;
                         String mqttDataTemperature = null;
                         String mqttDataHumidity = null;
                         
@@ -545,12 +545,12 @@ public class OpenGateway {
                                 DPAParsedDataOut.put(entry.getKey(), mqttData);
                             break;
 
-                            case "vco-t-h":
-                                vco = (entry.getValue()[6] << 8) + entry.getValue()[7];
+                            case "voc-t-h":
+                                voc = (entry.getValue()[6] << 8) + entry.getValue()[7];
                                 
-                                mqttDataVCO
+                                mqttDataVOC
                                 = "{\"e\":["
-                                + "{\"n\":\"vco\"," + "\"u\":\"PPM\"," + "\"v\":" + vco + "}"
+                                + "{\"n\":\"voc\"," + "\"u\":\"PPM\"," + "\"v\":" + voc + "}"
                                 + "],"
                                 + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
                                 + "}";
@@ -558,7 +558,7 @@ public class OpenGateway {
                                 mqttDataTemperature = prepareTemperature((entry.getValue()[10] << 8), entry.getValue()[11]);
                                 mqttDataHumidity = prepareHumidity((entry.getValue()[14] << 8), entry.getValue()[15]);
                                 
-                                mqttData.add(mqttDataVCO);
+                                mqttData.add(mqttDataVOC);
                                 mqttData.add(mqttDataTemperature);
                                 mqttData.add(mqttDataHumidity);
                                 
@@ -566,7 +566,7 @@ public class OpenGateway {
                             break;
 
                             default:
-                                System.out.println("Device type not supported: " + dev.getType());
+                                printMessageAndExit("Device type not supported:" + dev.getType() , true);
                             break;    
                         }                      
                     }
