@@ -25,6 +25,7 @@ import com.microrisc.simply.SimpleMessageSource;
 import com.microrisc.simply.SimpleMethodMessageSource;
 import com.microrisc.simply.SimplyException;
 import com.microrisc.simply.asynchrony.BaseAsynchronousMessage;
+import com.microrisc.simply.di_services.WaitingTimeoutService;
 import com.microrisc.simply.errors.NetworkInternalError;
 import com.microrisc.simply.iqrf.dpa.DPA_ResponseCode;
 import com.microrisc.simply.iqrf.dpa.asynchrony.DPA_AsynchronousMessage;
@@ -139,6 +140,7 @@ implements ProtocolStateMachineListener
                 )
         );
         
+        /*
         Set<String> frcUnlimitedOperations = new HashSet<>();
         frcUnlimitedOperations.add(
                 FRCStandardTransformer
@@ -146,13 +148,13 @@ implements ProtocolStateMachineListener
                 .transform(FRC.MethodID.SEND)
         );
 
-/*        
+      
         frcUnlimitedOperations.add(
                 FRCStandardTransformer
                 .getInstance()
                 .transform(FRC.MethodID.EXTRA_RESULT)
         );
-*/
+
         
         timeUnlimitedRequestsMap.put(
                 FRC.class,
@@ -161,6 +163,7 @@ implements ProtocolStateMachineListener
                         frcUnlimitedOperations
                 )
         );
+        */
     }
     
     // static initializer
@@ -182,11 +185,7 @@ implements ProtocolStateMachineListener
 
     // indicates, wheather a timeout is defined by user
     private static boolean isTimeoutDefinedByUserRequest(long procTime) {
-        
-        if (procTime == -1)
-            return false;
-        
-        return true;
+        return procTime != WaitingTimeoutService.UNLIMITED_WAITING_TIMEOUT;
     }
     
     // indicates, wheather a time unlimited request is in process
