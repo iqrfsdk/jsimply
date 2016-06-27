@@ -523,46 +523,58 @@ public class OpenGateway {
                         
                         // type of devices from app conf file
                         Device dev = devices.get(key-1);
-                
+                        
                         switch (dev.getType().toLowerCase()) {
                             case "co2-t-h":
-                                co2 = (entry.getValue()[6] << 8) + entry.getValue()[7];
-                                
-                                mqttDataCO2
-                                = "{\"e\":["
-                                + "{\"n\":\"co2\"," + "\"u\":\"PPM\"," + "\"v\":" + co2 + "}"
-                                + "],"
-                                + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
-                                + "}";
-                                
-                                mqttDataTemperature = prepareTemperature((entry.getValue()[10] << 8), entry.getValue()[11]);
-                                mqttDataHumidity = prepareHumidity((entry.getValue()[14] << 8), entry.getValue()[15]);
-                                
-                                mqttData.add(mqttDataCO2);
-                                mqttData.add(mqttDataTemperature);
-                                mqttData.add(mqttDataHumidity);
-                                
-                                DPAParsedDataOut.put(entry.getKey(), mqttData);
+                                // in this case we are supposed to receive 18B
+                                if (18 == entry.getValue().length) {
+                                    co2 = (entry.getValue()[6] << 8) + entry.getValue()[7];
+
+                                    mqttDataCO2
+                                    = "{\"e\":["
+                                    + "{\"n\":\"co2\"," + "\"u\":\"PPM\"," + "\"v\":" + co2 + "}"
+                                    + "],"
+                                    + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
+                                    + "}";
+
+                                    mqttDataTemperature = prepareTemperature((entry.getValue()[10] << 8), entry.getValue()[11]);
+                                    mqttDataHumidity = prepareHumidity((entry.getValue()[14] << 8), entry.getValue()[15]);
+
+                                    mqttData.add(mqttDataCO2);
+                                    mqttData.add(mqttDataTemperature);
+                                    mqttData.add(mqttDataHumidity);
+
+                                    DPAParsedDataOut.put(entry.getKey(), mqttData);
+                                } else {
+                                    System.out.println("No correct data received from UART on the node");
+                                    DPAParsedDataOut.put(entry.getKey(), null);
+                                }
                             break;
 
                             case "voc-t-h":
-                                voc = (entry.getValue()[6] << 8) + entry.getValue()[7];
-                                
-                                mqttDataVOC
-                                = "{\"e\":["
-                                + "{\"n\":\"voc\"," + "\"u\":\"PPM\"," + "\"v\":" + voc + "}"
-                                + "],"
-                                + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
-                                + "}";
-                                
-                                mqttDataTemperature = prepareTemperature((entry.getValue()[10] << 8), entry.getValue()[11]);
-                                mqttDataHumidity = prepareHumidity((entry.getValue()[14] << 8), entry.getValue()[15]);
-                                
-                                mqttData.add(mqttDataVOC);
-                                mqttData.add(mqttDataTemperature);
-                                mqttData.add(mqttDataHumidity);
-                                
-                                DPAParsedDataOut.put(entry.getKey(), mqttData);
+                                // in this case we are supposed to receive 18B
+                                if (18 == entry.getValue().length) {
+                                    voc = (entry.getValue()[6] << 8) + entry.getValue()[7];
+
+                                    mqttDataVOC
+                                    = "{\"e\":["
+                                    + "{\"n\":\"voc\"," + "\"u\":\"PPM\"," + "\"v\":" + voc + "}"
+                                    + "],"
+                                    + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
+                                    + "}";
+
+                                    mqttDataTemperature = prepareTemperature((entry.getValue()[10] << 8), entry.getValue()[11]);
+                                    mqttDataHumidity = prepareHumidity((entry.getValue()[14] << 8), entry.getValue()[15]);
+
+                                    mqttData.add(mqttDataVOC);
+                                    mqttData.add(mqttDataTemperature);
+                                    mqttData.add(mqttDataHumidity);
+
+                                    DPAParsedDataOut.put(entry.getKey(), mqttData);
+                                } else {
+                                    System.out.println("No correct data received from UART on the node");
+                                    DPAParsedDataOut.put(entry.getKey(), null);
+                                }
                             break;
 
                             default:
