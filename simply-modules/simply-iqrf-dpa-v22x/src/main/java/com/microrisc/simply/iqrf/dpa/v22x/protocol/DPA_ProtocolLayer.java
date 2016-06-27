@@ -534,11 +534,11 @@ implements ProtocolStateMachineListener
                             isTimeUnlimitedRequestInProcess = false;
                             isTimeoutDefinedByUserRequestInProcess = false;
                             protoMachine.newRequest(request, timingParamsStorage.getTimingParams(request));
-                            
-                            // for timing parameters storage
-                            requestForTiming = request;
                         }
                     }
+                    
+                    // for timing parameters storage
+                    requestForTiming = request;
                 }
             }
         }
