@@ -921,10 +921,11 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
         // For FRC peripheral can be set timeout following way otherwise timeout is unlimited:
         // timeout for IQRF = Bonded Nodes x 130 + _RESPONSE_FRC_TIME_xxx_MS + 250 [ms]
         // + overhead for the Java framework (for threads) = 2000 [ms]
+        /*
         final short overhead = 2000;
         long timeout = bondedNodes.getNodesNumber() * 130 + (long)FRC_Configuration.FRC_RESPONSE_TIME.TIME_40_MS.getRepsonseTimeInInt() + 250 + overhead;
         coordFrc.setDefaultWaitingTimeout(timeout);
- 
+        */
         // set FRC response time to be sure it is set correctly
         coordFrc.setFRCParams( new FRC_Configuration(FRC_RESPONSE_TIME.TIME_40_MS) );
         
@@ -1271,10 +1272,12 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
         // For FRC peripheral can be set timeout following way otherwise timeout is unlimited:
         // timeout for IQRF = Bonded Nodes x 130 + _RESPONSE_FRC_TIME_xxx_MS + 250 [ms]
         // + overhead for the Java framework (for threads) = 2000 [ms]
+        /*
         final short overhead = 2000;
         long timeout = bondedNodes.getNodesNumber() * 130 + (long)FRC_Configuration.FRC_RESPONSE_TIME.TIME_40_MS.getRepsonseTimeInInt() + 250 + overhead;
         coordFrc.setDefaultWaitingTimeout(timeout);
- 
+        */
+        
         // set FRC response time to be sure it is set correctly for prebonding
         coordFrc.setFRCParams( new FRC_Configuration(FRC_RESPONSE_TIME.TIME_40_MS) );
         
