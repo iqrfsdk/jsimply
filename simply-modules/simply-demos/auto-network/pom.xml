@@ -34,6 +34,7 @@
         </dependency>
         
         <!--For CK-USB-04A CDC-UART - Insert Manually-->
+        <!--
         <dependency>
             <groupId>com.microrisc.simply.network.serial</groupId>
             <artifactId>simply-network-serial-v2</artifactId>
@@ -44,6 +45,7 @@
             <artifactId>hdlc-framing-v2</artifactId>
             <version>1.0.0</version>
         </dependency>
+        -->
         
         <!--For Raspberry PI SPI - Insert Manually-->
         <dependency>
@@ -80,12 +82,12 @@
         <dependency>
             <groupId>com.microrisc.simply.network.usbcdc</groupId>
             <artifactId>simply-network-usbcdc</artifactId>
-            <version>1.0.2-SNAPSHOT</version>
+            <version>1.1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.microrisc.cdc</groupId>
             <artifactId>jlibcdc</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.0-SNAPSHOT</version>
         </dependency>
         
         <!--Logger - download automatically-->
