@@ -125,5 +125,5 @@ public interface FRC
      * @param config data to configuration
      * @return {@code VoidType} object, if method call has processed allright
      */
-    VoidType setFRCParams(FRC_Configuration config);
+    FRC_Configuration setFRCParams(FRC_Configuration config);
 }

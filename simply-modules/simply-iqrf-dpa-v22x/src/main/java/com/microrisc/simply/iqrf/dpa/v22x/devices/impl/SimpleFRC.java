@@ -183,7 +183,7 @@ public final class SimpleFRC
     }
     
     @Override
-    public VoidType setFRCParams(FRC_Configuration config){
+    public FRC_Configuration setFRCParams(FRC_Configuration config){
         checkTime(config);
         UUID uid = dispatchCall("4", new Object[]{getRequestHwProfile(), config},
                 getDefaultWaitingTimeout()
@@ -191,6 +191,6 @@ public final class SimpleFRC
         if (uid == null) {
             return null;
         }
-        return getCallResult(uid, VoidType.class, getDefaultWaitingTimeout());
+        return getCallResult(uid, FRC_Configuration.class, getDefaultWaitingTimeout());
     }
 }

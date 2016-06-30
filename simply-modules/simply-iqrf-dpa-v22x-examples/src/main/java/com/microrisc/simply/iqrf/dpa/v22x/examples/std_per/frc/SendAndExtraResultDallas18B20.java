@@ -143,7 +143,7 @@ public class SendAndExtraResultDallas18B20 {
         FRC_Configuration config = sendFRCResponseTime(frc);
 
         // sending of determined FRC configuration
-        VoidType paramsResult = frc.setFRCParams(config);
+        FRC_Configuration paramsResult = frc.setFRCParams(config);
         if (paramsResult == null) {
             processNullResult(frc, "Setting FRC params failed",
                     "Setting FRC params hasn't been processed yet"
