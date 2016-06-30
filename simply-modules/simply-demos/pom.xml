@@ -26,5 +26,6 @@
     <modules>
         <module>auto-network</module>
         <module>open-gateway</module>
+        <module>light-building</module>
     </modules>
 </project>
