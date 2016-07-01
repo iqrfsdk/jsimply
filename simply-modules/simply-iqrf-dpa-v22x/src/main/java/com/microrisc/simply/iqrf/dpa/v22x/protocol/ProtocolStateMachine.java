@@ -323,6 +323,10 @@ final class ProtocolStateMachine implements ManageableObject {
         
         @Override
         public long count(CallRequest request, TimingParams timingParams) {
+            if ( timingParams == null ) {
+                throw new IllegalArgumentException("FRC timing parameters is null.");
+            }
+            
             if ( !(timingParams instanceof FRC_TimingParams) ) {
                 throw new IllegalArgumentException(
                     "Timing parameters has not correct type. "
