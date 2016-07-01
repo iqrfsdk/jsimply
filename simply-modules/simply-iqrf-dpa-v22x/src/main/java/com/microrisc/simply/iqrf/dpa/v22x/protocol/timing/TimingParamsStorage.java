@@ -519,14 +519,16 @@ public final class TimingParamsStorage {
     public synchronized TimingParams getTimingParams(CallRequest request) {
         logger.debug("getTimingParams - start: request={}", request);
         
-        NetworkTimingParamsMap networkTimingParams = timingParamsForAllNetworks.get(request.getMethodId());
+        NetworkTimingParamsMap networkTimingParams = timingParamsForAllNetworks.get(request.getNetworkId());
         if ( networkTimingParams == null ) {
+            logger.warn("getTimingParams: not found timing params for network {}", request.getNetworkId());
             logger.debug("getTimingParams - end: null");
             return null;
         }
         
         MutableTimingParams mutTimingParams = networkTimingParams.get(request.getDeviceInterface());
         if ( mutTimingParams == null ) {
+            logger.warn("getTimingParams: not found timing params for device interface {}", request.getDeviceInterface());
             logger.debug("getTimingParams - end: null");
             return null;
         }
