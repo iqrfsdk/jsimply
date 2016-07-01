@@ -517,16 +517,21 @@ public final class TimingParamsStorage {
      * @return timing parameters found for {@code request}, or {@code null}
      */ 
     public synchronized TimingParams getTimingParams(CallRequest request) {
+        logger.debug("getTimingParams - start: request={}", request);
+        
         NetworkTimingParamsMap networkTimingParams = timingParamsForAllNetworks.get(request.getMethodId());
         if ( networkTimingParams == null ) {
+            logger.debug("getTimingParams - end: null");
             return null;
         }
         
         MutableTimingParams mutTimingParams = networkTimingParams.get(request.getDeviceInterface());
         if ( mutTimingParams == null ) {
+            logger.debug("getTimingParams - end: null");
             return null;
         }
         
+        logger.debug("getTimingParams - end: {}", mutTimingParams.getTimingParams());
         return mutTimingParams.getTimingParams();
     }
 
@@ -536,8 +541,12 @@ public final class TimingParamsStorage {
      * @param response response on {@code request} request
      */
     public synchronized void updateTimingParams(CallRequest request, BaseCallResponse response) {
+        logger.debug("updateTimingParams - start: request={}, response={}", request, response);
+        
         TimingParamsUpdater timingParamsUpdater = timingParamsUpdaters.get(request.getDeviceInterface());
         if ( timingParamsUpdater == null ) {
+            logger.warn("updateTimingParams - timing params updater not found");
+            logger.debug("updateTimingParams - end");
             return;
         }
 
@@ -545,6 +554,8 @@ public final class TimingParamsStorage {
         
         NetworkTimingParamsMap networkTimingParamsMap = timingParamsForAllNetworks.get(request.getNetworkId());
         networkTimingParamsMap.previousRequest = request;
+        
+        logger.debug("updateTimingParams - end");
     }
     
 }
