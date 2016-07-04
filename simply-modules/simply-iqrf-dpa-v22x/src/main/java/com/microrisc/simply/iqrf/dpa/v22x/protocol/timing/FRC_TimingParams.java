@@ -95,4 +95,17 @@ public final class FRC_TimingParams extends TimingParams {
         return this.reponseTime;
     }
     
+    public String toString() {
+        StringBuilder strBuilder = new StringBuilder();
+        String NEW_LINE = System.getProperty("line.separator");
+        
+        strBuilder.append(this.getClass().getSimpleName() + " { " + NEW_LINE);
+        strBuilder.append(" Number of bonded nodes: " + this.bondedNodesNum + NEW_LINE);
+        strBuilder.append(" RF mode: " + this.rfMode + NEW_LINE);
+        strBuilder.append(" Response time: " + this.reponseTime + NEW_LINE);
+        strBuilder.append("}");
+        
+        return strBuilder.toString();
+    }
+    
 }
