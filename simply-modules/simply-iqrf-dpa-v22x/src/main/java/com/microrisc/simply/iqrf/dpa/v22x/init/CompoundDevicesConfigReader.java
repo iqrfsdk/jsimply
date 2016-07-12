@@ -30,5 +30,5 @@ public interface CompoundDevicesConfigReader {
      * @param configuration configuration settings to use
      * @return configuration of Compound Devices and returns it. 
      */
-    CompoundDevicesConfigurationDefImpl read(Configuration configuration);
+    CompoundDevicesConfiguration read(Configuration configuration);
 }

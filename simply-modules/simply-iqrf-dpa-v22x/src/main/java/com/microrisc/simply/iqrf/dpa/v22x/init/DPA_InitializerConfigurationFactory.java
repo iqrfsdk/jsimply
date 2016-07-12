@@ -193,7 +193,7 @@ public final class DPA_InitializerConfigurationFactory {
         }
     }
     
-    private static CompoundDevicesConfigurationDefImpl createCompoundDevicesConfiguration(
+    private static CompoundDevicesConfiguration createCompoundDevicesConfiguration(
         Configuration configuration
     ) throws ConfigurationException {
         String configReaderClassName = configuration.getString(

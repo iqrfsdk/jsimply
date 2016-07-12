@@ -35,7 +35,7 @@ public final class DPA_InitializerConfiguration {
     private final DiscoveryConfiguration discoveryConfig;
     
     // compound devices configuration
-    private final CompoundDevicesConfigurationDefImpl compoundDevicesConfig;
+    private final CompoundDevicesConfiguration compoundDevicesConfig;
     
     
     public static class Builder {
@@ -43,7 +43,7 @@ public final class DPA_InitializerConfiguration {
         private EnumerationConfiguration enumConfig;
         private FixedInitConfiguration fixedInitConfig;
         private DiscoveryConfiguration discoveryConfig;
-        private CompoundDevicesConfigurationDefImpl compoundDevicesConfig;
+        private CompoundDevicesConfiguration compoundDevicesConfig;
         
         public Builder(InitializationType initType) {
             this.initType = initType;
@@ -64,7 +64,7 @@ public final class DPA_InitializerConfiguration {
             return this;
         }
         
-        public Builder compoundDevicesConfiguration(CompoundDevicesConfigurationDefImpl compoundDevicesConfig) {
+        public Builder compoundDevicesConfiguration(CompoundDevicesConfiguration compoundDevicesConfig) {
             this.compoundDevicesConfig = compoundDevicesConfig;
             return this;
         }
@@ -139,7 +139,7 @@ public final class DPA_InitializerConfiguration {
     /**
      * @return compound devices configuration
      */
-    public CompoundDevicesConfigurationDefImpl getCompoundDevicesConfiguration() {
+    public CompoundDevicesConfiguration getCompoundDevicesConfiguration() {
         return compoundDevicesConfig;
     }
 }
