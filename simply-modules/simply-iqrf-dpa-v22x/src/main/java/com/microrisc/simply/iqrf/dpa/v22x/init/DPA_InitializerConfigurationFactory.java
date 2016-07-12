@@ -16,6 +16,10 @@
 
 package com.microrisc.simply.iqrf.dpa.v22x.init;
 
+import java.lang.reflect.Constructor;
+import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 
@@ -176,6 +180,36 @@ public final class DPA_InitializerConfigurationFactory {
         );
     }
     
+    // returns object of config reader
+    private static CompoundDevicesConfigReader getCompoundDevicesConfigReader(
+            String configReaderClassName
+    ) throws ConfigurationException {
+        try {
+            Class configReaderClass = Class.forName(configReaderClassName);
+            Constructor constructor = configReaderClass.getConstructor();
+            return (CompoundDevicesConfigReader)constructor.newInstance();
+        } catch ( Exception ex ) {
+            throw new ConfigurationException(ex);
+        }
+    }
+    
+    private static CompoundDevicesConfigurationDefImpl createCompoundDevicesConfiguration(
+        Configuration configuration
+    ) throws ConfigurationException {
+        String configReaderClassName = configuration.getString(
+                "initialization.compoundDevices.configReader.class",
+                ""
+        );
+        
+        // if config reader isn't specified, return empty configuration
+        if ( configReaderClassName.isEmpty() ) {
+            return new CompoundDevicesConfigurationDefImpl( new LinkedList<CompoundDeviceConfiguration>() );
+        }
+        
+        CompoundDevicesConfigReader configReader = getCompoundDevicesConfigReader(configReaderClassName);
+        return configReader.read(configuration);
+    }
+    
     
     /**
      * Returns DPA initializer configuration settings.
@@ -193,11 +227,13 @@ public final class DPA_InitializerConfigurationFactory {
                 return new DPA_InitializerConfiguration.Builder(initType)
                         .enumerationConfiguration(createEnumerationConfiguration(configuration))
                         .discoveryConfiguration(createDiscoveryConfiguration(configuration))
+                        .compoundDevicesConfiguration(createCompoundDevicesConfiguration(configuration))
                         .build();
             case FIXED:
                 return new DPA_InitializerConfiguration.Builder(initType)
                         .fixedInitConfiguration(createFixedInitConfiguration(configuration))
                         .discoveryConfiguration(createDiscoveryConfiguration(configuration))
+                        .compoundDevicesConfiguration(createCompoundDevicesConfiguration(configuration))
                         .build();
             default:
                 throw new IllegalArgumentException("Unsupported type of initialization.");

@@ -34,12 +34,16 @@ public final class DPA_InitializerConfiguration {
     // discovery configuration
     private final DiscoveryConfiguration discoveryConfig;
     
+    // compound devices configuration
+    private final CompoundDevicesConfigurationDefImpl compoundDevicesConfig;
+    
     
     public static class Builder {
         private final InitializationType initType;
         private EnumerationConfiguration enumConfig;
         private FixedInitConfiguration fixedInitConfig;
         private DiscoveryConfiguration discoveryConfig;
+        private CompoundDevicesConfigurationDefImpl compoundDevicesConfig;
         
         public Builder(InitializationType initType) {
             this.initType = initType;
@@ -57,6 +61,11 @@ public final class DPA_InitializerConfiguration {
         
         public Builder discoveryConfiguration(DiscoveryConfiguration discoveryConfig) {
             this.discoveryConfig = discoveryConfig;
+            return this;
+        }
+        
+        public Builder compoundDevicesConfiguration(CompoundDevicesConfigurationDefImpl compoundDevicesConfig) {
+            this.compoundDevicesConfig = compoundDevicesConfig;
             return this;
         }
         
@@ -80,6 +89,7 @@ public final class DPA_InitializerConfiguration {
         this.enumConfig = builder.enumConfig;
         this.fixedInitConfig = builder.fixedInitConfig;
         this.discoveryConfig = builder.discoveryConfig;
+        this.compoundDevicesConfig = builder.compoundDevicesConfig;
         
         switch ( initType ) {
             case ENUMERATION:
@@ -124,5 +134,12 @@ public final class DPA_InitializerConfiguration {
      */
     public DiscoveryConfiguration getDiscoveryConfiguration() {
         return discoveryConfig;
+    }
+    
+    /**
+     * @return compound devices configuration
+     */
+    public CompoundDevicesConfigurationDefImpl getCompoundDevicesConfiguration() {
+        return compoundDevicesConfig;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MICRORISC s.r.o..
+ * Copyright 2014 MICRORISC s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1302,7 +1302,7 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
                 
                 // creating new node
                 com.microrisc.simply.Node newNode 
-                = NodeFactory.createNodeWithAllPeripherals(networkId, Integer.toString(newAddr));
+                = NodeFactory.createNodeWithAllPeripherals(networkId, Integer.toString(newAddr), null);
                                
                 OS os = newNode.getDeviceObject(OS.class);
                 if ( os == null ) {
@@ -1349,7 +1349,7 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
             
             // reference to all nodes with temporary address 0xFE
             com.microrisc.simply.Node temporaryNodes 
-                = NodeFactory.createNodeWithAllPeripherals(networkId, Integer.toString(0xFE));
+                = NodeFactory.createNodeWithAllPeripherals(networkId, Integer.toString(0xFE), null);
             
             // reference to OS peripheral
             OS tnsOS = temporaryNodes.getDeviceObject(OS.class);
@@ -1450,7 +1450,7 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
         
         for ( int addr : newAddrs ) {
             com.microrisc.simply.Node newNode 
-                = NodeFactory.createNodeWithAllPeripherals(networkId, Integer.toString(addr));
+                = NodeFactory.createNodeWithAllPeripherals(networkId, Integer.toString(addr), null);
             
             synchronized ( synchroResultNetwork ) {
                 resultNetwork.addNode(newNode);

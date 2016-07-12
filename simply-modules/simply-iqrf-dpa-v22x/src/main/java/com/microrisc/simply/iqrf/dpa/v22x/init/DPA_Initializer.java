@@ -275,7 +275,10 @@ extends
         Set<Integer> peripheralNumbers = getPeripheralNumbers(perInfoObject);
         System.out.println("Peripherals: " + Arrays.toString(peripheralNumbers.toArray( new Integer[0])) );
         
-        DPA_Node node = NodeFactory.createNode(networkId, nodeId, peripheralNumbers);
+        DPA_Node node = NodeFactory.createNode(
+                networkId, nodeId, peripheralNumbers, 
+                dpaInitConfig.getCompoundDevicesConfiguration().getDevicesConfigurations(networkId, nodeId)
+        );
         
         System.out.println("Node created\n");
         logger.debug("createNode - end: {}", node);
@@ -445,7 +448,9 @@ extends
             System.out.println("Peripherals: " + Arrays.toString(nodeMappingEntry.getValue().toArray( new Integer[0])) );
             
             DPA_Node node = NodeFactory.createNode(
-                    networkId, nodeMappingEntry.getKey(), nodeMappingEntry.getValue()
+                    networkId, nodeMappingEntry.getKey(), nodeMappingEntry.getValue(),
+                    dpaInitConfig.getCompoundDevicesConfiguration()
+                        .getDevicesConfigurations(networkId, nodeMappingEntry.getKey())
             );
             nodesMap.put(nodeMappingEntry.getKey(), node);
             
@@ -477,7 +482,12 @@ extends
         }
         
         // creating master node
-        DPA_Node masterNode = NodeFactory.createNode(networkId, "0", networkMapping.get("0"));
+        DPA_Node masterNode = NodeFactory
+            .createNode(
+                    networkId, "0", networkMapping.get("0"), 
+                    dpaInitConfig.getCompoundDevicesConfiguration()
+                            .getDevicesConfigurations(networkId, "0")
+            );
         logger.info("Master node created");                        
         
         //determine config depending on each network and set to use in protocol layer
@@ -577,8 +587,8 @@ extends
         System.out.println("Starting initialization of Simply ...");
         
         this.initObjects = initObjects;
-        this.dpaInitConfig = DPA_InitializerConfigurationFactory.
-                getDPA_InitializerConfiguration(initObjects.getConfigSettings().getGeneralSettings()
+        this.dpaInitConfig = DPA_InitializerConfigurationFactory
+                .getDPA_InitializerConfiguration(initObjects.getConfigSettings().getGeneralSettings()
         );
         
         // starting the connector

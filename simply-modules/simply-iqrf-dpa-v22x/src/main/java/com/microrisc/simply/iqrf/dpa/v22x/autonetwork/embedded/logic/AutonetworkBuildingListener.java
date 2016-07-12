@@ -64,7 +64,8 @@ public class AutonetworkBuildingListener implements AutonetworkStateListener {
       try {
          network.addNode(NodeFactory.createNodeWithAllPeripherals(
                  network.getId(),
-                 Integer.toString(nodeIndex))
+                 Integer.toString(nodeIndex), 
+                 null)
          );
       } catch (Exception ex) {
          log.error("addNodeWithAllPeripherals - error: " + ex);

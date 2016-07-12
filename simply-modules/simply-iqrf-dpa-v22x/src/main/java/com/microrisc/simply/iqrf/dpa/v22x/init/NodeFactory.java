@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 MICRORISC s.r.o..
+ * Copyright 2014 MICRORISC s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,15 @@ import com.microrisc.simply.SimpleDeviceObjectFactory;
 import com.microrisc.simply.init.InitConfigSettings;
 import com.microrisc.simply.iqrf.dpa.DPA_Node;
 import com.microrisc.simply.iqrf.dpa.DPA_NodeImpl;
+import com.microrisc.simply.iqrf.dpa.v22x.CompoundDeviceObject;
+import com.microrisc.simply.iqrf.dpa.v22x.CompoundDeviceObjectFactory;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.PeripheralInfoGetter;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeService;
 import com.microrisc.simply.services.Service;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.commons.configuration.Configuration;
@@ -91,34 +95,23 @@ public final class NodeFactory {
      * Creates node services and returns them.
      * @return node services
      */
-    private static Map<Class, Service> createServices() {
+    private static Map<Class, Service> createServices(Map<Class, DeviceObject> devices) {
         Map<Class, Service> services = new HashMap<>();
+        
+        // load code service
+        LoadCodeService loadCodeService = NodeServiceFactory.createService(LoadCodeService.class, devices);
+        if ( loadCodeService != null ) {
+            services.put(LoadCodeService.class, loadCodeService);
+        }
+        
         return services;
     }
     
-    /**
-     * Creates and returns new node with specified peripherals.
-     * @param networkId ID of network the node belongs to
-     * @param nodeId ID of node to create
-     * @param perNumbers peripheral numbers to create node services for
-     * @return new node
-     * @throws java.lang.Exception if an error has occured during node creation
-     */
-    public static DPA_Node createNode(String networkId, String nodeId, Set<Integer> perNumbers) 
-            throws Exception 
-    {
-        logger.debug("createNode - start: networkId={}, nodeId={}, perNumbers={}",
-                networkId, nodeId, Arrays.toString(perNumbers.toArray( new Integer[0] ))
-        );
-        
-        // node devices
-        Map<Class, DeviceObject> devices = new HashMap<>();
-        
-        // creating Peripheral Information object
-        PeripheralInfoGetter perInfoObject = createPerInfoObject(networkId, nodeId);
-        
-        // put info object into service's map
-        devices.put(PeripheralInfoGetter.class, (DeviceObject)perInfoObject);
+    // creates devices corresponding to specified DPA periherals number and
+    // add them into specified map
+    private static void createAndAddPeripherals(
+        String networkId, String nodeId, Set<Integer> perNumbers, Map<Class, DeviceObject> devices
+    ) throws Exception {
         
         for ( int perId : perNumbers ) {
             Class devIface = _initObjects.getPeripheralToDevIfaceMapper().getDeviceInterface(perId);
@@ -148,13 +141,105 @@ public final class NodeFactory {
             // put object into service's map
             devices.put(devIface, newDeviceObj);
         }
-        
-        Map<Class, Service> services = createServices();
-        // load code service
-        LoadCodeService loadCodeService = NodeServiceFactory.createService(LoadCodeService.class, devices);
-        if ( loadCodeService != null ) {
-            services.put(LoadCodeService.class, loadCodeService);
+    }
+    
+    // creates devices corresponding to specified compound devices and add them into the specified map
+    private static void createAndAddCompoundDevices(
+        List<CompoundDeviceConfiguration> compoundDevicesConfigList, Map<Class, DeviceObject> devices
+    ) {
+        if ( compoundDevicesConfigList == null ) {
+            logger.warn(
+                "List of compound's devices configuration object is null."
+                + "No compound devices will be created."
+            );
+            return;
         }
+        
+        if ( compoundDevicesConfigList.isEmpty() ) {
+            logger.warn(
+                "List of compound's devices configuration object is empty."
+                + "No compound devices will be created."
+            );
+            return;
+        }
+        
+        for ( CompoundDeviceConfiguration compDevConfig : compoundDevicesConfigList ) {
+            List<DeviceObject> internalDevices = new LinkedList<>();
+            List<Class> devIfacesOfInternalDevices = compDevConfig.getDevIfacesOfInternalDevices();
+            boolean internalDeviceNotFound = false;
+            
+            // getting the list of internal devices
+            for ( Class devIface : devIfacesOfInternalDevices ) {
+                DeviceObject devObject = devices.get(devIface);
+                if ( devIface == null ) {
+                    logger.error("Device object for internal device: {} not found", devIface);
+                    internalDeviceNotFound = true;
+                    break;
+                }
+                internalDevices.add(devObject);
+            }
+            
+            // if some internal device has not been found, continue with next Compound Device
+            if ( internalDeviceNotFound ) {
+                internalDeviceNotFound = false;
+                continue;
+            }
+            
+            CompoundDeviceObjectFactory factory = compDevConfig.getFactory();
+            if ( factory == null ) {
+                logger.error(
+                    "Factory for Compound Device Object: {} not found", compDevConfig.getImplClass()
+                );
+                continue;
+            }
+            
+            CompoundDeviceObject compoundDeviceObject 
+                = factory.createCompoundDeviceObject(
+                        compDevConfig.getNetworkId(), compDevConfig.getNodeId(),
+                        compDevConfig.getImplClass(), internalDevices, 
+                        compDevConfig.getOtherSettings()
+                );
+            
+            devices.put(compoundDeviceObject.getImplementedDeviceInterface(), compoundDeviceObject);
+        }
+    }
+    
+    /**
+     * Creates and returns new node with specified peripherals.
+     * @param networkId ID of network the node belongs to
+     * @param nodeId ID of node to create
+     * @param perNumbers peripheral numbers to create node services for
+     * @param compoundDevicesConfigList list of configuration objects of compound
+     *        devices related to node to create. If {@code null}, no compound devices
+     *        will be created
+     * @return new node
+     * @throws java.lang.Exception if an error has occured during node creation
+     */
+    public static DPA_Node createNode(
+        String networkId, String nodeId, Set<Integer> perNumbers, 
+        List<CompoundDeviceConfiguration> compoundDevicesConfigList
+    ) throws Exception 
+    {
+        logger.debug("createNode - start: networkId={}, nodeId={}, perNumbers={}",
+                networkId, nodeId, Arrays.toString(perNumbers.toArray( new Integer[0] ))
+        );
+        
+        // node devices
+        Map<Class, DeviceObject> devices = new HashMap<>();
+        
+        // creating Peripheral Information object
+        PeripheralInfoGetter perInfoObject = createPerInfoObject(networkId, nodeId);
+        
+        // put info object into service's map
+        devices.put(PeripheralInfoGetter.class, (DeviceObject)perInfoObject);
+        
+        // creating devices corresponding to DPA peripherals
+        createAndAddPeripherals(networkId, nodeId, perNumbers, devices);
+        
+        // creating compound devices
+        createAndAddCompoundDevices(compoundDevicesConfigList, devices);
+        
+        Map<Class, Service> services = createServices(devices);
         
         DPA_Node node = new DPA_NodeImpl(networkId, nodeId, devices, services);
         
@@ -166,13 +251,17 @@ public final class NodeFactory {
      * Creates and returns new node with services for all peripherals.
      * @param networkId ID of network the node belongs to
      * @param nodeId ID of node to create
+     * @param compoundDevicesConfigList list of configuration objects of compound
+     *        devices related to node to create. If {@code null}, no compound devices
+     *        will be created
      * @return new node
      * @throws java.lang.Exception if an error has occured during node creation
      */
-    public static Node createNodeWithAllPeripherals(String networkId, String nodeId) 
-            throws Exception 
+    public static Node createNodeWithAllPeripherals(
+        String networkId, String nodeId, List<CompoundDeviceConfiguration> compoundDevicesConfigList
+    ) throws Exception 
     {
         Set<Integer> peripherals = _initObjects.getPeripheralToDevIfaceMapper().getMappedPeripherals();
-        return createNode(networkId, nodeId, peripherals);
+        return createNode(networkId, nodeId, peripherals, compoundDevicesConfigList);
     }
 }
