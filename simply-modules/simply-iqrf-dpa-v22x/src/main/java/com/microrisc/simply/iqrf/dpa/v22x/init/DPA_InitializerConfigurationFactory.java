@@ -207,7 +207,14 @@ public final class DPA_InitializerConfigurationFactory {
         }
         
         CompoundDevicesConfigReader configReader = getCompoundDevicesConfigReader(configReaderClassName);
-        return configReader.read(configuration);
+        CompoundDevicesConfiguration compoundConfiguration = configReader.read(configuration);
+        if ( compoundConfiguration == null ) {
+            compoundConfiguration = new CompoundDevicesConfigurationDefImpl( 
+                    new LinkedList<CompoundDeviceConfiguration>() 
+            );
+        }
+        
+        return compoundConfiguration;
     }
     
     

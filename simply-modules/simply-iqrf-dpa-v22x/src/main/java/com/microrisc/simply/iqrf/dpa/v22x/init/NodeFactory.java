@@ -194,7 +194,7 @@ public final class NodeFactory {
             }
             
             CompoundDeviceObject compoundDeviceObject 
-                = factory.createCompoundDeviceObject(
+                = factory.getCompoundDeviceObject(
                         compDevConfig.getNetworkId(), compDevConfig.getNodeId(),
                         compDevConfig.getImplClass(), internalDevices, 
                         compDevConfig.getOtherSettings()

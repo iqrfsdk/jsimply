@@ -44,10 +44,60 @@ public final class CompoundDeviceConfiguration {
     
     // factory for creation
     private final CompoundDeviceObjectFactory factory;
-
+    
+    
+    private static String checkNetworkId(String networkId) {
+        if ( networkId == null ) {
+            throw new IllegalArgumentException("Network ID cannot be null.");
+        }
+        
+        if ( networkId.isEmpty() ) {
+            throw new IllegalArgumentException("Network ID cannot be empty string.");
+        }
+        
+        return networkId;
+    }
+    
+    private static String checkNodeId(String nodeId) {
+        if ( nodeId == null ) {
+            throw new IllegalArgumentException("Node ID cannot be null.");
+        }
+        
+        if ( nodeId.isEmpty() ) {
+            throw new IllegalArgumentException("Node ID cannot be empty string.");
+        }
+        
+        return nodeId;
+    }
+    
+    private static Class checkImplClass(Class implClass) {
+        if ( implClass == null ) {
+            throw new IllegalArgumentException("Implementing class cannot be null.");
+        }
+        return implClass;
+    }
+    
+    private static List<Class> checkDevIfacesOfInternalDevices(
+            List<Class> devIfacesOfInternalDevices
+    ) {
+        if ( devIfacesOfInternalDevices == null ) {
+            throw new IllegalArgumentException(
+                    "Device Interfaces list of internal devices cannot be null"
+            );
+        }
+        return devIfacesOfInternalDevices;
+    }
+    
+    private static CompoundDeviceObjectFactory checkFactory(CompoundDeviceObjectFactory factory) {
+        if ( factory == null ) {
+            throw new IllegalArgumentException("Factory cannot be null.");
+        }
+        return factory;
+    }
+    
     
     /**
-     * Creates new otherSettings for Compound Device Object.
+     * Creates new configuration object for Compound Device Object.
      * 
      * @param networkId network ID
      * @param nodeId node ID
@@ -55,17 +105,20 @@ public final class CompoundDeviceConfiguration {
      * @param devIfacesOfInternalDevices Device Interfaces of internal devices
      * @param otherSettings other configuration settings
      * @param factory factory
+     * @throws IllegalArgumentException if: <br>
+     *         - any of the argument, except for {@code otherSettings} is {@code null} <br>
+     *         - {@code networkId} or {@code nodeId} is empty string
      */
     public CompoundDeviceConfiguration(
         String networkId, String nodeId, Class implClass, List<Class> devIfacesOfInternalDevices,
         Configuration otherSettings, CompoundDeviceObjectFactory factory
     ) {
-        this.networkId = networkId;
-        this.nodeId = nodeId;
-        this.implClass = implClass;
-        this.devIfacesOfInternalDevices = devIfacesOfInternalDevices;
+        this.networkId = checkNetworkId(networkId);
+        this.nodeId = checkNodeId(nodeId);
+        this.implClass = checkImplClass(implClass);
+        this.devIfacesOfInternalDevices = checkDevIfacesOfInternalDevices(devIfacesOfInternalDevices);
         this.otherSettings = otherSettings;
-        this.factory = factory;
+        this.factory = checkFactory(factory);
     }
     
     /**

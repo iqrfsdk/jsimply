@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MICRORISC s.r.o..
+ * Copyright 2016 MICRORISC s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,16 +27,16 @@ import org.apache.commons.configuration.Configuration;
 public interface CompoundDeviceObjectFactory {
     
     /**
-     * Creates Compound Device Object according to specified parameters.
+     * Returns Compound Device Object according to specified parameters.
      * 
-     * @param networkId ID of network, which the Compound Device Object to create will be belonging to
-     * @param nodeId ID of node, which the created Compound Device Object will be belonging to
-     * @param implClass class implementing Device Interface of the created Device Object
-     * @param internalDevices devices, which the created Compound Device Object will be using 
-     * @param configuration configuration settings for Compound Device Object to create 
+     * @param networkId ID of network, which returned Compound Device Object will be belonging to
+     * @param nodeId ID of node, which returned Compound Device Object will be belonging to
+     * @param implClass class implementing Device Interface of the returned Device Object
+     * @param internalDevices devices, which the returned Compound Device Object will be using 
+     * @param configuration configuration settings 
      * @return Compound Device Object
      */
-    CompoundDeviceObject createCompoundDeviceObject(
+    CompoundDeviceObject getCompoundDeviceObject(
             String networkId, String nodeId, Class implClass, 
             List<DeviceObject> internalDevices, Configuration configuration
     );
