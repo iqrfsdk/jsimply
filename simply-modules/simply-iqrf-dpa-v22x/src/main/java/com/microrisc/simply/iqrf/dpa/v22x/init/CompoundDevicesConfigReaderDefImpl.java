@@ -64,7 +64,9 @@ implements CompoundDevicesConfigReader
     private List<Class> getDevIfacesOfInternalDevices(HierarchicalConfiguration deviceConfig) {
         List<Class> devIfacesOfInternalDevices = new LinkedList<>();
         
-        List<HierarchicalConfiguration> intDevicesConfig = deviceConfig.configurationsAt("internalDevice");
+        List<HierarchicalConfiguration> intDevicesConfig
+            = deviceConfig.configurationsAt("internalDevices.internalDevice");
+        
         for ( HierarchicalConfiguration intDeviceConfig : intDevicesConfig ) {
             String devIfaceClassName = intDeviceConfig.getString("interface", "");
             if ( devIfaceClassName.isEmpty() ) {

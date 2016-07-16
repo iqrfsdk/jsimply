@@ -6,5 +6,5 @@
             <goals>
                 <goal>verify</goal>
             </goals>
-        </action>
+        </action>     
     </actions>
