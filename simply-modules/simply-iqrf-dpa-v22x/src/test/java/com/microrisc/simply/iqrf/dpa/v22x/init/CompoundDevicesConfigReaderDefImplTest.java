@@ -66,7 +66,9 @@ public class CompoundDevicesConfigReaderDefImplTest {
     @Test
     public void testRead() throws ConfigurationException {
         Configuration configuration 
-            = new PropertiesConfiguration("compound_devices" + File.separator + "SimplyTest_1.properties");
+            = new PropertiesConfiguration(
+                    "compound_devices" + File.separator + "Simply_ConfigReaderDefImplTest.properties"
+            );
         
         CompoundDevicesConfigReaderDefImpl instance = new CompoundDevicesConfigReaderDefImpl();
         CompoundDevicesConfiguration result = instance.read(configuration);
