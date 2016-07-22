@@ -13,14 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.iqrf.dpa.v22x.init;
+package com.microrisc.simply.compound_devices;
 
 import com.microrisc.simply.DeviceInterface;
 import com.microrisc.simply.DeviceObject;
-import com.microrisc.simply.iqrf.dpa.v22x.CompoundDeviceObject;
-import com.microrisc.simply.iqrf.dpa.v22x.CompoundDeviceObjectFactoryDefImpl;
-import com.microrisc.simply.iqrf.dpa.v22x.devices.UART;
-import com.microrisc.simply.iqrf.types.VoidType;
 import java.io.File;
 import java.util.List;
 import org.apache.commons.configuration.Configuration;
@@ -37,8 +33,13 @@ import static org.junit.Assert.*;
 public class CompoundDevicesConfigReaderDefImplTest {
     
     @DeviceInterface
+    public static interface TestingInternalDeviceInterface {
+        Object doSomething();
+    }
+    
+    @DeviceInterface
     public static interface TestingDeviceInterface {
-        VoidType doSomething();
+        Object doSomething();
     }
     
     // testing compound device
@@ -50,8 +51,8 @@ public class CompoundDevicesConfigReaderDefImplTest {
         }
 
         @Override
-        public VoidType doSomething() {
-            return new VoidType();
+        public Object doSomething() {
+            return new Object();
         }
         
     }
@@ -66,9 +67,7 @@ public class CompoundDevicesConfigReaderDefImplTest {
     @Test
     public void testRead() throws ConfigurationException {
         Configuration configuration 
-            = new PropertiesConfiguration(
-                    "compound_devices" + File.separator + "Simply_ConfigReaderDefImplTest.properties"
-            );
+            = new PropertiesConfiguration("Simply_ConfigReaderDefImplTest.properties");
         
         CompoundDevicesConfigReaderDefImpl instance = new CompoundDevicesConfigReaderDefImpl();
         CompoundDevicesConfiguration result = instance.read(configuration);
@@ -85,7 +84,7 @@ public class CompoundDevicesConfigReaderDefImplTest {
         assertEquals(TestingCompoundDevice.class, devConfig.getImplClass());
         
         assertEquals(1, devConfig.getDevIfacesOfInternalDevices().size());
-        assertArrayEquals( new Class[] {UART.class} , devConfig.getDevIfacesOfInternalDevices().toArray());
+        assertArrayEquals( new Class[] {TestingInternalDeviceInterface.class} , devConfig.getDevIfacesOfInternalDevices().toArray());
         
         assertNotNull(devConfig.getOtherSettings());
         assertEquals(CompoundDeviceObjectFactoryDefImpl.class, devConfig.getFactory().getClass());
@@ -103,7 +102,7 @@ public class CompoundDevicesConfigReaderDefImplTest {
         assertEquals(TestingCompoundDevice.class, devConfig.getImplClass());
         
         assertEquals(1, devConfig.getDevIfacesOfInternalDevices().size());
-        assertArrayEquals( new Class[] {UART.class} , devConfig.getDevIfacesOfInternalDevices().toArray());
+        assertArrayEquals( new Class[] {TestingInternalDeviceInterface.class} , devConfig.getDevIfacesOfInternalDevices().toArray());
         
         assertNotNull(devConfig.getOtherSettings());
         assertEquals(CompoundDeviceObjectFactoryDefImpl.class, devConfig.getFactory().getClass());

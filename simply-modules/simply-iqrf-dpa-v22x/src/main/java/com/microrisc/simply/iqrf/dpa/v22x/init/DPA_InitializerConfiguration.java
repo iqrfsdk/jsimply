@@ -16,6 +16,8 @@
 
 package com.microrisc.simply.iqrf.dpa.v22x.init;
 
+import com.microrisc.simply.compound_devices.CompoundDevicesConfiguration;
+
 /**
  * Configuration of DPA initializer.
  * 

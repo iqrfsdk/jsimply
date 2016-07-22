@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.iqrf.dpa.v22x;
+package com.microrisc.simply.compound_devices;
 
 import com.microrisc.simply.BaseDeviceObject;
 import com.microrisc.simply.DeviceInterface;
 import com.microrisc.simply.DeviceObject;
-import com.microrisc.simply.iqrf.types.VoidType;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.commons.configuration.Configuration;
@@ -47,7 +46,7 @@ public class CompoundDeviceObjectFactoryDefImplTest {
     
     @DeviceInterface
     public static interface TestingDeviceInterface {
-        VoidType doSomething();
+        Object doSomething();
     }
     
     // testing compound device
@@ -59,8 +58,8 @@ public class CompoundDeviceObjectFactoryDefImplTest {
         }
 
         @Override
-        public VoidType doSomething() {
-            return new VoidType();
+        public Object doSomething() {
+            return new Object();
         }
         
     }

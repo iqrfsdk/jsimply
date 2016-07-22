@@ -12,14 +12,14 @@
 	<network id="1">
 		<node id="1">
 			<device>
-				<implClass>com.microrisc.simply.iqrf.dpa.v22x.init.CompoundDevicesConfigReaderDefImplTest$TestingCompoundDevice</implClass>
+				<implClass>com.microrisc.simply.compound_devices.CompoundDevicesConfigReaderDefImplTest$TestingCompoundDevice</implClass>
 				<internalDevices>
 					<internalDevice>
-						<interface>com.microrisc.simply.iqrf.dpa.v22x.devices.UART</interface>
+						<interface>com.microrisc.simply.compound_devices.CompoundDevicesConfigReaderDefImplTest$TestingInternalDeviceInterface</interface>
 					</internalDevice>
 				</internalDevices>
 				<factory>
-					<class>com.microrisc.simply.iqrf.dpa.v22x.CompoundDeviceObjectFactoryDefImpl</class>
+					<class>com.microrisc.simply.compound_devices.CompoundDeviceObjectFactoryDefImpl</class>
 				</factory>
 			</device>
 		</node>

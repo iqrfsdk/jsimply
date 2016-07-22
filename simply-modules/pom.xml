@@ -36,5 +36,6 @@
         <module>simply-services</module>
         <module>simply-iqrf-dpa-v22x-examples</module>
         <module>simply-demos</module>
+        <module>simply-compound_devices</module>
     </modules>
 </project>

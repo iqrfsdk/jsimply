@@ -16,14 +16,15 @@
 
 package com.microrisc.simply.iqrf.dpa.v22x.init;
 
+import com.microrisc.simply.compound_devices.CompoundDeviceConfiguration;
 import com.microrisc.simply.DeviceObject;
 import com.microrisc.simply.Node;
 import com.microrisc.simply.SimpleDeviceObjectFactory;
 import com.microrisc.simply.init.InitConfigSettings;
 import com.microrisc.simply.iqrf.dpa.DPA_Node;
 import com.microrisc.simply.iqrf.dpa.DPA_NodeImpl;
-import com.microrisc.simply.iqrf.dpa.v22x.CompoundDeviceObject;
-import com.microrisc.simply.iqrf.dpa.v22x.CompoundDeviceObjectFactory;
+import com.microrisc.simply.compound_devices.CompoundDeviceObject;
+import com.microrisc.simply.compound_devices.CompoundDeviceObjectFactory;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.PeripheralInfoGetter;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeService;
 import com.microrisc.simply.services.Service;

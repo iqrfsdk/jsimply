@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.iqrf.dpa.v22x.init;
+package com.microrisc.simply.compound_devices;
 
-import com.microrisc.simply.iqrf.dpa.v22x.CompoundDeviceObjectFactory;
+import com.microrisc.simply.compound_devices.CompoundDeviceObjectFactory;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.LinkedList;
