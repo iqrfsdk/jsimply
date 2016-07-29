@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.compound_devices;
+package com.microrisc.simply.compounddevices;
 
 import com.microrisc.simply.DeviceInterface;
 import com.microrisc.simply.DeviceObject;
-import java.io.File;
 import java.util.List;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;

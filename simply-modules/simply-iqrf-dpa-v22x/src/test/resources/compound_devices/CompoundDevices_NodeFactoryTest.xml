@@ -19,7 +19,7 @@
 					</internalDevice>
 				</internalDevices>
 				<factory>
-					<class>com.microrisc.simply.compound_devices.CompoundDeviceObjectFactoryDefImpl</class>
+					<class>com.microrisc.simply.compounddevices.CompoundDeviceObjectFactoryDefImpl</class>
 				</factory>
 			</device>
 		</node>

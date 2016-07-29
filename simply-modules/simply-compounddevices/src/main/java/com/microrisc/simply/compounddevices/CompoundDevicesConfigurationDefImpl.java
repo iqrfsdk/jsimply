@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.compound_devices;
+package com.microrisc.simply.compounddevices;
 
 import java.util.LinkedList;
 import java.util.List;

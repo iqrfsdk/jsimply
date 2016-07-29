@@ -61,8 +61,8 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.microrisc.simply.compound_devices</groupId>
-            <artifactId>simply-compound_devices</artifactId>
+            <groupId>com.microrisc.simply.compounddevices</groupId>
+            <artifactId>simply-compounddevices</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>

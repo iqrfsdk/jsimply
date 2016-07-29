@@ -12,14 +12,14 @@
 	<network id="1">
 		<node id="1">
 			<device>
-				<implClass>com.microrisc.simply.compound_devices.CompoundDevicesConfigReaderDefImplTest$TestingCompoundDevice</implClass>
+				<implClass>com.microrisc.simply.compounddevices.CompoundDevicesConfigReaderDefImplTest$TestingCompoundDevice</implClass>
 				<internalDevices>
 					<internalDevice>
-						<interface>com.microrisc.simply.compound_devices.CompoundDevicesConfigReaderDefImplTest$TestingInternalDeviceInterface</interface>
+						<interface>com.microrisc.simply.compounddevices.CompoundDevicesConfigReaderDefImplTest$TestingInternalDeviceInterface</interface>
 					</internalDevice>
 				</internalDevices>
 				<factory>
-					<class>com.microrisc.simply.compound_devices.CompoundDeviceObjectFactoryDefImpl</class>
+					<class>com.microrisc.simply.compounddevices.CompoundDeviceObjectFactoryDefImpl</class>
 				</factory>
 			</device>
 		</node>

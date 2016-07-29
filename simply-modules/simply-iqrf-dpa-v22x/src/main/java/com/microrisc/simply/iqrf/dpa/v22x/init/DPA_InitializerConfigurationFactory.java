@@ -16,14 +16,12 @@
 
 package com.microrisc.simply.iqrf.dpa.v22x.init;
 
-import com.microrisc.simply.compound_devices.CompoundDeviceConfiguration;
-import com.microrisc.simply.compound_devices.CompoundDevicesConfiguration;
-import com.microrisc.simply.compound_devices.CompoundDevicesConfigReader;
-import com.microrisc.simply.compound_devices.CompoundDevicesConfigurationDefImpl;
+import com.microrisc.simply.compounddevices.CompoundDeviceConfiguration;
+import com.microrisc.simply.compounddevices.CompoundDevicesConfiguration;
+import com.microrisc.simply.compounddevices.CompoundDevicesConfigReader;
+import com.microrisc.simply.compounddevices.CompoundDevicesConfigurationDefImpl;
 import java.lang.reflect.Constructor;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 

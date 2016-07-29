@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.compound_devices;
+package com.microrisc.simply.compounddevices;
 
-import com.microrisc.simply.compound_devices.CompoundDeviceObjectFactory;
+import com.microrisc.simply.compounddevices.CompoundDeviceObjectFactory;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.commons.configuration.Configuration;
