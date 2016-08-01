@@ -26,6 +26,7 @@
     <modules>
         <module>simply-core</module>
         <module>simply-asynchrony</module>
+        <module>simply-compounddevices</module>
         <module>simply-iqrf</module>
         <module>simply-iqrf-dpa</module>
         <module>simply-iqrf-dpa-v22x</module>
@@ -34,9 +35,8 @@
         <module>simply-network-udp</module>
         <module>simply-network-usbcdc</module>
         <module>simply-services</module>
+        <module>simply-devices</module>
         <module>simply-iqrf-dpa-v22x-examples</module>
         <module>simply-demos</module>
-        <module>simply-compounddevices</module>
-        <module>simply-devices</module>
     </modules>
 </project>
