@@ -7,7 +7,10 @@ import com.microrisc.simply.errors.CallRequestProcessingError;
 import com.microrisc.simply.compounddevices.CompoundDeviceObject;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.UART;
 import com.microrisc.simply.devices.protronix.dpa22x.CO2_Sensor;
+import com.microrisc.simply.devices.protronix.dpa22x.errors.BadResponseDataError;
+import com.microrisc.simply.devices.protronix.dpa22x.utils.Modbus_CRCSetter;
 import com.microrisc.simply.iqrf.dpa.v22x.protronix.types.CO2_SensorData;
+import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_AdditionalInfo;
 import java.util.UUID;
 
 /**
@@ -29,6 +32,8 @@ extends CompoundDeviceObject implements CO2_Sensor {
     private static final short[] DATA 
         = { 0x01, 0x42, 0x00, 0x03, 0x75, 0x31, 0x75, 0x33, 0x75, 0x32, 0x00, 0x00 }; 
     
+    // reponse length
+    private static final int MODBUS_RESPONSE_LENGTH = 18;
     
     
     // parses data from UART to CO2 Sensor Data 
@@ -65,6 +70,9 @@ extends CompoundDeviceObject implements CO2_Sensor {
         return (UART)uartDeviceObject;
     }
     
+    // last response data error
+    private BadResponseDataError lastResponseDataError = null; 
+    
     
     /**
      * Creates a new object representing the CO2 sensor.
@@ -80,38 +88,28 @@ extends CompoundDeviceObject implements CO2_Sensor {
     }
 
     @Override
-    public UUID async_get() {
-        return uart.async_writeAndRead(READ_TIMEOUT, DATA);
-    }
-
-    @Override
     public CO2_SensorData get() {
-        short[] readData = uart.writeAndRead(READ_TIMEOUT, DATA);
+        lastResponseDataError = null;
+        
+        short[] readData = uart.writeAndRead(READ_TIMEOUT, Modbus_CRCSetter.set(DATA));
         if ( readData == null ) {
             return null;
         }
         
+        if ( readData.length == 0 ) {
+            lastResponseDataError = new BadResponseDataError("No received data from UART.");
+            return null;
+        }
+                
+        if ( readData.length != MODBUS_RESPONSE_LENGTH ) {
+            lastResponseDataError = new BadResponseDataError(
+                    "Bad lenght of data received from UART. Get data length: " + readData.length 
+                    + "Expected: " + MODBUS_RESPONSE_LENGTH
+            );
+            return null;
+        }
+        
         return UART_DataParser.parse(readData);
-    }
-
-    @Override
-    public <T> T getCallResult(UUID callId, Class<T> resultClass, long timeout) {
-        return uart.getCallResult(callId, resultClass, timeout);
-    }
-
-    @Override
-    public <T> T getCallResultInDefaultWaitingTimeout(UUID callId, Class<T> resultClass) {
-        return uart.getCallResultInDefaultWaitingTimeout(callId, resultClass);
-    }
-
-    @Override
-    public <T> T getCallResultImmediately(UUID callId, Class<T> resultClass) {
-        return uart.getCallResultImmediately(callId, resultClass);
-    }
-
-    @Override
-    public <T> T getCallResultInUnlimitedWaitingTimeout(UUID callId, Class<T> resultClass) {
-        return uart.getCallResultInUnlimitedWaitingTimeout(callId, resultClass);
     }
 
     @Override
@@ -125,21 +123,6 @@ extends CompoundDeviceObject implements CO2_Sensor {
     }
 
     @Override
-    public UUID getIdOfLastExexutedCallRequest() {
-        return uart.getIdOfLastExexutedCallRequest();
-    }
-
-    @Override
-    public CallRequestProcessingState getCallRequestProcessingState(UUID callId) {
-        return uart.getCallRequestProcessingState(callId);
-    }
-
-    @Override
-    public void cancelCallRequest(UUID callId) {
-        uart.cancelCallRequest(callId);
-    }
-
-    @Override
     public CallRequestProcessingState getCallRequestProcessingStateOfLastCall() {
         return uart.getCallRequestProcessingStateOfLastCall();
     }
@@ -150,33 +133,21 @@ extends CompoundDeviceObject implements CO2_Sensor {
     }
 
     @Override
-    public CallRequestProcessingError getCallRequestProcessingError(UUID callId) {
-        return uart.getCallRequestProcessingError(callId);
-    }
-
-    @Override
     public CallRequestProcessingError getCallRequestProcessingErrorOfLastCall() {
+        if ( lastResponseDataError != null ) {
+            return lastResponseDataError;
+        }
         return uart.getCallRequestProcessingErrorOfLastCall();
     }
-
+    
     @Override
-    public Object getCallResultAdditionalInfo(UUID callId) {
-        return uart.getCallResultAdditionalInfo(callId);
-    }
-
-    @Override
-    public Object getCallResultAdditionalInfoOfLastCall() {
-        return uart.getCallResultAdditionalInfoOfLastCall();
-    }
-
-    @Override
-    public UUID call(Object methodId, Object[] args) {
+    public DPA_AdditionalInfo getDPA_AdditionalInfo(UUID callId) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public String transform(Object methodId) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public DPA_AdditionalInfo getDPA_AdditionalInfoOfLastCall() {
+        return uart.getDPA_AdditionalInfoOfLastCall();
     }
     
 }

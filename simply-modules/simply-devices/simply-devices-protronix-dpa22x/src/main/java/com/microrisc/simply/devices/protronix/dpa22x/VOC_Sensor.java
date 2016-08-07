@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.iqrf.dpa.v22x.protronix.devices;
+package com.microrisc.simply.devices.protronix.dpa22x;
 
 import com.microrisc.simply.DeviceInterface;
-import com.microrisc.simply.DeviceInterfaceMethodId;
-import com.microrisc.simply.di_services.GenericAsyncCallable;
-import com.microrisc.simply.di_services.MethodIdTransformer;
-import com.microrisc.simply.di_services.StandardServices;
-import com.microrisc.simply.iqrf.dpa.v22x.protronix.types.CO2_SensorData;
+import com.microrisc.simply.di_services.CallErrorsService_sync;
+import com.microrisc.simply.di_services.CallRequestProcessingService_sync;
+import com.microrisc.simply.di_services.WaitingTimeoutService;
+import com.microrisc.simply.iqrf.dpa.v22x.di_services.DPA_AdditionalInfoService;
 import com.microrisc.simply.iqrf.dpa.v22x.protronix.types.VOC_SensorData;
-import java.util.UUID;
 
 /**
  * VoC Sensor Device Interface.
@@ -35,29 +33,12 @@ import java.util.UUID;
  */
 @DeviceInterface
 public interface VOC_Sensor
-extends StandardServices, GenericAsyncCallable, MethodIdTransformer {
+extends WaitingTimeoutService, CallRequestProcessingService_sync, 
+        CallErrorsService_sync, DPA_AdditionalInfoService 
+{
     
     /**
-     * Identifiers of this device interface's methods.
-     */
-    enum MethodID implements DeviceInterfaceMethodId {
-        GET
-    }
-    
-    
-    // ASYNCHRONOUS METHODS
-    
-    /**
-     * Sends method call request for getting data from the sensor.
-     * @return unique identifier of sent request
-     */
-    UUID async_get();
-    
-    
-    // SYNCHRONOUS WRAPPERS
-    
-    /**
-     * Synchronous wrapper for {@link #async_get() async_get} method.
+     * Returns data from the sensor.
      * @return sensor data <br>
      *         {@code null}, if an error has occurred during processing
      */
