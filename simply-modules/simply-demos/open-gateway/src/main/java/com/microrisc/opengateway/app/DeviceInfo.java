@@ -17,27 +17,34 @@
 package com.microrisc.opengateway.app;
 
 /**
- * Holding device nformations
+ * Holds information about concrete device.
  * 
  * @author Rostislav Spinar
+ * @author Michal Konopa
  */
-public class Device {
-    private long id;
-    private String manufacturer;
-    private String type;
-
+public final class DeviceInfo {
+    private final int id;
+    private final String manufacturer;
+    private final String type;
+    
+    
+    /**
+     * Creates new object of device identification.
+     * @param id ID of the device
+     * @param manufacturer manufacturer name
+     * @param type type
+     */
+    public DeviceInfo(int id, String manufacturer, String type) {
+        this.id = id;
+        this.manufacturer = manufacturer;
+        this.type = type;
+    }
+    
     /**
      * @return the id
      */
-    public long getId() {
+    public int getId() {
         return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(long id) {
-        this.id = id;
     }
 
     /**
@@ -48,23 +55,10 @@ public class Device {
     }
 
     /**
-     * @param manufacturer the manufacturer to set
-     */
-    public void setManufacturer(String manufacturer) {
-        this.manufacturer = manufacturer;
-    }
-
-    /**
      * @return the type
      */
     public String getType() {
         return type;
     }
 
-    /**
-     * @param type the type to set
-     */
-    public void setType(String type) {
-        this.type = type;
-    }
 }

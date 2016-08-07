@@ -15,45 +15,40 @@
  */
 package com.microrisc.opengateway;
 
-import com.microrisc.opengateway.app.APPConfig;
-import com.microrisc.opengateway.app.Device;
-import com.microrisc.opengateway.mqtt.MQTTConfig;
-import com.microrisc.opengateway.mqtt.MQTTTopics;
-import com.microrisc.opengateway.mqtt.MQTTCommunicator;
+import com.microrisc.opengateway.app.ApplicationConfiguration;
+import com.microrisc.opengateway.app.DeviceInfo;
+import com.microrisc.opengateway.mqtt.MqttConfiguration;
+import com.microrisc.opengateway.mqtt.MqttTopics;
+import com.microrisc.opengateway.mqtt.MqttCommunicator;
+import com.microrisc.opengateway.mqtt.MqttFormatter;
 import com.microrisc.simply.CallRequestProcessingState;
 import static com.microrisc.simply.CallRequestProcessingState.ERROR;
 import com.microrisc.simply.Network;
 import com.microrisc.simply.Node;
 import com.microrisc.simply.SimplyException;
+import com.microrisc.simply.compounddevices.CompoundDeviceObject;
+import com.microrisc.simply.devices.protronix.dpa22x.CO2_Sensor;
+import com.microrisc.simply.devices.protronix.dpa22x.VOC_Sensor;
 import com.microrisc.simply.errors.CallRequestProcessingError;
-import com.microrisc.simply.errors.CallRequestProcessingErrorType;
-import com.microrisc.simply.iqrf.dpa.DPA_ResponseCode;
 import com.microrisc.simply.iqrf.dpa.DPA_Simply;
 import com.microrisc.simply.iqrf.dpa.v22x.DPA_SimplyFactory;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.OS;
-import com.microrisc.simply.iqrf.dpa.v22x.devices.UART;
-import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_AdditionalInfo;
+import com.microrisc.simply.iqrf.dpa.v22x.protronix.types.CO2_SensorData;
+import com.microrisc.simply.iqrf.dpa.v22x.protronix.types.VOC_SensorData;
 import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.json.simple.parser.ContainerFactory;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
@@ -61,748 +56,527 @@ import org.json.simple.parser.ParseException;
  * Sending Protronix values over MQTT in JSON SENML format .
  *
  * @author Rostislav Spinar
+ * @author Michal Konopa
  */
 public class OpenGateway {
 
     // references for DPA
-    public static DPA_Simply DPASimply = null;
-    public static Network DPANetwork = null;
-    public static Map<String, Node> DPANodes = null;
-    public static Map<String, OsInfo> DPAOSInfo = new LinkedHashMap<>();
-    public static Map<String, UART> DPAUARTs = new LinkedHashMap<>();
-    public static Map<String, short[]> MODBUSes = new LinkedHashMap<>();
-    public static Map<String, UUID> DPAUARTUUIDs = new LinkedHashMap<>();
-    public static Map<String, short[]> DPADataOut = new LinkedHashMap<>();
-    public static Map<String, List<String>> DPAParsedDataOut = new LinkedHashMap<>();
-    public static String moduleId = null;
+    private static DPA_Simply dpaSimply = null;
     
     // references for MQTT
-    public static MQTTCommunicator mqttCommunicator = null;
-    public static String protocol = "tcp://";
-    public static String broker = "localhost";
-    public static int port = 1883;
-    public static String clientId = "macid-std";
-    public static boolean cleanSession = true;
-    public static boolean quietMode = false;
-    public static boolean ssl = false;
-    public static String certFile = null;
-    public static String password = null;
-    public static String userName = null;
+    private static MqttCommunicator mqttCommunicator = null;
     
-    // references for APP
-    public static int pid = 0;
-    public static long numberOfDevices = 1;
-    public static long pollingPeriod = 60*1;
-    public static List<Device> devices = new LinkedList();
-
-    public static void main(String[] args) throws InterruptedException, MqttException {
-        
-        // DPA INIT
-        String configFileDPA = "Simply.properties";
-        DPASimply = getDPASimply(configFileDPA);
-        
-        // MQTT INIT
-        String configFileMQTT = "Mqtt.json";
-        MQTTConfig configMQTT = new MQTTConfig();
-        if( loadMQTTConfig(configFileMQTT, configMQTT) ) {
-            mqttCommunicator = new MQTTCommunicator(configMQTT);
-            MQTTTopics.setCLIENT_ID(configMQTT.getGwId());
-            MQTTTopics.setSTD_SENSORS_PROTRONIX("/sensors/protronix/");
-        } else {
-            printMessageAndExit("Error in MQTT config loading", true);
-        }
-        
-        // APP INIT
-        String configFileAPP = "App.json";
-        APPConfig configAPP = new APPConfig();
-        if( loadAPPConfig(configFileAPP, configAPP) ) {
-            //numberOfDevices = configAPP.getNumberOfDevices();
-            pollingPeriod = configAPP.getPollingPeriod();
-            devices = configAPP.getDevices();
-        } else {
-            printMessageAndExit("Error in APP config loading", true);
-        }
-        
-        // APP EXIT HOOK
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+    // application related references
+    private static ApplicationConfiguration appConfiguration = null;
+    
+    // not used so far
+    private static int pid = 0;
+    
+    
+    public static void main(String[] args) throws InterruptedException, MqttException 
+    {
+        // application exit hook
+        Runtime.getRuntime().addShutdownHook( new Thread(new Runnable() {
 
             @Override
             public void run() {
                 System.out.println("End via shutdown hook.");
-
-                // end working with Simply
-                DPASimply.destroy();
+                cleanupUsedResources();
             }
-
         }));
         
-        // REF TO DPA NET
-        String netId = "1";
-        DPANetwork = getDPANetwork(netId);
+        // Simply initialization
+        dpaSimply = getDPA_Simply("Simply.properties");
         
-        // REF TO ALL NODES
-        DPANodes = getDPANodes();
-        int numberOfBondedNodes = DPANetwork.getNodesMap().size() - 1;
         
-        // REF TO NODES OS-INFO FOR GETTING MODULE IDs
-        DPAOSInfo = getOsInfoFromNodes();
+        // loading MQTT configuration
+        MqttConfiguration mqttConfiguration = null;
+        try {
+            mqttConfiguration = loadMqttConfiguration("Mqtt.json");
+        } catch ( Exception ex ) {
+            printMessageAndExit("Error in loading MQTT configuration: " + ex);
+        } 
         
-        // MIDs
-        for (Map.Entry<String, OsInfo> entry : DPAOSInfo.entrySet()) {
-            System.out.println("Node: " + entry.getKey() + " MID: " + entry.getValue().getPrettyFormatedModuleId() );
+        mqttCommunicator = new MqttCommunicator(mqttConfiguration);
+        
+        MqttTopics mqttTopics = new MqttTopics(
+                mqttConfiguration.getGwId(), 
+                "/sensors/protronix/", 
+                "/sensors/protronix/errors/"
+        );
+        
+        // loading application configuration
+        try {
+            appConfiguration = loadApplicationConfiguration("App.json");
+        } catch ( Exception ex ) {
+            printMessageAndExit("Error in loading application configuration: " + ex);
+        } 
+        
+        
+        // getting reference to IQRF DPA network to use
+        Network dpaNetwork = dpaSimply.getNetwork("1", Network.class);
+        if ( dpaNetwork == null ) {
+            printMessageAndExit("DPA Network doesn't exist");
         }
         
-        // REF TO UART ON NODES
-        DPAUARTs = getUARTOnNodes();
+        // reference to map of all nodes in the network
+        Map<String, Node> nodesMap = dpaNetwork.getNodesMap();
         
-        // SET MODBUS FRAMES ACCORDING TO DEVICE TYPE
-        MODBUSes = setModbusFrameOnNodes();
+        // reference to OS Info
+        Map<String, OsInfo> osInfoMap = getOsInfoFromNodes(nodesMap);
         
-        int checkResponse = 0;
+        // printing MIDs of nodes in the network
+        printMIDs(osInfoMap);
         
-        // SENDING AND RECEIVING
+        // reference to sensors
+        Map<String, CompoundDeviceObject> sensorsMap = getSensorsMap(nodesMap);
+        
+        
+        /*
+          main loop:
+          1. Obtain data from sensors.
+          2. Creation of MQTT form of obtained sensor's data. 
+          3. Sending MQTT form of sensor's data through MQTT to destination point.
+        */
         while( true ) {
+            Map<String, Object> dataFromSensorsMap = getDataFromSensors(sensorsMap);
+
+            // getting MQTT form of data from sensors
+            Map<String, List<String>> dataFromsSensorsMqtt = toMqttForm(dataFromSensorsMap, osInfoMap);
             
-            DPAUARTUUIDs = sendDPARequests();
-            
-            // RECEIVING AND ACTING ON ASYNC AND WEB REQUESTS
-            while (true) {
-
-                Thread.sleep(1);
-                checkResponse++;
-
-                // dpa async task - not used for protronix
-                //if (asyncRequestReceived) {
-                //    asyncRequestReceived = false;
-                //}
-
-                // mqtt web confirmation task - not used for protronix
-                //if (webRequestReceived) {
-                //    webRequestReceived = false;
-                //}
-
-                // periodic task to read protronix every set second - main
-                if (checkResponse == pollingPeriod * 1000) {
-                    checkResponse = 0;
-                    break;
-                }
-            }
-            
-            // GET RESPONSE DATA 
-            DPADataOut = collectDPAResponses();
-
-            // PARSE RESPONSE DATA
-            DPAParsedDataOut = parseDPAResponses();
-            
-            // SEND DATA
-            MQTTSendData();
+            // sending data
+            mqttSendAndPublish(dataFromsSensorsMqtt, mqttTopics);
         }
     }
     
     // init dpa simply
-    public static DPA_Simply getDPASimply(String configFile) {
-        
+    private static DPA_Simply getDPA_Simply(String configFile) {
         DPA_Simply DPASimply = null;
         
         try {
             DPASimply = DPA_SimplyFactory.getSimply("config" + File.separator + "simply" + File.separator + configFile);
-        } catch (SimplyException ex) {
-            printMessageAndExit("Error while creating Simply: " + ex.getMessage(), true);
+        } catch ( SimplyException ex ) {
+            printMessageAndExit("Error while creating Simply: " + ex.getMessage());
         }
         
         return DPASimply;
     }
     
-    // reference to dpa network
-    public static Network getDPANetwork(String netId) {
+    // tests, if specified node ID is in valid interval
+    private static boolean isNodeIdInValidInterval(long nodeId) {
+        return ( nodeId <= 0 || nodeId > appConfiguration.getNumberOfDevices() );
+    }
+    
+    // returns reference to map of OS info objects for specified nodes map
+    private static Map<String, OsInfo> getOsInfoFromNodes(Map<String, Node> nodesMap) {
+        Map<String, OsInfo> osInfoMap = new LinkedHashMap<>();
         
-        Network DPANetwork = null;
-        
-        DPANetwork = DPASimply.getNetwork(netId, Network.class);
-        if (DPANetwork == null) {
-            printMessageAndExit("DPA Network doesn't exist", true);
+        for ( Map.Entry<String, Node> entry : nodesMap.entrySet() ) {
+            int nodeId = Integer.parseInt(entry.getKey());
+            
+            // node ID must be within valid interval
+            if ( isNodeIdInValidInterval(nodeId) ) {
+                continue;
+            }
+                
+            System.out.println("Getting OS info on the node: " + entry.getKey());
+
+            // OS peripheral
+            OS os = entry.getValue().getDeviceObject(OS.class);
+            
+            if ( os != null ) {
+                // get OS info about module
+                OsInfo osInfo = os.read();
+                if ( osInfo != null ) {
+                    osInfoMap.put(entry.getKey(), osInfo);
+                } else {
+                    CallRequestProcessingState procState = os.getCallRequestProcessingStateOfLastCall();
+                    if ( procState == ERROR ) {
+                        CallRequestProcessingError error = os.getCallRequestProcessingErrorOfLastCall();
+                        System.err.println("Getting OS info failed: " + error);
+                    } else {
+                        System.err.println("Getting OS info hasn't been processed yet: " + procState);
+                    }
+                }
+            } else {
+                System.err.println("OS doesn't exist on node");
+            }
         }
         
-        return DPANetwork;
+        return osInfoMap;
     }
     
-    // reference to all nodes in the network
-    public static Map<String, Node> getDPANodes() {
-        
-        Map<String, Node> DPANodes = null;
-        
-        DPANodes = DPANetwork.getNodesMap();
-        
-        return DPANodes;
+    // prints MIDs of specified nodes in the map
+    private static void printMIDs(Map<String, OsInfo> osInfoMap) {
+        for ( Map.Entry<String, OsInfo> entry : osInfoMap.entrySet() ) {
+            System.out.println("Node: " + entry.getKey() + " MID: " + entry.getValue().getPrettyFormatedModuleId() );
+        }
     }
     
-    // reference to os info of all nodes
-    public static Map<String, OsInfo> getOsInfoFromNodes() {
+    // returns map of CO2 and VOC sensors from specified map of nodes
+    private static Map<String, CompoundDeviceObject> getSensorsMap(Map<String, Node> nodesMap) {
+        Map<String, CompoundDeviceObject> sensorsMap = new LinkedHashMap<>();
         
-        Map<String, OsInfo> DPAOSInfo = new LinkedHashMap<>();
-        
-        for (Map.Entry<String, Node> entry : DPANodes.entrySet()) {
+        for ( Map.Entry<String, Node> entry : nodesMap.entrySet() ) {
+            int nodeId = Integer.parseInt(entry.getKey());
             
-            int key = Integer.parseInt(entry.getKey());
-                
-            // node 1-NUMBEROFNODES
-            if(0 < key && numberOfDevices >= key) {
-                
-                System.out.println("Getting OsInfo on the node: " + entry.getKey());
+            // node ID must be within valid interval
+            if ( isNodeIdInValidInterval(nodeId) ) {
+                continue;
+            }
+            
+            System.out.println("Getting device: " + entry.getKey());
+            DeviceInfo sensorInfo = appConfiguration.getDevicesInfoMap().get(nodeId);
 
-                // OS peripheral
-                OS os = entry.getValue().getDeviceObject(OS.class);
+            switch ( sensorInfo.getType() ) {
+                case "co2-t-h":
+                    CO2_Sensor co2Sensor = entry.getValue().getDeviceObject(CO2_Sensor.class);
+                    if ( co2Sensor != null ) {
+                        sensorsMap.put(entry.getKey(), (CompoundDeviceObject) co2Sensor);
+                        System.out.println("Device type: " + sensorInfo.getType());
+                    } else {
+                        System.err.println("CO2 sensor not found on node: " + nodeId);
+                    }
+                break;
 
-                if (os == null) {
-                    printMessageAndExit("OS doesn't exist on node", false);
-                }
-                else {
-                    // get info about module
-                    OsInfo osInfo = os.read();
+                case "voc-t-h":
+                    VOC_Sensor vocSensor = entry.getValue().getDeviceObject(VOC_Sensor.class);
+                    if ( vocSensor != null ) {
+                        sensorsMap.put(entry.getKey(), (CompoundDeviceObject) vocSensor);
+                        System.out.println("Device type: " + sensorInfo.getType());
+                    } else {
+                        System.err.println("CO2 sensor not found on node: " + nodeId);
+                    }
+                break;
 
-                    if (osInfo == null) {
-                        CallRequestProcessingState procState = os.getCallRequestProcessingStateOfLastCall();
-                        if (procState == ERROR) {
-                            CallRequestProcessingError error = os.getCallRequestProcessingErrorOfLastCall();
-                            printMessageAndExit("Getting OS info failed on node: " + error, false);
+                default:
+                    printMessageAndExit("Device type not supported:" + sensorInfo.getType());
+                break;
+            }
+        }
+        
+        return sensorsMap;
+    }
+    
+    // returns data from sensors as specicied by map
+    private static Map<String, Object> getDataFromSensors(
+            Map<String, CompoundDeviceObject> sensorsMap
+    ) {
+        // data from sensors
+        Map<String, Object> dataFromSensors = new HashMap<>();
+        
+        for ( Map.Entry<String, CompoundDeviceObject> entry : sensorsMap.entrySet() ) {
+            int nodeId = Integer.parseInt(entry.getKey());
+            
+            // node ID must be within valid interval
+            if ( isNodeIdInValidInterval(nodeId) ) {
+                continue;
+            }
+            
+            DeviceInfo sensorInfo = appConfiguration.getDevicesInfoMap().get(nodeId);
+            System.out.println("Getting data from sensor: " + entry.getKey());
+
+            switch ( sensorInfo.getType() ) {
+                case "co2-t-h":
+                    CompoundDeviceObject compDevObject = entry.getValue();
+                    if ( compDevObject == null ) {
+                        System.err.println("Sensor not found. Id: " + entry.getKey());
+                        break;
+                    }
+                    
+                    if ( !(compDevObject instanceof CO2_Sensor) ) {
+                        System.err.println(
+                            "Bad type of sensor. Got: " + compDevObject.getClass() 
+                            + ", expected: " + CO2_Sensor.class
+                        );
+                        break;
+                    }
+                    
+                    CO2_Sensor co2Sensor = (CO2_Sensor)compDevObject;
+                    CO2_SensorData co2SensorData = co2Sensor.get();
+                    if ( co2SensorData != null ) {
+                        dataFromSensors.put(entry.getKey(), co2SensorData);
+                    } else {
+                        CallRequestProcessingState requestState = co2Sensor.getCallRequestProcessingStateOfLastCall();
+                        if ( requestState == ERROR ) {
+                            System.err.println(
+                                "Error while getting data from CO2 sensor: " 
+                                + co2Sensor.getCallRequestProcessingErrorOfLastCall()
+                            );
                         } else {
-                            printMessageAndExit("Getting OS info hasn't been processed yet on node: " + procState, false);
+                            System.err.println(
+                                "Could not get data from CO2 sensor. State of the sensor: " + requestState
+                            );
                         }
                     } 
-                    else {
-                        DPAOSInfo.put(entry.getKey(), osInfo);
+                break;
+
+                case "voc-t-h":
+                    compDevObject = entry.getValue();
+                    if ( compDevObject == null ) {
+                        System.err.println("Sensor not found. Id: " + entry.getKey());
+                        break;
                     }
-                }
-            }
-        }
-        
-        return DPAOSInfo;
-    }
-    
-    // reference to uart peripheral on all nodes
-    public static Map<String, UART> getUARTOnNodes() {
-        
-        Map<String, UART> DPAUARTs = new LinkedHashMap<>();
-        
-        for (Map.Entry<String, Node> entry : DPANodes.entrySet()) {
-            
-            int key = Integer.parseInt(entry.getKey());
-
-            // node 1-NUMBEROFNODES
-            if(0 < key && numberOfDevices >= key) {
-                
-                System.out.println("Getting UART on the node: " + entry.getKey());
-                
-                // UART peripheral
-                UART uart = entry.getValue().getDeviceObject(UART.class);
-
-                if (uart == null) {
-                    printMessageAndExit("UART doesn't exist on node", true);
-                } 
-                else {
-                    int protronixHWPID = 0x0132;
-                    //int protronixHWPID = 0xFFFF;
-                    uart.setRequestHwProfile(protronixHWPID);
                     
-                    // worst case: 3 * 50 * 2 + 1500 (uart timeout) + 2000 (reserve)
-                    // it is not needed any more, timing machine handles that since 06/2016 
-                    //uart.setDefaultWaitingTimeout(4000);
-
-                    DPAUARTs.put(entry.getKey(), uart);
-                }
-            }
-        }
-        
-        return DPAUARTs;
-    }
-    
-    public static Map<String, short[]> setModbusFrameOnNodes() {
-        
-        Map<String, short[]> MODBUSes = new LinkedHashMap<>();
-        short[] modbusIn = null;
-        
-        for (Map.Entry<String, Node> entry : DPANodes.entrySet()) {
-            
-            int key = Integer.parseInt(entry.getKey());
-            
-            // node 1-NUMBEROFDEVICES
-            if(0 < key && numberOfDevices >= key) {
-                
-                System.out.println("Setting MODBUS frame on the node: " + entry.getKey());
-                
-                Device dev = devices.get(key-1);
-                
-                switch (dev.getType()) {
-                    case "co2-t-h":
-                        // 1B address, 1B function, 2B number of registers, 2B registers..., + 2B crc
-                        short[] modbusInCo2 = { 0x01, 0x42, 0x00, 0x03, 0x75, 0x31, 0x75, 0x33, 0x75, 0x32, 0x00, 0x00 };
-                        modbusIn = Arrays.copyOf(modbusInCo2, modbusInCo2.length);
-                        System.out.println("Device type: " + dev.getType());
-                    break;
+                    if ( !(compDevObject instanceof VOC_Sensor) ) {
+                        System.err.println(
+                            "Bad type of sensor. Got: " + compDevObject.getClass() 
+                            + ", expected: " + VOC_Sensor.class
+                        );
+                        break;
+                    }
                     
-                    case "voc-t-h":
-                        // 1B address, 1B function, 2B number of registers, 2B registers..., + 2B crc   
-                        short[] modbusInVoc = { 0x01, 0x42, 0x00, 0x03, 0x75, 0x34, 0x75, 0x33, 0x75, 0x32, 0x00, 0x00 };
-                        modbusIn = Arrays.copyOf(modbusInVoc, modbusInVoc.length);
-                        System.out.println("Device type: " + dev.getType());
-                    break;
-                        
-                    default:
-                        printMessageAndExit("Device type not supported:" + dev.getType() , true);
-                    break;
-                }
-                
-                int crc = calculateModbusCrc(modbusIn);
-                modbusIn[modbusIn.length - 2] = (short) (crc & 0xFF);
-                modbusIn[modbusIn.length - 1] = (short) ((crc & 0xFF00) >> 8);
-        
-                MODBUSes.put(entry.getKey(), modbusIn);
-            }
-        }
-        
-        return MODBUSes;
-    }
-    
-    // sends all requests and do not wait for response
-    public static Map<String, UUID> sendDPARequests() {
-
-        // delay before getting uart response on the node
-        short uartTimeout = 0xFE;
-        
-        // 1B address, 1B function, 2B register, 2B number of registers + 2B crc
-        //short[] modbusIn = { 0x01, 0x04, 0x75, 0x31, 0x00, 0x03, 0x00, 0x00 };
-        
-        //int crc = calculateModbusCrc(modbusIn);
-        //modbusIn[modbusIn.length - 2] = (short) (crc & 0xFF);
-        //modbusIn[modbusIn.length - 1] = (short) ((crc & 0xFF00) >> 8);
-        
-        Map<String, UUID> DPAUARTUUIDs = new LinkedHashMap<>();
-        UUID uuidUART = null;
-
-        // SEND DPA REQUESTS
-        for (Map.Entry<String, UART> entry : DPAUARTs.entrySet()) {
-
-            int key = Integer.parseInt(entry.getKey());
-
-            // node 1-NUMBEROFNODES
-            if(0 < key && numberOfDevices >= key) {
-
-                System.out.println("Issuing req for node: " + entry.getKey());
-                
-                short [] modbusIn = (short[]) MODBUSes.values().toArray()[key - 1];
-                
-                if (null != entry.getValue() && null != modbusIn) {
-
-                    // ASYNC DPA CALL - NO BLOCKING
-                    uuidUART = entry.getValue().async_writeAndRead(uartTimeout, modbusIn);
-                    DPAUARTUUIDs.put(entry.getKey(), uuidUART);
-                }
-                else {
-                    System.out.println("Issuing req for node: " + entry.getKey() + " failed");
-                }
-            }
-        }
-        
-        return DPAUARTUUIDs;
-    }
-    
-    // collect dpa responses 
-    public static Map<String, short[]> collectDPAResponses() {
-
-        // PROTRONIX PARAMS OUT
-        Map<String, short[]> DPADataOut = new LinkedHashMap<>();
-        CallRequestProcessingState procState = null;
-        short[] dataOut = null;
-        
-        // CHECK STATE AND COLLECT 
-        for (Map.Entry<String, UART> entry : DPAUARTs.entrySet()) {
-            
-            int key = Integer.parseInt(entry.getKey());
-
-            // node 1-NUMBEROFNODES
-            if(0 < key && numberOfDevices >= key) {
-
-                System.out.println("Collecting resp for node: " + entry.getKey());
-
-                if (null != entry.getValue()) {
-                    procState = entry.getValue().getCallRequestProcessingState(DPAUARTUUIDs.get(entry.getKey()));
-
-                    if (null != procState) {
-                        // if any error occured
-                        if (procState == CallRequestProcessingState.ERROR) {
-
-                            // general call error
-                            CallRequestProcessingError error = entry.getValue().getCallRequestProcessingError(DPAUARTUUIDs.get(entry.getKey()));
-                            printMessageAndExit("Getting UART data failed on the node: " + error.getErrorType(), false);
-
-                            DPADataOut.put(entry.getKey(), null);
-
-                        } else {
-
-                            // have result already - protronix
-                            if (procState == CallRequestProcessingState.RESULT_ARRIVED) {
-
-                                dataOut = entry.getValue().getCallResultImmediately(DPAUARTUUIDs.get(entry.getKey()), short[].class);
-
-                                if (null != dataOut) {
-                                    DPADataOut.put(entry.getKey(), dataOut);
-                                }                            
-                            } else if (procState == CallRequestProcessingState.ERROR) {
-
-                                // general call error
-                                CallRequestProcessingError error = entry.getValue().getCallRequestProcessingErrorOfLastCall();
-
-                                if (error.getErrorType() == CallRequestProcessingErrorType.NETWORK_INTERNAL) {
-
-                                    // specific call error
-                                    DPA_AdditionalInfo dpaAddInfo = entry.getValue().getDPA_AdditionalInfoOfLastCall();
-                                    DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
-                                    printMessageAndExit("Getting UART data failed on the node, DPA error: " + dpaResponseCode, false);
-
-                                    DPADataOut.put(entry.getKey(), null);
-                                }
-                            } else {
-                                System.out.println("Getting UART data on node hasn't been processed yet: " + procState);
-                                DPADataOut.put(entry.getKey(), null);
-                            }
-                        }
+                    VOC_Sensor vocSensor = (VOC_Sensor)compDevObject;
+                    VOC_SensorData vocSensorData = vocSensor.get();
+                    if ( vocSensorData != null ) {
+                        dataFromSensors.put(entry.getKey(), vocSensorData);
                     } else {
-                        System.out.println("No call request processing info from connector");
-                    }
-                }
-            }
-        }
-        
-        return DPADataOut;
-    }
-    
-    // data parsing
-    public static Map<String, List<String>> parseDPAResponses() {
-        
-        Map<String, List<String>> DPAParsedDataOut = new LinkedHashMap<>();
-        short[] data = null;
-        
-        // PARSE DATA 
-        for (Map.Entry<String, short[]> entry : DPADataOut.entrySet()) {
-            
-            int key = Integer.parseInt(entry.getKey());
-
-            // node 1-NUMBEROFNODES
-            if(0 < key && numberOfDevices >= key) {
-
-                System.out.println("Parsing resp for node: " + entry.getKey());
-
-                if (null != entry.getValue()) {
-
-                    if (0 == entry.getValue().length) {
-                        System.out.println("No received data from UART on the node");
-
-                        DPAParsedDataOut.put(entry.getKey(), null);
-                    }
-                    else {
-                        int co2, voc = 0;
-                        
-                        String mqttDataCO2 = null;
-                        String mqttDataVOC = null;
-                        String mqttDataTemperature = null;
-                        String mqttDataHumidity = null;
-                        
-                        // queue for mqtt
-                        List<String> mqttData = new LinkedList<>();  
-                        
-                        pid++;
-
-                        // getting additional info of the last call
-                        DPA_AdditionalInfo dpaAddInfo = DPAUARTs.get(entry.getKey()).getDPA_AdditionalInfoOfLastCall();
-                        
-                        if (DPAOSInfo.get(entry.getKey()) != null) {
-                            moduleId = DPAOSInfo.get(entry.getKey()).getPrettyFormatedModuleId();
+                        CallRequestProcessingState requestState = vocSensor.getCallRequestProcessingStateOfLastCall();
+                        if ( requestState == ERROR ) {
+                            System.err.println(
+                                "Error while getting data from VOC sensor: " 
+                                + vocSensor.getCallRequestProcessingErrorOfLastCall()
+                            );
                         } else {
-                            moduleId = "not-known";
+                            System.err.println(
+                                "Could not get data from VOC sensor. State of the sensor: " + requestState
+                            );
                         }
-                        
-                        // type of devices from app conf file
-                        Device dev = devices.get(key-1);
-                        
-                        switch (dev.getType().toLowerCase()) {
-                            case "co2-t-h":
-                                // in this case we are supposed to receive 18B
-                                if (18 == entry.getValue().length) {
-                                    co2 = (entry.getValue()[6] << 8) + entry.getValue()[7];
-
-                                    mqttDataCO2
-                                    = "{\"e\":["
-                                    + "{\"n\":\"co2\"," + "\"u\":\"PPM\"," + "\"v\":" + co2 + "}"
-                                    + "],"
-                                    + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
-                                    + "}";
-
-                                    mqttDataTemperature = prepareTemperature((entry.getValue()[10] << 8), entry.getValue()[11]);
-                                    mqttDataHumidity = prepareHumidity((entry.getValue()[14] << 8), entry.getValue()[15]);
-
-                                    mqttData.add(mqttDataCO2);
-                                    mqttData.add(mqttDataTemperature);
-                                    mqttData.add(mqttDataHumidity);
-
-                                    DPAParsedDataOut.put(entry.getKey(), mqttData);
-                                } else {
-                                    System.out.println("No correct data received from UART on the node");
-                                    DPAParsedDataOut.put(entry.getKey(), null);
-                                }
-                            break;
-
-                            case "voc-t-h":
-                                // in this case we are supposed to receive 18B
-                                if (18 == entry.getValue().length) {
-                                    voc = (entry.getValue()[6] << 8) + entry.getValue()[7];
-
-                                    mqttDataVOC
-                                    = "{\"e\":["
-                                    + "{\"n\":\"voc\"," + "\"u\":\"PPM\"," + "\"v\":" + voc + "}"
-                                    + "],"
-                                    + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
-                                    + "}";
-
-                                    mqttDataTemperature = prepareTemperature((entry.getValue()[10] << 8), entry.getValue()[11]);
-                                    mqttDataHumidity = prepareHumidity((entry.getValue()[14] << 8), entry.getValue()[15]);
-
-                                    mqttData.add(mqttDataVOC);
-                                    mqttData.add(mqttDataTemperature);
-                                    mqttData.add(mqttDataHumidity);
-
-                                    DPAParsedDataOut.put(entry.getKey(), mqttData);
-                                } else {
-                                    System.out.println("No correct data received from UART on the node");
-                                    DPAParsedDataOut.put(entry.getKey(), null);
-                                }
-                            break;
-
-                            default:
-                                printMessageAndExit("Device type not supported:" + dev.getType() , true);
-                            break;    
-                        }                      
                     }
-                } else {
-                    System.out.println("Protronix result has not arrived.");
-                }
+                break;
+
+                default:
+                    printMessageAndExit("Device type not supported:" + sensorInfo.getType());
+                break;
             }
         }
         
-        return DPAParsedDataOut;
+        return dataFromSensors;
     }
     
-    public static String prepareTemperature (int dataIn1, int dataIn2) {
+    // returns ID of module for specified sensor ID
+    private static String getModuleId(String sensorId, Map<String, OsInfo> osInfoMap) {
+        if ( osInfoMap.get(sensorId) != null ) {
+            return osInfoMap.get(sensorId).getPrettyFormatedModuleId();
+        }
+        return "not-known";
+    }
+    
+    // for specified sensor's data returns their equivalent MQTT form
+    private static Map<String, List<String>> toMqttForm(
+            Map<String, Object> dataFromSensorsMap, Map<String, OsInfo> osInfoMap
+    ) {
+        Map<String, List<String>> mqttAllSensorsData = new LinkedHashMap<>();
         
-        float temperature = dataIn1 + dataIn2;
-        temperature /= 10;
-
-        DecimalFormat df = new DecimalFormat("##.#");
-
-        String mqttDataTemperature
-                = "{\"e\":["
-                + "{\"n\":\"temperature\"," + "\"u\":\"Cel\"," + "\"v\":" + df.format(temperature) + "}"
-                + "],"
-                + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
-                + "}";
-     
-        return mqttDataTemperature;
-    }
-    
-    public static String prepareHumidity (int dataIn1, int dataIn2) {
-        
-        float humidity = dataIn1 + dataIn2;
-        humidity /= 10;
-
-        DecimalFormat df = new DecimalFormat("##.#");
-
-        String mqttDataHumidity
-                = "{\"e\":["
-                + "{\"n\":\"humidity\"," + "\"u\":\"%RH\"," + "\"v\":" + df.format(humidity) + "}"
-                + "],"
-                + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
-                + "}";
-
-        return mqttDataHumidity;
-    }
-    
-    // sends parsed data 
-    public static void MQTTSendData() {
-                
-        // SEND DATA 
-        for (Map.Entry<String, List<String>> entry : DPAParsedDataOut.entrySet()) {
+        // for each sensor's data
+        for ( Map.Entry<String, Object> entry : dataFromSensorsMap.entrySet() ) {
+            int nodeId=  Integer.parseInt(entry.getKey());
             
-            int key = Integer.parseInt(entry.getKey());
-
-            // node 1-NUMBEROFNODES
-            if(0 < key && numberOfDevices >= key) {
-
-                if( null != entry.getValue() ) {
-                    System.out.println("Sending parsed data for node: " + entry.getKey());
+            if ( isNodeIdInValidInterval(nodeId) ) {
+                continue;
+            }
+            
+            // mqtt data for 1 sensor
+            List<String> mqttSensorData = new LinkedList<>();
+            
+            DeviceInfo sensorInfo = appConfiguration.getDevicesInfoMap().get(nodeId);
+            System.out.println("Preparing MQTT message for node: " + entry.getKey());
+            
+            DecimalFormat sensorDataFormat = new DecimalFormat("##.#");
+            
+            switch ( sensorInfo.getType().toLowerCase() ) {
+                case "co2-t-h":
+                    CO2_SensorData co2SensorData = (CO2_SensorData)entry.getValue();
+                    if ( co2SensorData == null ) {
+                        System.out.println(
+                            "No data received from device, check log for details "
+                            + "about protronix uart data"
+                        );
+                        mqttAllSensorsData.put(entry.getKey(), null);
+                        break;
+                    }
                     
-                    for (String mqttData : entry.getValue()) {
-                        try {
-                            mqttCommunicator.publish(MQTTTopics.getSTD_SENSORS_PROTRONIX() + entry.getKey(), 2, mqttData.getBytes());
-                        } catch (MqttException ex) {
-                            System.err.println("Error while publishing sync dpa message.");
-                        }
+                    // packet id
+                    pid++;
+                    
+                    String moduleId = getModuleId(entry.getKey(), osInfoMap);
+                    
+                    String mqttDataCO2 = MqttFormatter
+                                .formatCO2(
+                                    String.valueOf(co2SensorData.getCo2()), 
+                                    moduleId
+                                );
+                    String mqttDataTemperature = MqttFormatter
+                                .formatTemperature(
+                                    sensorDataFormat.format(co2SensorData.getTemperature()), 
+                                    moduleId
+                                );
+                    
+                    String mqttDataHumidity = MqttFormatter
+                                .formatHumidity(
+                                    sensorDataFormat.format(co2SensorData.getHumidity()), 
+                                    moduleId
+                                );
+
+                    mqttSensorData.add(mqttDataCO2);
+                    mqttSensorData.add(mqttDataTemperature);
+                    mqttSensorData.add(mqttDataHumidity);
+
+                    mqttAllSensorsData.put(entry.getKey(), mqttSensorData);
+                break;
+
+                case "voc-t-h":
+                    VOC_SensorData vocSensorData = (VOC_SensorData)entry.getValue();
+                    if ( vocSensorData == null ) {
+                        System.out.println(
+                            "No data received from device, check log for details "
+                            + "about protronix uart data"
+                        );
+                        mqttAllSensorsData.put(entry.getKey(), null);
+                        break;
+                    }
+                    
+                    // packet id
+                    pid++;
+
+                    moduleId = getModuleId(entry.getKey(), osInfoMap);
+
+                    String mqttDataVOC = MqttFormatter
+                                .formatVOC(
+                                    String.valueOf(vocSensorData.getVoc()), 
+                                    moduleId
+                                );
+                    mqttDataTemperature = MqttFormatter
+                                .formatTemperature(
+                                    sensorDataFormat.format(vocSensorData.getTemperature()), 
+                                    moduleId
+                                );
+                    
+                    mqttDataHumidity = MqttFormatter
+                                .formatHumidity(
+                                    sensorDataFormat.format(vocSensorData.getHumidity()), 
+                                    moduleId
+                                );
+
+                    mqttSensorData.add(mqttDataVOC);
+                    mqttSensorData.add(mqttDataTemperature);
+                    mqttSensorData.add(mqttDataHumidity);
+
+                    mqttAllSensorsData.put(entry.getKey(), mqttSensorData);
+                break;
+
+                default:
+                    printMessageAndExit("Device type not supported:" + sensorInfo.getType());
+                break;    
+            }                      
+        }
+        
+        return mqttAllSensorsData;
+    }
+    
+    // sends and publishes prepared json messages with data from sensors to 
+    // specified MQTT topics
+    private static void mqttSendAndPublish(
+        Map<String, List<String>> dataFromsSensorsMqtt, MqttTopics mqttTopics
+    ) { 
+        for ( Map.Entry<String, List<String>> entry : dataFromsSensorsMqtt.entrySet() ) {        
+            int nodeId = Integer.parseInt(entry.getKey());
+            
+            if ( isNodeIdInValidInterval(nodeId) ) {
+                continue;
+            }
+            
+            if ( entry.getValue() != null ) {
+                System.out.println("Sending parsed data for node: " + entry.getKey());
+
+                for ( String mqttData : entry.getValue() ) {
+                    try {
+                        mqttCommunicator.publish(mqttTopics.getStdSensorsProtronix() + entry.getKey(), 2, mqttData.getBytes());
+                    } catch ( MqttException ex ) {
+                        System.err.println("Error while publishing sync dpa message: " + ex);
                     }
                 }
-            }
+            } else {
+                System.err.println("No data found for sensor: " + entry.getKey());
+            }   
         }
     }
     
     // loads mqtt params from file
-    public static boolean loadMQTTConfig(String configFile, MQTTConfig configMQTT) {
-        
+    private static MqttConfiguration loadMqttConfiguration(String configFile) 
+            throws IOException, ParseException 
+    {
         JSONParser parser = new JSONParser();
-        
-        try {
-            Object obj = parser.parse(new FileReader("config" + File.separator + "mqtt" + File.separator + configFile));
-            
-            JSONObject jsonObject = (JSONObject) obj;
-        
-            configMQTT.setProtocol((String) jsonObject.get("protocol"));
-            configMQTT.setBroker((String) jsonObject.get("broker"));
-            configMQTT.setPort((long) jsonObject.get("port"));    
-            configMQTT.setClientId((String) jsonObject.get("clientid"));
-            configMQTT.setGwId((String) jsonObject.get("gwid"));
-            configMQTT.setCleanSession((boolean) jsonObject.get("cleansession"));
-            configMQTT.setQuiteMode((boolean) jsonObject.get("quitemode"));
-            configMQTT.setSsl((boolean) jsonObject.get("ssl"));
-            configMQTT.setCertFilePath((String) jsonObject.get("certfile"));
-            configMQTT.setUsername((String) jsonObject.get("username"));
-            configMQTT.setPassword((String) jsonObject.get("password"));            
+        Object obj = parser.parse( 
+                new FileReader("config" + File.separator + "mqtt" + File.separator + configFile)
+        );
 
-/*            
-            System.out.println("protocol: " + configMQTT.getProtocol());
-            System.out.println("broker: " + configMQTT.getBroker());
-            System.out.println("port: " + Long.toString(configMQTT.getPort()));
-            System.out.println("clientid: " + configMQTT.getClientId());
-            System.out.println("cleansession: " + Boolean.toString(configMQTT.isCleanSession()));
-            System.out.println("quitemode: " + Boolean.toString(configMQTT.isQuiteMode()));
-            System.out.println("ssl: " + Boolean.toString(configMQTT.isSsl()));
-            System.out.println("certfile: " + configMQTT.getCertFilePath());
-            System.out.println("username: " + configMQTT.getUsername());
-            System.out.println("password: " + configMQTT.getPassword());       
-*/
-            
-/*            
-            JSONArray companyList = (JSONArray) jsonObject.get("Company List");
-            System.out.println("\nCompany List:");
-            Iterator<String> iterator = companyList.iterator();
-            while (iterator.hasNext()) {
-                System.out.println(iterator.next());
-            }
-*/            
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
+        JSONObject jsonObject = (JSONObject) obj;
         
-        return true;
+        return new MqttConfiguration(
+            (String) jsonObject.get("protocol"), 
+            (String) jsonObject.get("broker"), 
+            (long) jsonObject.get("port"), 
+            (String) jsonObject.get("clientid"), 
+            (String) jsonObject.get("gwid"), 
+            (boolean) jsonObject.get("cleansession"), 
+            (boolean) jsonObject.get("quitemode"), 
+            (boolean) jsonObject.get("ssl"), 
+            (String) jsonObject.get("certfile"), 
+            (String) jsonObject.get("username"), 
+            (String) jsonObject.get("password")
+        );
     }
     
-    // loads app params from file
-    public static boolean loadAPPConfig(String configFile, APPConfig configAPP) {
-        
-        try {
-            
-            JSONObject appJsonObjects = (JSONObject) JSONValue.parseWithException(new FileReader("config" + File.separator + "app" + File.separator + configFile));
-            
-            configAPP.setPollingPeriod((long) appJsonObjects.get("pollingPeriod"));
-            //System.out.println("polling: " + configAPP.getPollingPeriod());
+    // loads app configuration from file
+    private static ApplicationConfiguration loadApplicationConfiguration(String configFile) 
+            throws IOException, ParseException 
+    {
+        JSONObject appJsonObjects = (JSONObject) JSONValue
+            .parseWithException( new FileReader(
+                    "config" + File.separator + "app" + File.separator + configFile
+            )
+        );
 
-            // get the devices
-            JSONArray devicesArray = (JSONArray) appJsonObjects.get("devices");
-            numberOfDevices = devicesArray.size();
-            
-            List deviceList = new LinkedList();
-            for (int i = 0; i < numberOfDevices; i++) {
-                JSONObject deviceObjects = (JSONObject) devicesArray.get(i);
-                
-                Device device = new Device();
-                device.setId((long) deviceObjects.get("device"));
-                device.setManufacturer((String) deviceObjects.get("manufacturer"));
-                device.setType((String) deviceObjects.get("type"));
-                
-                deviceList.add(device);
-            }
-            configAPP.setDevices(deviceList);
-            
-            /*
-            for (Iterator iterator = deviceList.iterator(); iterator.hasNext();) {
-                Device nextDev = (Device) iterator.next();
-                System.out.println("each device: " + nextDev.getId() + nextDev.getManufacturer() + nextDev.getType());    
-            }
-            */
-        } catch (ParseException | FileNotFoundException ex) { 
-            System.out.println(ex);
-            return false;
-        } catch (IOException ex) {
-            System.out.println(ex);
-            return false;
-        } 
+        // get the devices
+        JSONArray devicesArray = (JSONArray) appJsonObjects.get("devices");
 
-        /*
-        try {
-            JSONParser parser = new JSONParser();
-            Object obj = parser.parse(new FileReader("config" + File.separator + "app" + File.separator + configFile));
-            
-            JSONObject jsonObject = (JSONObject) obj;
-        
-            configAPP.setNumberOfDevices((long) jsonObject.get("numberOfDevices"));
-            configAPP.setPollingPeriod((long) jsonObject.get("pollingPeriod"));
+        Map<Integer, DeviceInfo> devicesInfos = new HashMap<>();
+        for ( int i = 0; i < devicesArray.size(); i++ ) {
+            JSONObject deviceObjects = (JSONObject) devicesArray.get(i);
+
+            DeviceInfo deviceInfo = new DeviceInfo(
+                    (int) deviceObjects.get("device"),
+                    (String) deviceObjects.get("manufacturer"),
+                    (String) deviceObjects.get("type")
+            );
+
+            devicesInfos.put(deviceInfo.getId(), deviceInfo);
         }
-        catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-        */
         
-        return true;
+        return new ApplicationConfiguration(
+                (long) appJsonObjects.get("pollingPeriod"),  
+                devicesInfos
+        );
     }
-
+    
+    // cleans up used resources
+    private static void cleanupUsedResources() {
+        if ( dpaSimply != null ) {
+            dpaSimply.destroy();
+        }
+    }
+    
     // prints out specified message, destroys the Simply and exits
-    public static void printMessageAndExit(String message, boolean exit) {
+    private static void printMessageAndExit(String message) {
         System.out.println(message);
-
-        if (exit) {
-            if (DPASimply != null) {
-                DPASimply.destroy();
-            }
-            System.exit(1);
-        }
+        cleanupUsedResources();
+        System.exit(1);
     }
     
-    public static int calculateModbusCrc( short[] dataIn ) {
-        
-        int crc = 0xFFFF;
-        
-        for (int i = 0; i < dataIn.length-2; i++) {
-
-            crc ^= (dataIn[i] & 0xFF);
-
-            for (int j = 0; j < 8; j++) {
-                boolean bitOne = ((crc & 0x01) == 0x01);
-                crc >>>= 1;
-                if (bitOne) {
-                    crc ^= 0x0000A001;
-                }
-            }
-        }
-
-        //System.out.println("CRC: " + Integer.toHexString(crc & 0xFFFF));
-        return crc;
-    }
-    
-    // sender of mqtt requests to dpa 
+    // sender of mqtt requests to dpa
+    // WHY this method is called from MqttCommunicator object?
     public static String sendDPAWebRequest(String topic, String msgSenML) {
         return null;
-    }
-
-    // sender of dpa async requests and responses to mqtt 
-    public static boolean sendDPAAsyncRequest() {
-        return true;
     }
 }

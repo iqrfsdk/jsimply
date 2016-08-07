@@ -16,55 +16,56 @@
 
 package com.microrisc.opengateway.mqtt;
 
-import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 
 /**
- *
+ * MQTT topics.
+ * 
  * @author Rostislav Spinar
  */
-public class MQTTTopics {
+public final class MqttTopics {
     
-    private static String CLIENT_ID;
-    private static String STD_SENSORS_PROTRONIX;
+    private final String clientId;
+    private final String stdSensorsProtronix; ;
+    private final String stdSensorsProtronixErrors;
 
-    static {
-        setCLIENT_ID("macid");
-        setSTD_SENSORS_PROTRONIX(getCLIENT_ID() + "/sensors/protronix/");
+    
+    /**
+     * Creates new object of MQTT topics.
+     * @param clientId cliend ID
+     * @param stdSensorsProtronix
+     * @param stdSensorsProtronixErrors 
+     */
+    public MqttTopics(String clientId, String stdSensorsProtronix, String stdSensorsProtronixErrors) 
+    {
+        this.clientId = clientId;
+        this.stdSensorsProtronix = stdSensorsProtronix;
+        this.stdSensorsProtronixErrors = stdSensorsProtronixErrors;
+    }
+    
+    /**
+     * @return the client ID
+     */
+    public String getClientId() {
+        return clientId;
     }
 
     /**
-     * @return the CLIENT_ID
+     * @return the std sensors Protronix
      */
-    public static String getCLIENT_ID() {
-        return CLIENT_ID;
+    public String getStdSensorsProtronix() {
+        return stdSensorsProtronix;
     }
-
+    
     /**
-     * @param aCLIENT_ID the CLIENT_ID to set
+     * @return the std sensors Protronix
      */
-    public static void setCLIENT_ID(String aCLIENT_ID) {
-        CLIENT_ID = aCLIENT_ID;
-    }
-
-    /**
-     * @return the STD_SENSORS_PROTRONIX
-     */
-    public static String getSTD_SENSORS_PROTRONIX() {
-        return STD_SENSORS_PROTRONIX;
-    }
-
-    /**
-     * @param aSTD_SENSORS_PROTRONIX the STD_SENSORS_PROTRONIX to set
-     */
-    public static void setSTD_SENSORS_PROTRONIX(String aSTD_SENSORS_PROTRONIX) {
-        STD_SENSORS_PROTRONIX = getCLIENT_ID() + aSTD_SENSORS_PROTRONIX;
+    public String getStdSensorsProtronixErrors() {
+        return stdSensorsProtronixErrors;
     }
     
     private static String getMac() {
-        
         String interfaceName = "eth0";
         //InetAddress ip;
         try {

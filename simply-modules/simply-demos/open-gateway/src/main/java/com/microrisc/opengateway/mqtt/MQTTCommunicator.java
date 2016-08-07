@@ -44,7 +44,7 @@ import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
  *
  * @author Rostislav Spinar
  */
-public class MQTTCommunicator implements MqttCallback {
+public class MqttCommunicator implements MqttCallback {
 
     // Private instance variables
     private MqttClient client;
@@ -62,7 +62,7 @@ public class MQTTCommunicator implements MqttCallback {
      * @param MQTTConfig the configuration params of the server to connect to
      * @throws MqttException
      */
-    public MQTTCommunicator(MQTTConfig mqttConfig) throws MqttException {
+    public MqttCommunicator(MqttConfiguration mqttConfig) throws MqttException {
         
         String brokerUrl = mqttConfig.getProtocol() + mqttConfig.getBroker() + ":" + mqttConfig.getPort();
         
