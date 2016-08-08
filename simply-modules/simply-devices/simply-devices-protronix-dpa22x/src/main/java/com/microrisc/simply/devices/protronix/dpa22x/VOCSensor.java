@@ -20,7 +20,7 @@ import com.microrisc.simply.di_services.CallErrorsService_sync;
 import com.microrisc.simply.di_services.CallRequestProcessingService_sync;
 import com.microrisc.simply.di_services.WaitingTimeoutService;
 import com.microrisc.simply.iqrf.dpa.v22x.di_services.DPA_AdditionalInfoService;
-import com.microrisc.simply.iqrf.dpa.v22x.protronix.types.VOC_SensorData;
+import com.microrisc.simply.devices.protronix.dpa22x.types.VOCSensorData;
 
 /**
  * VoC Sensor Device Interface.
@@ -32,7 +32,7 @@ import com.microrisc.simply.iqrf.dpa.v22x.protronix.types.VOC_SensorData;
  * @author Michal Konopa
  */
 @DeviceInterface
-public interface VOC_Sensor
+public interface VOCSensor
 extends WaitingTimeoutService, CallRequestProcessingService_sync, 
         CallErrorsService_sync, DPA_AdditionalInfoService 
 {
@@ -42,5 +42,5 @@ extends WaitingTimeoutService, CallRequestProcessingService_sync,
      * @return sensor data <br>
      *         {@code null}, if an error has occurred during processing
      */
-    VOC_SensorData get();
+    VOCSensorData get();
 }

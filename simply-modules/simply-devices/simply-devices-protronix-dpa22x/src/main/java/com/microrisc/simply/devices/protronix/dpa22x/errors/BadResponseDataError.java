@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.microrisc.simply.devices.protronix.dpa22x.errors;
 
 import com.microrisc.simply.errors.AbstractCallRequestProcessingError;

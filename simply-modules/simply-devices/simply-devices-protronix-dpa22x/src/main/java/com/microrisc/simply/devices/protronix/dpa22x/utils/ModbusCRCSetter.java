@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.microrisc.simply.devices.protronix.dpa22x.utils;
 
 /**
@@ -21,7 +22,7 @@ package com.microrisc.simply.devices.protronix.dpa22x.utils;
  * @author Rostislav Spinar
  * @author Michal Konopa
  */
-public final class Modbus_CRCSetter {
+public final class ModbusCRCSetter {
     
     // calculates CRC and returns it
     private static int calculateCrc(short[] dataIn) {

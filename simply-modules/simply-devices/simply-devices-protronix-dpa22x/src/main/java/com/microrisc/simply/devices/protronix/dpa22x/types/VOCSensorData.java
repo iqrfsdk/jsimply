@@ -1,12 +1,12 @@
 
-package com.microrisc.simply.iqrf.dpa.v22x.protronix.types;
+package com.microrisc.simply.devices.protronix.dpa22x.types;
 
 /**
  * Data from VOC sensor.
  * 
  * @author Michal Konopa
  */
-public final class VOC_SensorData {
+public final class VOCSensorData {
     private final int voc;
     private final float temperature;
     private final float humidity;
@@ -20,7 +20,7 @@ public final class VOC_SensorData {
      * @param temperature temperature [in Celsius degree]
      * @param humidity relative humidity of air [in percent]
      */
-    public VOC_SensorData(int voc, float temperature, float humidity) {
+    public VOCSensorData(int voc, float temperature, float humidity) {
         this.voc = voc;
         this.temperature = temperature;
         this.humidity = humidity;

@@ -1,12 +1,27 @@
+/*
+ * Copyright 2016 MICRORISC s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-package com.microrisc.simply.iqrf.dpa.v22x.protronix.types;
+package com.microrisc.simply.devices.protronix.dpa22x.types;
 
 /**
  * Data from CO2 sensor.
  * 
  * @author Michal Konopa
  */
-public final class CO2_SensorData {
+public final class CO2SensorData {
     private final int co2;
     private final float temperature;
     private final float humidity;
@@ -20,7 +35,7 @@ public final class CO2_SensorData {
      * @param temperature temperature [in Celsius degree]
      * @param humidity relative humidity of air [in percent]
      */
-    public CO2_SensorData(int co2, float temperature, float humidity) {
+    public CO2SensorData(int co2, float temperature, float humidity) {
         this.co2 = co2;
         this.temperature = temperature;
         this.humidity = humidity;
@@ -46,5 +61,4 @@ public final class CO2_SensorData {
     public float getHumidity() {
         return humidity;
     }
-    
 }

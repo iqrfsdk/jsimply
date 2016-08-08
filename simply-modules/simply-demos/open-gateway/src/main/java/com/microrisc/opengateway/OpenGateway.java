@@ -27,14 +27,14 @@ import com.microrisc.simply.Network;
 import com.microrisc.simply.Node;
 import com.microrisc.simply.SimplyException;
 import com.microrisc.simply.compounddevices.CompoundDeviceObject;
-import com.microrisc.simply.devices.protronix.dpa22x.CO2_Sensor;
-import com.microrisc.simply.devices.protronix.dpa22x.VOC_Sensor;
+import com.microrisc.simply.devices.protronix.dpa22x.CO2Sensor;
+import com.microrisc.simply.devices.protronix.dpa22x.VOCSensor;
+import com.microrisc.simply.devices.protronix.dpa22x.types.CO2SensorData;
+import com.microrisc.simply.devices.protronix.dpa22x.types.VOCSensorData;
 import com.microrisc.simply.errors.CallRequestProcessingError;
 import com.microrisc.simply.iqrf.dpa.DPA_Simply;
 import com.microrisc.simply.iqrf.dpa.v22x.DPA_SimplyFactory;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.OS;
-import com.microrisc.simply.iqrf.dpa.v22x.protronix.types.CO2_SensorData;
-import com.microrisc.simply.iqrf.dpa.v22x.protronix.types.VOC_SensorData;
 import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
 import java.io.File;
 import java.io.FileReader;
@@ -45,6 +45,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -88,7 +90,6 @@ public class OpenGateway {
         // Simply initialization
         dpaSimply = getDPA_Simply("Simply.properties");
         
-        
         // loading MQTT configuration
         MqttConfiguration mqttConfiguration = null;
         try {
@@ -99,7 +100,7 @@ public class OpenGateway {
         
         mqttCommunicator = new MqttCommunicator(mqttConfiguration);
         
-        MqttTopics mqttTopics = new MqttTopics(
+        final MqttTopics mqttTopics = new MqttTopics(
                 mqttConfiguration.getGwId(), 
                 "/sensors/protronix/", 
                 "/sensors/protronix/errors/"
@@ -123,29 +124,38 @@ public class OpenGateway {
         Map<String, Node> nodesMap = dpaNetwork.getNodesMap();
         
         // reference to OS Info
-        Map<String, OsInfo> osInfoMap = getOsInfoFromNodes(nodesMap);
+        final Map<String, OsInfo> osInfoMap = getOsInfoFromNodes(nodesMap);
         
         // printing MIDs of nodes in the network
         printMIDs(osInfoMap);
         
         // reference to sensors
-        Map<String, CompoundDeviceObject> sensorsMap = getSensorsMap(nodesMap);
+        final Map<String, CompoundDeviceObject> sensorsMap = getSensorsMap(nodesMap);
         
+        // support for periodic task
+        Timer timer = new Timer();
         
         /*
           main loop:
           1. Obtain data from sensors.
           2. Creation of MQTT form of obtained sensor's data. 
           3. Sending MQTT form of sensor's data through MQTT to destination point.
+          4. Repeats at fixed period   
         */
-        while( true ) {
-            Map<String, Object> dataFromSensorsMap = getDataFromSensors(sensorsMap);
-
-            // getting MQTT form of data from sensors
-            Map<String, List<String>> dataFromsSensorsMqtt = toMqttForm(dataFromSensorsMap, osInfoMap);
+        while( true) {
             
-            // sending data
-            mqttSendAndPublish(dataFromsSensorsMqtt, mqttTopics);
+            // periodic task
+            timer.scheduleAtFixedRate(new TimerTask() {
+                public void run() {
+                    Map<String, Object> dataFromSensorsMap = getDataFromSensors(sensorsMap);
+
+                    // getting MQTT form of data from sensors
+                    Map<String, List<String>> dataFromsSensorsMqtt = toMqttForm(dataFromSensorsMap, osInfoMap);
+
+                    // sending data
+                    mqttSendAndPublish(dataFromsSensorsMqtt, mqttTopics);
+                }
+            }, 0, appConfiguration.getPollingPeriod() * 1000);
         }
     }
     
@@ -230,7 +240,7 @@ public class OpenGateway {
 
             switch ( sensorInfo.getType() ) {
                 case "co2-t-h":
-                    CO2_Sensor co2Sensor = entry.getValue().getDeviceObject(CO2_Sensor.class);
+                    CO2Sensor co2Sensor = entry.getValue().getDeviceObject(CO2Sensor.class);
                     if ( co2Sensor != null ) {
                         sensorsMap.put(entry.getKey(), (CompoundDeviceObject) co2Sensor);
                         System.out.println("Device type: " + sensorInfo.getType());
@@ -240,12 +250,12 @@ public class OpenGateway {
                 break;
 
                 case "voc-t-h":
-                    VOC_Sensor vocSensor = entry.getValue().getDeviceObject(VOC_Sensor.class);
+                    VOCSensor vocSensor = entry.getValue().getDeviceObject(VOCSensor.class);
                     if ( vocSensor != null ) {
                         sensorsMap.put(entry.getKey(), (CompoundDeviceObject) vocSensor);
                         System.out.println("Device type: " + sensorInfo.getType());
                     } else {
-                        System.err.println("CO2 sensor not found on node: " + nodeId);
+                        System.err.println("VOC sensor not found on node: " + nodeId);
                     }
                 break;
 
@@ -284,16 +294,15 @@ public class OpenGateway {
                         break;
                     }
                     
-                    if ( !(compDevObject instanceof CO2_Sensor) ) {
-                        System.err.println(
-                            "Bad type of sensor. Got: " + compDevObject.getClass() 
-                            + ", expected: " + CO2_Sensor.class
+                    if ( !(compDevObject instanceof CO2Sensor) ) {
+                        System.err.println("Bad type of sensor. Got: " + compDevObject.getClass() 
+                            + ", expected: " + CO2Sensor.class
                         );
                         break;
                     }
                     
-                    CO2_Sensor co2Sensor = (CO2_Sensor)compDevObject;
-                    CO2_SensorData co2SensorData = co2Sensor.get();
+                    CO2Sensor co2Sensor = (CO2Sensor)compDevObject;
+                    CO2SensorData co2SensorData = co2Sensor.get();
                     if ( co2SensorData != null ) {
                         dataFromSensors.put(entry.getKey(), co2SensorData);
                     } else {
@@ -318,16 +327,15 @@ public class OpenGateway {
                         break;
                     }
                     
-                    if ( !(compDevObject instanceof VOC_Sensor) ) {
-                        System.err.println(
-                            "Bad type of sensor. Got: " + compDevObject.getClass() 
-                            + ", expected: " + VOC_Sensor.class
+                    if ( !(compDevObject instanceof VOCSensor) ) {
+                        System.err.println("Bad type of sensor. Got: " + compDevObject.getClass() 
+                            + ", expected: " + VOCSensor.class
                         );
                         break;
                     }
                     
-                    VOC_Sensor vocSensor = (VOC_Sensor)compDevObject;
-                    VOC_SensorData vocSensorData = vocSensor.get();
+                    VOCSensor vocSensor = (VOCSensor)compDevObject;
+                    VOCSensorData vocSensorData = vocSensor.get();
                     if ( vocSensorData != null ) {
                         dataFromSensors.put(entry.getKey(), vocSensorData);
                     } else {
@@ -386,7 +394,7 @@ public class OpenGateway {
             
             switch ( sensorInfo.getType().toLowerCase() ) {
                 case "co2-t-h":
-                    CO2_SensorData co2SensorData = (CO2_SensorData)entry.getValue();
+                    CO2SensorData co2SensorData = (CO2SensorData)entry.getValue();
                     if ( co2SensorData == null ) {
                         System.out.println(
                             "No data received from device, check log for details "
@@ -426,7 +434,7 @@ public class OpenGateway {
                 break;
 
                 case "voc-t-h":
-                    VOC_SensorData vocSensorData = (VOC_SensorData)entry.getValue();
+                    VOCSensorData vocSensorData = (VOCSensorData)entry.getValue();
                     if ( vocSensorData == null ) {
                         System.out.println(
                             "No data received from device, check log for details "

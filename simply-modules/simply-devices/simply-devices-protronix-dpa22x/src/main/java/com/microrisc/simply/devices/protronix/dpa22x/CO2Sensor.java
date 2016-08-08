@@ -18,12 +18,9 @@ package com.microrisc.simply.devices.protronix.dpa22x;
 import com.microrisc.simply.DeviceInterface;
 import com.microrisc.simply.di_services.CallErrorsService_sync;
 import com.microrisc.simply.di_services.CallRequestProcessingService_sync;
-import com.microrisc.simply.di_services.GenericAsyncCallable;
-import com.microrisc.simply.di_services.MethodIdTransformer;
 import com.microrisc.simply.di_services.WaitingTimeoutService;
 import com.microrisc.simply.iqrf.dpa.v22x.di_services.DPA_AdditionalInfoService;
-import com.microrisc.simply.iqrf.dpa.v22x.di_services.DPA_StandardServices;
-import com.microrisc.simply.iqrf.dpa.v22x.protronix.types.CO2_SensorData;
+import com.microrisc.simply.devices.protronix.dpa22x.types.CO2SensorData;
 
 /**
  * CO2 Sensor Device Interface.
@@ -35,7 +32,7 @@ import com.microrisc.simply.iqrf.dpa.v22x.protronix.types.CO2_SensorData;
  * @author Michal Konopa
  */
 @DeviceInterface
-public interface CO2_Sensor
+public interface CO2Sensor
 extends WaitingTimeoutService, CallRequestProcessingService_sync, 
         CallErrorsService_sync, DPA_AdditionalInfoService 
 {
@@ -45,5 +42,5 @@ extends WaitingTimeoutService, CallRequestProcessingService_sync,
      * @return sensor data <br>
      *         {@code null}, if an error has occurred during processing
      */
-    CO2_SensorData get();
+    CO2SensorData get();
 }
