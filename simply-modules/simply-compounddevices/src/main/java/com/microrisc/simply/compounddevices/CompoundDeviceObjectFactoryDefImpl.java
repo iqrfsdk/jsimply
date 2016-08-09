@@ -17,6 +17,7 @@ package com.microrisc.simply.compounddevices;
 
 import com.microrisc.simply.DeviceObject;
 import java.util.List;
+import java.util.logging.Level;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,33 @@ implements CompoundDeviceObjectFactory
     
     /** Logger. */
     private static final Logger logger = LoggerFactory.getLogger(CompoundDeviceObjectFactoryDefImpl.class);
+    
+    
+    private CompoundDeviceObject createCompoundDeviceObjectWithOneInternal(
+            String networkId, String nodeId, Class implClass, DeviceObject internalDevice
+    ) {
+        // parameter types of the constructor
+        Class[] paramsTypes = new Class[] { String.class, String.class, DeviceObject.class };
+
+        // find the constructor
+        java.lang.reflect.Constructor constructor = null;
+        try {
+            constructor = implClass.getConstructor(paramsTypes);
+        } catch ( Exception ex ) {
+            throw new RuntimeException(ex);
+        }
+        
+        // arguments for the constructor
+        Object[] args = new Object[] { networkId, nodeId, internalDevice };
+        CompoundDeviceObject compoundDevObj = null;
+        try {
+            compoundDevObj = (CompoundDeviceObject)constructor.newInstance(args);
+        } catch ( Exception ex ) {
+            throw new RuntimeException(ex);
+        }
+        
+        return compoundDevObj;
+    }
     
     
     /**
@@ -74,13 +102,34 @@ implements CompoundDeviceObjectFactory
         
         // parameter types of the constructor
         Class[] paramsTypes = new Class[] { String.class, String.class, DeviceObject[].class };
-
+        
+        // if try to use (String, String, DeviceObject) constructor
+        boolean tryOneDeviceConstructor = false;
+                
         // find the constructor
         java.lang.reflect.Constructor constructor = null;
         try {
             constructor = implClass.getConstructor(paramsTypes);
-        } catch ( Exception ex ) {
+        } catch ( SecurityException ex ) {
             throw new RuntimeException(ex);
+        } catch ( NoSuchMethodException ex ) {
+            if ( internalDevices.size() != 1 ) {
+                throw new RuntimeException(ex);
+            } else {
+                logger.warn("Constructor with param types: (String, String, DeviceObject[]) not found.");
+                tryOneDeviceConstructor = true;
+            }
+        }
+        
+        // try to create CDO using (String, String, DeviceObject) constructor
+        if ( tryOneDeviceConstructor ) {
+            logger.info("Try to find and use (String, String, DeviceObject) constructor.");
+            CompoundDeviceObject compDevObjectwithOneInternal 
+                = createCompoundDeviceObjectWithOneInternal(
+                        networkId, nodeId, implClass, internalDevices.get(0)
+                );
+            logger.debug("getCompoundDeviceObject - end: {}", compDevObjectwithOneInternal);
+            return compDevObjectwithOneInternal;
         }
         
         // arguments for the constructor

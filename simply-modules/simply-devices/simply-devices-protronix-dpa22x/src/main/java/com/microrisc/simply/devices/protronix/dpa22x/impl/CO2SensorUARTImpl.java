@@ -102,7 +102,6 @@ extends CompoundDeviceObject implements CO2Sensor {
      */
     public CO2SensorUARTImpl(String networkId, String nodeId, DeviceObject uartDeviceObject) {
         super(networkId, nodeId, uartDeviceObject);
-        
         this.uart = checkUartDeviceObject(uartDeviceObject);
         this.uart.setRequestHwProfile(HWPID);
     }

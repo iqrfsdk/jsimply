@@ -102,7 +102,6 @@ extends CompoundDeviceObject implements VOCSensor {
      */
     public VOCSensorUARTImpl(String networkId, String nodeId, DeviceObject uartDeviceObject) {
         super(networkId, nodeId, uartDeviceObject);
-        
         this.uart = checkUartDeviceObject(uartDeviceObject);
         this.uart.setRequestHwProfile(HWPID);
     }

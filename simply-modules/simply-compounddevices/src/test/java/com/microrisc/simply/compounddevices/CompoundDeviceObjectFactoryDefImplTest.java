@@ -56,7 +56,26 @@ public class CompoundDeviceObjectFactoryDefImplTest {
         public TestingCompoundDevice(String networkId, String nodeId, DeviceObject... internalDevices) {
             super(networkId, nodeId, internalDevices);
         }
-
+        
+        
+        @Override
+        public Object doSomething() {
+            return new Object();
+        }
+        
+    }
+    
+    // testing compound device with one internal
+    public static class TestingCompoundDeviceWithOneInternal 
+    extends CompoundDeviceObject implements TestingDeviceInterface {
+        
+        public TestingCompoundDeviceWithOneInternal(
+                String networkId, String nodeId, DeviceObject internalDevice
+        ) {
+            super(networkId, nodeId, internalDevice);
+        }
+        
+        
         @Override
         public Object doSomething() {
             return new Object();
@@ -80,6 +99,37 @@ public class CompoundDeviceObjectFactoryDefImplTest {
         String networkId = "1";
         String nodeId = "1";
         Class implClass = TestingCompoundDevice.class;
+        
+        List<DeviceObject> internalDevices = new LinkedList<>();
+        DeviceObject internalDevice = new TestingInternalDevice(networkId, nodeId);
+        internalDevices.add(internalDevice);
+        
+        Configuration configuration = null;
+        
+        CompoundDeviceObject result = factory
+                .getCompoundDeviceObject(networkId, nodeId, implClass, internalDevices, configuration);
+        
+        assertNotNull(result);
+        assertEquals(networkId, result.getNetworkId());
+        assertEquals(nodeId, result.getNodeId());
+        assertEquals(TestingDeviceInterface.class, result.getImplementedDeviceInterface());
+        
+        assertEquals(1, result.internalDevices.length);
+        assertEquals(internalDevice, result.internalDevices[0]);
+    }
+    
+    /**
+     * Test of getCompoundDeviceObject method.
+     * Testing of creation of Compound Device Object with one internal device.
+     */
+    @Test
+    public void testGetCompoundDeviceObject_2() {
+        CompoundDeviceObjectFactoryDefImpl factory = new CompoundDeviceObjectFactoryDefImpl();
+        assertNotNull(factory);
+        
+        String networkId = "1";
+        String nodeId = "1";
+        Class implClass = TestingCompoundDeviceWithOneInternal.class;
         
         List<DeviceObject> internalDevices = new LinkedList<>();
         DeviceObject internalDevice = new TestingInternalDevice(networkId, nodeId);
