@@ -23,7 +23,7 @@ package com.microrisc.opengateway.app;
  * @author Michal Konopa
  */
 public final class DeviceInfo {
-    private final int id;
+    private final long id;
     private final String manufacturer;
     private final String type;
     
@@ -34,7 +34,7 @@ public final class DeviceInfo {
      * @param manufacturer manufacturer name
      * @param type type
      */
-    public DeviceInfo(int id, String manufacturer, String type) {
+    public DeviceInfo(long id, String manufacturer, String type) {
         this.id = id;
         this.manufacturer = manufacturer;
         this.type = type;
@@ -43,7 +43,7 @@ public final class DeviceInfo {
     /**
      * @return the id
      */
-    public int getId() {
+    public long getId() {
         return id;
     }
 

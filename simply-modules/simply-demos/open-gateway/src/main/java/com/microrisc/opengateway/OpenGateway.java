@@ -100,7 +100,7 @@ public class OpenGateway {
         
         mqttCommunicator = new MqttCommunicator(mqttConfiguration);
         
-        final MqttTopics mqttTopics = new MqttTopics(
+        MqttTopics mqttTopics = new MqttTopics(
                 mqttConfiguration.getGwId(), 
                 "/sensors/protronix/", 
                 "/sensors/protronix/errors/"
@@ -124,39 +124,44 @@ public class OpenGateway {
         Map<String, Node> nodesMap = dpaNetwork.getNodesMap();
         
         // reference to OS Info
-        final Map<String, OsInfo> osInfoMap = getOsInfoFromNodes(nodesMap);
+        Map<String, OsInfo> osInfoMap = getOsInfoFromNodes(nodesMap);
         
         // printing MIDs of nodes in the network
         printMIDs(osInfoMap);
         
         // reference to sensors
-        final Map<String, CompoundDeviceObject> sensorsMap = getSensorsMap(nodesMap);
+        Map<String, CompoundDeviceObject> sensorsMap = getSensorsMap(nodesMap);
         
         // support for periodic task
         Timer timer = new Timer();
+        runPeriodicTask(timer, sensorsMap, osInfoMap, mqttTopics);
         
-        /*
-          main loop:
-          1. Obtain data from sensors.
-          2. Creation of MQTT form of obtained sensor's data. 
-          3. Sending MQTT form of sensor's data through MQTT to destination point.
-          4. Repeats at fixed period   
-        */
         while( true) {
-            
-            // periodic task
-            timer.scheduleAtFixedRate(new TimerTask() {
-                public void run() {
-                    Map<String, Object> dataFromSensorsMap = getDataFromSensors(sensorsMap);
-
-                    // getting MQTT form of data from sensors
-                    Map<String, List<String>> dataFromsSensorsMqtt = toMqttForm(dataFromSensorsMap, osInfoMap);
-
-                    // sending data
-                    mqttSendAndPublish(dataFromsSensorsMqtt, mqttTopics);
-                }
-            }, 0, appConfiguration.getPollingPeriod() * 1000);
+            Thread.sleep(1000);
         }
+    }
+    
+    private static void runPeriodicTask(Timer timer, final Map<String, CompoundDeviceObject> sensorsMap, 
+            final Map<String, OsInfo> osInfoMap, final MqttTopics mqttTopics) {
+        /*
+         task:
+         1. Obtain data from sensors.
+         2. Creation of MQTT form of obtained sensor's data. 
+         3. Sending MQTT form of sensor's data through MQTT to destination point.
+         4. Repeats at fixed period   
+         */
+        
+        timer.scheduleAtFixedRate(new TimerTask() {
+            public void run() {
+                Map<String, Object> dataFromSensorsMap = getDataFromSensors(sensorsMap);
+
+                // getting MQTT form of data from sensors
+                Map<String, List<String>> dataFromsSensorsMqtt = toMqttForm(dataFromSensorsMap, osInfoMap);
+
+                // sending data
+                mqttSendAndPublish(dataFromsSensorsMqtt, mqttTopics);
+            }
+        }, 0, appConfiguration.getPollingPeriod() * 1000);
     }
     
     // init dpa simply
@@ -554,12 +559,12 @@ public class OpenGateway {
             JSONObject deviceObjects = (JSONObject) devicesArray.get(i);
 
             DeviceInfo deviceInfo = new DeviceInfo(
-                    (int) deviceObjects.get("device"),
+                    (long) deviceObjects.get("device"),
                     (String) deviceObjects.get("manufacturer"),
                     (String) deviceObjects.get("type")
             );
 
-            devicesInfos.put(deviceInfo.getId(), deviceInfo);
+            devicesInfos.put((int)deviceInfo.getId(), deviceInfo);
         }
         
         return new ApplicationConfiguration(
