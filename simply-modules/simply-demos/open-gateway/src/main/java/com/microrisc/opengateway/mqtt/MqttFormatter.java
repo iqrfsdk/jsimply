@@ -71,4 +71,16 @@ public final class MqttFormatter {
                 + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
                 + "}";
     }
+    
+    /**
+     * Returns formated value of humidity.
+     *
+     * @param error message
+     * @return formated error message
+     */
+    public static String formatError(String error) {
+        return "{\"e\":["
+                + "{\"n\":\"error\"," + "\"u\":\"description\"," + "\"v\":" + error + "}"
+                + "]}";
+    }
 }

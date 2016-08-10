@@ -32,9 +32,12 @@ import com.microrisc.simply.devices.protronix.dpa22x.VOCSensor;
 import com.microrisc.simply.devices.protronix.dpa22x.types.CO2SensorData;
 import com.microrisc.simply.devices.protronix.dpa22x.types.VOCSensorData;
 import com.microrisc.simply.errors.CallRequestProcessingError;
+import com.microrisc.simply.errors.CallRequestProcessingErrorType;
+import com.microrisc.simply.iqrf.dpa.DPA_ResponseCode;
 import com.microrisc.simply.iqrf.dpa.DPA_Simply;
 import com.microrisc.simply.iqrf.dpa.v22x.DPA_SimplyFactory;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.OS;
+import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_AdditionalInfo;
 import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
 import java.io.File;
 import java.io.FileReader;
@@ -113,7 +116,6 @@ public class OpenGateway {
             printMessageAndExit("Error in loading application configuration: " + ex);
         } 
         
-        
         // getting reference to IQRF DPA network to use
         Network dpaNetwork = dpaSimply.getNetwork("1", Network.class);
         if ( dpaNetwork == null ) {
@@ -143,6 +145,7 @@ public class OpenGateway {
     
     private static void runPeriodicTask(Timer timer, final Map<String, CompoundDeviceObject> sensorsMap, 
             final Map<String, OsInfo> osInfoMap, final MqttTopics mqttTopics) {
+        
         /*
          task:
          1. Obtain data from sensors.
@@ -151,9 +154,11 @@ public class OpenGateway {
          4. Repeats at fixed period   
          */
         
+        System.out.println("Running period task every " + appConfiguration.getPollingPeriod() + "sec");
+        
         timer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
-                Map<String, Object> dataFromSensorsMap = getDataFromSensors(sensorsMap);
+                Map<String, Object> dataFromSensorsMap = getDataFromSensors(sensorsMap, mqttTopics);
 
                 // getting MQTT form of data from sensors
                 Map<String, List<String>> dataFromsSensorsMqtt = toMqttForm(dataFromSensorsMap, osInfoMap);
@@ -207,8 +212,16 @@ public class OpenGateway {
                 } else {
                     CallRequestProcessingState procState = os.getCallRequestProcessingStateOfLastCall();
                     if ( procState == ERROR ) {
+                        // general call error    
                         CallRequestProcessingError error = os.getCallRequestProcessingErrorOfLastCall();
                         System.err.println("Getting OS info failed: " + error);
+                        
+                        if (error.getErrorType() == CallRequestProcessingErrorType.NETWORK_INTERNAL) {
+                            // specific call error
+                            DPA_AdditionalInfo dpaAddInfo = os.getDPA_AdditionalInfoOfLastCall();
+                            DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
+                            System.err.println("Getting OS info failed on the node, DPA error: " + dpaResponseCode);
+                        }
                     } else {
                         System.err.println("Getting OS info hasn't been processed yet: " + procState);
                     }
@@ -275,7 +288,7 @@ public class OpenGateway {
     
     // returns data from sensors as specicied by map
     private static Map<String, Object> getDataFromSensors(
-            Map<String, CompoundDeviceObject> sensorsMap
+            Map<String, CompoundDeviceObject> sensorsMap, MqttTopics mqttTopics
     ) {
         // data from sensors
         Map<String, Object> dataFromSensors = new HashMap<>();
@@ -312,11 +325,20 @@ public class OpenGateway {
                         dataFromSensors.put(entry.getKey(), co2SensorData);
                     } else {
                         CallRequestProcessingState requestState = co2Sensor.getCallRequestProcessingStateOfLastCall();
-                        if ( requestState == ERROR ) {
-                            System.err.println(
-                                "Error while getting data from CO2 sensor: " 
-                                + co2Sensor.getCallRequestProcessingErrorOfLastCall()
-                            );
+                        if ( requestState == ERROR ) {                      
+                            // call error    
+                            CallRequestProcessingError error = co2Sensor.getCallRequestProcessingErrorOfLastCall();
+                            System.err.println("Error while getting data from CO2 sensor: " + error);
+                            
+                            String mqttError = MqttFormatter.formatError( String.valueOf(error) );
+                            mqttPublishErrors(nodeId, mqttTopics, mqttError);
+                            
+                            // specific call error
+                            if (error.getErrorType() == CallRequestProcessingErrorType.NETWORK_INTERNAL) {
+                                DPA_AdditionalInfo dpaAddInfo = co2Sensor.getDPA_AdditionalInfoOfLastCall();
+                                DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
+                                System.err.println("Error while getting data from CO2 sensor, DPA error: " + dpaResponseCode);
+                            }
                         } else {
                             System.err.println(
                                 "Could not get data from CO2 sensor. State of the sensor: " + requestState
@@ -346,10 +368,19 @@ public class OpenGateway {
                     } else {
                         CallRequestProcessingState requestState = vocSensor.getCallRequestProcessingStateOfLastCall();
                         if ( requestState == ERROR ) {
-                            System.err.println(
-                                "Error while getting data from VOC sensor: " 
-                                + vocSensor.getCallRequestProcessingErrorOfLastCall()
-                            );
+                            // general call error
+                            CallRequestProcessingError error = vocSensor.getCallRequestProcessingErrorOfLastCall();
+                            System.err.println("Error while getting data from VOC sensor: " + error);
+                            
+                            String mqttError = MqttFormatter.formatError( String.valueOf(error) );
+                            mqttPublishErrors(nodeId, mqttTopics, mqttError);
+                            
+                            // specific call error
+                            if (error.getErrorType() == CallRequestProcessingErrorType.NETWORK_INTERNAL) {
+                                DPA_AdditionalInfo dpaAddInfo = vocSensor.getDPA_AdditionalInfoOfLastCall();
+                                DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
+                                System.err.println("Error while getting data from VOC sensor, DPA error: " + dpaResponseCode);
+                            }
                         } else {
                             System.err.println(
                                 "Could not get data from VOC sensor. State of the sensor: " + requestState
@@ -511,7 +542,21 @@ public class OpenGateway {
                 }
             } else {
                 System.err.println("No data found for sensor: " + entry.getKey());
-            }   
+            }
+        }
+    }
+    
+    // publish error messages to specified MQTT topics
+    private static void mqttPublishErrors(int nodeId, MqttTopics mqttTopics, String errorMessage) {
+        
+        if ( isNodeIdInValidInterval(nodeId) ) {
+                return;
+        }
+        
+        try {
+            mqttCommunicator.publish(mqttTopics.getStdSensorsProtronixErrors() + nodeId, 2, errorMessage.getBytes());
+        } catch (MqttException ex) {
+            System.err.println("Error while publishing error message: " + ex);
         }
     }
     
