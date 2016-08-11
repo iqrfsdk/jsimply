@@ -143,6 +143,9 @@ extends CompoundDeviceObject implements CO2Sensor {
 
     @Override
     public CallRequestProcessingState getCallRequestProcessingStateOfLastCall() {
+        if ( lastResponseDataError != null ) {
+            return CallRequestProcessingState.ERROR;
+        }
         return uart.getCallRequestProcessingStateOfLastCall();
     }
 

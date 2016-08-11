@@ -143,6 +143,9 @@ extends CompoundDeviceObject implements VOCSensor {
 
     @Override
     public CallRequestProcessingState getCallRequestProcessingStateOfLastCall() {
+        if ( lastResponseDataError != null ) {
+            return CallRequestProcessingState.ERROR;
+        }
         return uart.getCallRequestProcessingStateOfLastCall();
     }
 
