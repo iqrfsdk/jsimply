@@ -48,8 +48,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -78,6 +76,15 @@ public class OpenGateway {
     private static int pid = 0;
     
     
+    // WEB REQUESTS PROCESSING
+    // thread synchronization mean
+    private static final Object syncProcessingWebRequest = new Object();
+    
+    // indicator, if it is possible to process web request
+    private static Boolean isPossibleToProcessWebRequest = false;
+    
+    
+    
     public static void main(String[] args) throws InterruptedException, MqttException 
     {
         // application exit hook
@@ -86,7 +93,7 @@ public class OpenGateway {
             @Override
             public void run() {
                 System.out.println("End via shutdown hook.");
-                cleanupUsedResources();
+                releaseUsedResources();
             }
         }));
         
@@ -134,39 +141,39 @@ public class OpenGateway {
         // reference to sensors
         Map<String, CompoundDeviceObject> sensorsMap = getSensorsMap(nodesMap);
         
-        // support for periodic task
-        Timer timer = new Timer();
-        runPeriodicTask(timer, sensorsMap, osInfoMap, mqttTopics);
         
-        while( true) {
-            Thread.sleep(1000);
+        // main application loop
+        while( true ) {
+            getAndPublishSensorData(sensorsMap, mqttTopics, osInfoMap);
+            Thread.sleep(appConfiguration.getPollingPeriod() * 1000);
         }
     }
     
-    private static void runPeriodicTask(Timer timer, final Map<String, CompoundDeviceObject> sensorsMap, 
-            final Map<String, OsInfo> osInfoMap, final MqttTopics mqttTopics) {
-        
-        /*
+    // prints out specified message, destroys the Simply and exits
+    private static void printMessageAndExit(String message) {
+        System.out.println(message);
+        releaseUsedResources();
+        System.exit(1);
+    }
+    
+    // gets data from sensors and publishes them
+    /*
          task:
          1. Obtain data from sensors.
          2. Creation of MQTT form of obtained sensor's data. 
          3. Sending MQTT form of sensor's data through MQTT to destination point.
-         4. Repeats at fixed period   
-         */
-        
-        System.out.println("Running period task every " + appConfiguration.getPollingPeriod() + "sec");
-        
-        timer.scheduleAtFixedRate(new TimerTask() {
-            public void run() {
-                Map<String, Object> dataFromSensorsMap = getDataFromSensors(sensorsMap, mqttTopics);
+    */
+    private static void getAndPublishSensorData(
+            Map<String, CompoundDeviceObject> sensorsMap, MqttTopics mqttTopics,
+            Map<String, OsInfo> osInfoMap
+    ) {
+        Map<String, Object> dataFromSensorsMap = getDataFromSensors(sensorsMap, mqttTopics);
 
-                // getting MQTT form of data from sensors
-                Map<String, List<String>> dataFromsSensorsMqtt = toMqttForm(dataFromSensorsMap, osInfoMap);
+        // getting MQTT form of data from sensors
+        Map<String, List<String>> dataFromsSensorsMqtt = toMqttForm(dataFromSensorsMap, osInfoMap);
 
-                // sending data
-                mqttSendAndPublish(dataFromsSensorsMqtt, mqttTopics);
-            }
-        }, 0, appConfiguration.getPollingPeriod() * 1000);
+        // sending data
+        mqttSendAndPublish(dataFromsSensorsMqtt, mqttTopics);
     }
     
     // init dpa simply
@@ -294,6 +301,10 @@ public class OpenGateway {
         Map<String, Object> dataFromSensors = new HashMap<>();
         
         for ( Map.Entry<String, CompoundDeviceObject> entry : sensorsMap.entrySet() ) {
+            
+            // process new incomming asynchonous web request
+            waitUntilProcessingOfNewWebRequest();
+            
             int nodeId = Integer.parseInt(entry.getKey());
             
             // node ID must be within valid interval
@@ -618,23 +629,51 @@ public class OpenGateway {
         );
     }
     
-    // cleans up used resources
-    private static void cleanupUsedResources() {
+    // releases used resources
+    private static void releaseUsedResources() {
         if ( dpaSimply != null ) {
             dpaSimply.destroy();
         }
     }
     
-    // prints out specified message, destroys the Simply and exits
-    private static void printMessageAndExit(String message) {
-        System.out.println(message);
-        cleanupUsedResources();
-        System.exit(1);
+    private static void waitUntilProcessingOfNewWebRequest() {
+        
+        // open the space for processing a web request
+        synchronized ( syncProcessingWebRequest ) {
+            isPossibleToProcessWebRequest = true;
+            syncProcessingWebRequest.notifyAll();
+        }
+        
+        // other tread processes incomming web request ...
+        
+        // close the space for processing a web request
+        synchronized ( syncProcessingWebRequest ) {
+            isPossibleToProcessWebRequest = false;
+            syncProcessingWebRequest.notifyAll();
+        }
+    }
+    
+    // processes specified web request and returns result
+    private static String processWebRequest(WebRequest request) {
+        // TODO: implementation
+        throw new UnsupportedOperationException();
     }
     
     // sender of mqtt requests to dpa
-    // WHY this method is called from MqttCommunicator object?
-    public static String sendDPAWebRequest(String topic, String msgSenML) {
-        return null;
+    public static String sendDPAWebRequest(String topic, String data) {
+        synchronized ( syncProcessingWebRequest ) {
+            while ( !isPossibleToProcessWebRequest ) {
+                try {
+                    syncProcessingWebRequest.wait();
+                } catch ( InterruptedException ex ) {
+                    System.err.println("Interrupted while waiting to be able to process web request: " + ex);
+                    
+                    // TODO: what else to do?
+                    return null;
+                }
+            }
+            
+            return processWebRequest( new WebRequest(topic, data) );
+        }
     }
 }
