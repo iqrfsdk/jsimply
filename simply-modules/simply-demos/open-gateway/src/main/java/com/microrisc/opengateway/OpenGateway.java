@@ -559,14 +559,9 @@ public class OpenGateway {
     
     // publish error messages to specified MQTT topics
     private static void mqttPublishErrors(int nodeId, MqttTopics mqttTopics, String errorMessage) {
-        
-        if ( isNodeIdInValidInterval(nodeId) ) {
-                return;
-        }
-        
         try {
             mqttCommunicator.publish(mqttTopics.getStdSensorsProtronixErrors() + nodeId, 2, errorMessage.getBytes());
-        } catch (MqttException ex) {
+        } catch ( MqttException ex ) {
             System.err.println("Error while publishing error message: " + ex);
         }
     }
@@ -653,26 +648,31 @@ public class OpenGateway {
         }
     }
     
-    // processes specified web request and returns result
-    private static String processWebRequest(WebRequest request) {
-        // TODO: implementation
+    
+    // sends specified DPA request and returns result
+    private static DPA_CompleteResult sendDPARequest(DPA_Request dpaRequest) {
         throw new UnsupportedOperationException();
     }
     
-    // sender of mqtt requests to dpa
-    public static String sendDPAWebRequest(String topic, String data) {
+    // processes specified web request and returns result
+    private static DPA_CompleteResult processWebRequest(WebRequest webRequest) 
+        throws WebRequestParserException 
+    {
+        // parse web request into form suitable for sending over DI
+        DPA_Request dpaRequest = WebRequestParser.parse(webRequest);
+        
+        // send parsed web request into IQRF DPA network and return result
+        return sendDPARequest(dpaRequest);
+    }
+    
+    // sends web request to IQRF DPA network and returns result
+    public static DPA_CompleteResult sendWebRequestToDPA(String topic, String data) 
+            throws InterruptedException, WebRequestParserException 
+    {
         synchronized ( syncProcessingWebRequest ) {
             while ( !isPossibleToProcessWebRequest ) {
-                try {
-                    syncProcessingWebRequest.wait();
-                } catch ( InterruptedException ex ) {
-                    System.err.println("Interrupted while waiting to be able to process web request: " + ex);
-                    
-                    // TODO: what else to do?
-                    return null;
-                }
+                syncProcessingWebRequest.wait();
             }
-            
             return processWebRequest( new WebRequest(topic, data) );
         }
     }
