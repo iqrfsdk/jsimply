@@ -13,27 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.opengateway;
+package com.microrisc.opengateway.async;
 
 /**
- * Web requests parser.
+ * Exception class for {@link AsyncDataForMqttCreator}
  * 
  * @author Michal Konopa
  */
-public final class WebRequestParser {
+public final class AsyncDataForMqttCreatorException extends Exception {
     
-    /**
-     * Parses specified web request and returns its corresponding DPA request
-     * representation.
-     * @param webRequest web request to parse
-     * @return DPA request corresponding to {@code webRequest}
-     * @throws com.microrisc.opengateway.WebRequestParserException if some error
-     *         occurs during parsing
-     */
-    public static DPA_Request parse(WebRequest webRequest) 
-            throws WebRequestParserException 
-    {
-        throw new UnsupportedOperationException();
+    public AsyncDataForMqttCreatorException(String message) {
+        super(message);
     }
     
+    public AsyncDataForMqttCreatorException(String message, Throwable cause) {
+        super(message, cause);
+    }
+    
+    public AsyncDataForMqttCreatorException(Throwable cause) {
+        super(cause);
+    }
 }

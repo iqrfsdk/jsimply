@@ -18,8 +18,8 @@ package com.microrisc.opengateway.mqtt;
 
 import com.microrisc.opengateway.DPA_CompleteResult;
 import com.microrisc.opengateway.OpenGateway;
-import com.microrisc.opengateway.WebRequestParserException;
-import com.microrisc.opengateway.WebResponseConvertor;
+import com.microrisc.opengateway.web.WebRequestParserException;
+import com.microrisc.opengateway.web.WebResponseConvertor;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -294,7 +294,7 @@ public class MqttCommunicator implements MqttCallback {
         // getting DPA result
         DPA_CompleteResult dpaResult = null;
         try {
-            dpaResult = OpenGateway.sendWebRequestToDPA(topic, msg);
+            dpaResult = OpenGateway.sendWebRequestToDpaNetwork(topic, msg);
         } catch ( InterruptedException ex ) {
             // sending response to error topic
         } catch ( WebRequestParserException ex ) {

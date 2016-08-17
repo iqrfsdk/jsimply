@@ -15,6 +15,8 @@
  */
 package com.microrisc.opengateway.mqtt;
 
+import com.microrisc.opengateway.async.AsyncDataForMqtt;
+
 /**
  * Formats various types od sensor data to MQTT form.
  *
@@ -83,14 +85,26 @@ public final class MqttFormatter {
     }
     
     /**
-     * Returns formated value of humidity.
+     * Returns formated value of specified error string.
      *
-     * @param error message
+     * @param error error message
      * @return formated error message
      */
     public static String formatError(String error) {
         return "{\"e\":["
                 + "{\"n\":\"error\"," + "\"u\":\"description\"," + "\"v\":" + error + "}"
                 + "]}";
+    }
+    
+    /**
+     * Returns formated DPA asynchronous message data.
+     *
+     * @param asyncMsgForMqtt DPA asynchronous message data for MQTT
+     * @return MQTT form of {@code asyncMsgForMqtt}
+     */
+    public static String formatAsyncDataForMqtt(
+            AsyncDataForMqtt asyncMsgForMqtt
+    ) {
+        throw new UnsupportedOperationException();
     }
 }

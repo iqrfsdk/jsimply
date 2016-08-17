@@ -15,8 +15,14 @@
  */
 package com.microrisc.opengateway;
 
+import com.microrisc.opengateway.web.WebRequest;
+import com.microrisc.opengateway.web.WebRequestParser;
+import com.microrisc.opengateway.web.WebRequestParserException;
 import com.microrisc.opengateway.app.ApplicationConfiguration;
 import com.microrisc.opengateway.app.DeviceInfo;
+import com.microrisc.opengateway.async.AsyncDataForMqtt;
+import com.microrisc.opengateway.async.AsyncDataForMqttCreator;
+import com.microrisc.opengateway.async.AsyncDataForMqttCreatorException;
 import com.microrisc.opengateway.mqtt.MqttConfiguration;
 import com.microrisc.opengateway.mqtt.MqttTopics;
 import com.microrisc.opengateway.mqtt.MqttCommunicator;
@@ -26,6 +32,7 @@ import static com.microrisc.simply.CallRequestProcessingState.ERROR;
 import com.microrisc.simply.Network;
 import com.microrisc.simply.Node;
 import com.microrisc.simply.SimplyException;
+import com.microrisc.simply.asynchrony.AsynchronousMessagesListener;
 import com.microrisc.simply.compounddevices.CompoundDeviceObject;
 import com.microrisc.simply.devices.protronix.dpa22x.CO2Sensor;
 import com.microrisc.simply.devices.protronix.dpa22x.VOCSensor;
@@ -35,6 +42,7 @@ import com.microrisc.simply.errors.CallRequestProcessingError;
 import com.microrisc.simply.errors.CallRequestProcessingErrorType;
 import com.microrisc.simply.iqrf.dpa.DPA_ResponseCode;
 import com.microrisc.simply.iqrf.dpa.DPA_Simply;
+import com.microrisc.simply.iqrf.dpa.asynchrony.DPA_AsynchronousMessage;
 import com.microrisc.simply.iqrf.dpa.v22x.DPA_SimplyFactory;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.OS;
 import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_AdditionalInfo;
@@ -48,6 +56,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -75,6 +85,27 @@ public class OpenGateway {
     // not used so far
     private static int pid = 0;
     
+    
+    // ASYCHRONOUS MESSAGES PROCESSING
+    // listener class of incomming asynchronous messages 
+    private static class DPA_IncommingAsyncMessagesListener 
+        implements AsynchronousMessagesListener<DPA_AsynchronousMessage> {
+
+        @Override
+        public void onAsynchronousMessage(DPA_AsynchronousMessage message) {
+            System.out.println("New asynchronous message arrived.");
+            OpenGateway.asynchronousMessages.add(message);
+        }
+        
+    }
+    
+    // listener object
+    private static DPA_IncommingAsyncMessagesListener asyncMessagesListener = null;
+    
+    // queue of incomming asynchronous messages
+    private static Queue<DPA_AsynchronousMessage> asynchronousMessages = new ConcurrentLinkedQueue<>();
+    
+ 
     
     // WEB REQUESTS PROCESSING
     // thread synchronization mean
@@ -141,12 +172,16 @@ public class OpenGateway {
         // reference to sensors
         Map<String, CompoundDeviceObject> sensorsMap = getSensorsMap(nodesMap);
         
+        // initialization of asynchronous messages functionality
+        asyncMessagesListener = new DPA_IncommingAsyncMessagesListener();
+        dpaSimply.getAsynchronousMessagingManager().registerAsyncMsgListener(asyncMessagesListener);
         
         // main application loop
         while( true ) {
             getAndPublishSensorData(sensorsMap, mqttTopics, osInfoMap);
             Thread.sleep(appConfiguration.getPollingPeriod() * 1000);
         }
+        
     }
     
     // prints out specified message, destroys the Simply and exits
@@ -167,7 +202,7 @@ public class OpenGateway {
             Map<String, CompoundDeviceObject> sensorsMap, MqttTopics mqttTopics,
             Map<String, OsInfo> osInfoMap
     ) {
-        Map<String, Object> dataFromSensorsMap = getDataFromSensors(sensorsMap, mqttTopics);
+        Map<String, Object> dataFromSensorsMap = getDataFromSensors(sensorsMap, mqttTopics, osInfoMap);
 
         // getting MQTT form of data from sensors
         Map<String, List<String>> dataFromsSensorsMqtt = toMqttForm(dataFromSensorsMap, osInfoMap);
@@ -295,15 +330,19 @@ public class OpenGateway {
     
     // returns data from sensors as specicied by map
     private static Map<String, Object> getDataFromSensors(
-            Map<String, CompoundDeviceObject> sensorsMap, MqttTopics mqttTopics
+            Map<String, CompoundDeviceObject> sensorsMap, MqttTopics mqttTopics,
+            Map<String, OsInfo> osInfoMap
     ) {
         // data from sensors
         Map<String, Object> dataFromSensors = new HashMap<>();
         
         for ( Map.Entry<String, CompoundDeviceObject> entry : sensorsMap.entrySet() ) {
             
+            // process new incomming asynchonous DPA messages
+            processIncommingAsynchronousMessages(mqttTopics, osInfoMap);
+            
             // process new incomming asynchonous web request
-            waitUntilProcessingOfNewWebRequest();
+            waitUntilProcessIncommingWebRequest();
             
             int nodeId = Integer.parseInt(entry.getKey());
             
@@ -626,12 +665,74 @@ public class OpenGateway {
     
     // releases used resources
     private static void releaseUsedResources() {
+        // asynchronous messages
+        if ( asyncMessagesListener != null ) {
+            dpaSimply.getAsynchronousMessagingManager().unregisterAsyncMsgListener(asyncMessagesListener);
+            asyncMessagesListener = null;
+        }
+        
+        asynchronousMessages.clear();
+        
         if ( dpaSimply != null ) {
             dpaSimply.destroy();
         }
     }
     
-    private static void waitUntilProcessingOfNewWebRequest() {
+    
+    // processes specified asynchronous message
+    private static void processAsynchronousMessage(
+            DPA_AsynchronousMessage dpaAsyncMessage, MqttTopics mqttTopics, 
+            Map<String, OsInfo> osInfoMap
+    ) {
+        if ( dpaAsyncMessage.getMessageSource() == null ) {
+            // send or print out appropriate message
+            return;
+        }
+        
+        if ( dpaAsyncMessage.getMessageSource().getNodeId() == null ) {
+            // send or print out appropriate message
+            return;
+        }
+        
+        // getting corresponding OS info for source node
+        OsInfo osInfo = osInfoMap.get(dpaAsyncMessage.getMessageSource().getNodeId());
+        if ( osInfo == null ) {
+            // send or print out appropriate message
+            return;
+        }
+        
+        AsyncDataForMqtt asyncDataForMqtt = null;
+        try {
+            asyncDataForMqtt = AsyncDataForMqttCreator.create(dpaAsyncMessage, osInfo);
+        } catch ( AsyncDataForMqttCreatorException ex ) {
+            // send or print out appropriate message
+            return;
+        }
+        
+        String mqttMessage = MqttFormatter.formatAsyncDataForMqtt(asyncDataForMqtt);
+        
+        // TODO: send asynchronous message data to mqtt
+        /*
+        try {
+            mqttCommunicator.publish(mqttTopics.getStdSensorsProtronix(), 2, mqttMessage.getBytes());
+        } catch ( MqttException ex ) {
+            System.err.println("Error while publishing DPA message from node: " + ex.getMessage());
+        }
+        */
+    }
+    
+    // processes new asynchronous messages
+    private static void processIncommingAsynchronousMessages(
+            MqttTopics mqttTopics, Map<String, OsInfo> osInfoMap) 
+    {
+        while ( !asynchronousMessages.isEmpty() ) {
+            DPA_AsynchronousMessage asyncMessage = asynchronousMessages.poll();
+            processAsynchronousMessage(asyncMessage, mqttTopics, osInfoMap);
+        }
+    }
+    
+    // waits until incomming web request will be processed - if there is present one
+    private static void waitUntilProcessIncommingWebRequest() {
         
         // open the space for processing a web request
         synchronized ( syncProcessingWebRequest ) {
@@ -650,7 +751,7 @@ public class OpenGateway {
     
     
     // sends specified DPA request and returns result
-    private static DPA_CompleteResult sendDPARequest(DPA_Request dpaRequest) {
+    private static DPA_CompleteResult sendDpaRequest(DPA_Request dpaRequest) {
         throw new UnsupportedOperationException();
     }
     
@@ -662,11 +763,11 @@ public class OpenGateway {
         DPA_Request dpaRequest = WebRequestParser.parse(webRequest);
         
         // send parsed web request into IQRF DPA network and return result
-        return sendDPARequest(dpaRequest);
+        return sendDpaRequest(dpaRequest);
     }
     
     // sends web request to IQRF DPA network and returns result
-    public static DPA_CompleteResult sendWebRequestToDPA(String topic, String data) 
+    public static DPA_CompleteResult sendWebRequestToDpaNetwork(String topic, String data) 
             throws InterruptedException, WebRequestParserException 
     {
         synchronized ( syncProcessingWebRequest ) {

@@ -13,41 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.opengateway;
+package com.microrisc.opengateway.web;
 
 /**
- * Web request.
+ * Web Request Parser exceptions.
  * 
  * @author Michal Konopa
  */
-public final class WebRequest {
+public final class WebRequestParserException extends Exception {
     
-    private final String topic;
-    private final String data;
-    
-    
-    /**
-     * Creates new object of Web request with specified topic and data.
-     * @param topic topic
-     * @param data data
-     */
-    public WebRequest(String topic, String data) {
-        this.topic = topic;
-        this.data = data;
-    }
-
-    /**
-     * @return the topic
-     */
-    public String getTopic() {
-        return topic;
-    }
-
-    /**
-     * @return the data
-     */
-    public String getData() {
-        return data;
+    public WebRequestParserException(String message) {
+        super(message);
     }
     
+    public WebRequestParserException(String message, Throwable cause) {
+        super(message, cause);
+    }
+    
+    public WebRequestParserException(Throwable cause) {
+        super(cause);
+    }
 }

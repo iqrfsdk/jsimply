@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.opengateway;
+package com.microrisc.opengateway.web;
+
+import com.microrisc.opengateway.DPA_CompleteResult;
 
 /**
- * Web Request Parser exceptions.
+ * Convertor of DPA results into theirs web response form.
  * 
  * @author Michal Konopa
  */
-public final class WebRequestParserException extends Exception {
+public final class WebResponseConvertor {
     
-    public WebRequestParserException(String message) {
-        super(message);
+    /**
+     * Converts specified DPA result into its corresponding web form.
+     * @param completeResult complete DPA result to convert
+     * @return web form of {@code completeResult}
+     */
+    public static String convert(DPA_CompleteResult completeResult) {
+        throw new UnsupportedOperationException();
     }
-    
-    public WebRequestParserException(String message, Throwable cause) {
-        super(message, cause);
-    }
-    
-    public WebRequestParserException(Throwable cause) {
-        super(cause);
-    }
+ 
 }

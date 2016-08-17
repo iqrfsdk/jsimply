@@ -13,22 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.opengateway;
+package com.microrisc.opengateway.web;
 
 /**
- * Convertor of DPA results into theirs web response form.
+ * Web request.
  * 
  * @author Michal Konopa
  */
-public final class WebResponseConvertor {
+public final class WebRequest {
+    
+    private final String topic;
+    private final String data;
+    
     
     /**
-     * Converts specified DPA result into its corresponding web form.
-     * @param completeResult complete DPA result to convert
-     * @return web form of {@code completeResult}
+     * Creates new object of Web request with specified topic and data.
+     * @param topic topic
+     * @param data data
      */
-    public static String convert(DPA_CompleteResult completeResult) {
-        throw new UnsupportedOperationException();
+    public WebRequest(String topic, String data) {
+        this.topic = topic;
+        this.data = data;
     }
- 
+
+    /**
+     * @return the topic
+     */
+    public String getTopic() {
+        return topic;
+    }
+
+    /**
+     * @return the data
+     */
+    public String getData() {
+        return data;
+    }
+    
 }
