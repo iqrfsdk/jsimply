@@ -231,7 +231,7 @@ final class ProtocolStateMachine implements ManageableObject {
     }
     
     private long countTimeToWaitForConfirmation() {
-        logger.debug("Time to wait for confirmation: {}", timeToWaitForConfirmation);
+        logger.debug("Time to wait for confirmation [in ms]: {}", timeToWaitForConfirmation);
         return timeToWaitForConfirmation;
     }
     
@@ -324,6 +324,18 @@ final class ProtocolStateMachine implements ManageableObject {
         
         @Override
         public long count(CallRequest request, TimingParams timingParams) {
+            FRC.MethodID calledMethod = getCalledFRCMethod(request.getMethodId());
+            if ( calledMethod == null ) {
+                throw new IllegalStateException("FRC method not found.");
+            }
+            
+            if ( 
+                (calledMethod == FRC.MethodID.EXTRA_RESULT) 
+                || (calledMethod == FRC.MethodID.SET_FRC_PARAMS)
+            ) {
+                return NO_SPECIAL_WAITING_TIMEOUT;
+            }
+            
             if ( timingParams == null ) {
                 throw new IllegalArgumentException("FRC timing parameters is null.");
             }
@@ -336,18 +348,12 @@ final class ProtocolStateMachine implements ManageableObject {
                 );
             }
             
-            FRC.MethodID calledMethod = getCalledFRCMethod(request.getMethodId());
-            if ( calledMethod == null ) {
-                throw new IllegalStateException("FRC method not found.");
-            }
-            
             FRC_Command command = getFRC_Command(request.getArgs());
             if ( command == null ) {
                 throw new IllegalStateException("FRC command not found.");
             }
             
             FRC_Mode frcMode = getFRC_Mode(command, calledMethod);
-            
             return countWaitingTime(frcMode, (FRC_TimingParams)timingParams);
         }
     }
@@ -392,10 +398,24 @@ final class ProtocolStateMachine implements ManageableObject {
     
     // counts and returns waiting timeout for response [in ms] for usual case
     private long countTimeToWaitForResponseInUsualCase() {
-        long requestRoutingTime = 0;
         if ( countWithConfirmation ) {
-            requestRoutingTime = (confirmation.getHops() + 1) * confirmation.getTimeslotLength() * 10;
-            return baseTimeToWaitForResponse + requestRoutingTime + 100;
+            long estimatedTimeout = (confirmation.getHops() + 1) * confirmation.getTimeslotLength() * 10;
+            
+            long respTimeslotLength = 0;
+            if ( confirmation.getTimeslotLength() == 20 ) {
+                respTimeslotLength = 200;
+            } else {
+                if ( confirmation.getTimeslotLength() > 6 ) {
+                    // DPA in LP mode
+                    respTimeslotLength = 100;
+                } else {
+                    // DPA in STD mode
+                    respTimeslotLength = 50;
+                }
+            }
+            
+            estimatedTimeout += (confirmation.getHopsResponse() + 1) * respTimeslotLength + 40;
+            return estimatedTimeout + baseTimeToWaitForResponse;
         }
         
         return baseTimeToWaitForResponse + 100;
@@ -417,7 +437,7 @@ final class ProtocolStateMachine implements ManageableObject {
                 }
                 
                 long timeToWaitForResponse = waitingTime + countTimeToWaitForResponseInUsualCase();
-                logger.debug("Time to wait for response: {}", timeToWaitForResponse);
+                logger.debug("Time to wait for response [in ms]: {}", timeToWaitForResponse);
                 
                 return timeToWaitForResponse;
             } catch ( Exception e ) {
@@ -428,7 +448,7 @@ final class ProtocolStateMachine implements ManageableObject {
         }
         
         long timeToWaitForResponse = countTimeToWaitForResponseInUsualCase();
-        logger.debug("Time to wait for response: {}", timeToWaitForResponse);
+        logger.debug("Time to wait for response [in ms]: {}", timeToWaitForResponse);
         
         return timeToWaitForResponse;
     }
@@ -461,14 +481,14 @@ final class ProtocolStateMachine implements ManageableObject {
                 = ( confirmation.getHops() + 1 ) * confirmation.getTimeslotLength() * 10
                 + ( confirmation.getHopsResponse() + 1 ) * actualRespTimeslotLength  * 10
                 - (System.currentTimeMillis() - confirmRecvTime);
-            logger.debug("Time to wait after response: {}", timeToWaitAfterResponse);
+            logger.debug("Time to wait after response [in ms]: {}", timeToWaitAfterResponse);
             
             return timeToWaitAfterResponse;
         }
         
         long timeToWaitAfterResponse 
             = ( actualRespTimeslotLength * 10 ) - (System.currentTimeMillis() - responseRecvTime);
-        logger.debug("Time to wait after response: {}", timeToWaitAfterResponse);
+        logger.debug("Time to wait after response [in ms]: {}", timeToWaitAfterResponse);
         
         return timeToWaitAfterResponse;
     }
@@ -477,7 +497,7 @@ final class ProtocolStateMachine implements ManageableObject {
         long timeToWaitAfterConfirmation 
                 = ( confirmation.getHops() + 1 ) * confirmation.getTimeslotLength() * 10
                 - (System.currentTimeMillis() - responseRecvTime);
-        logger.debug("Time to wait after confirmation: {}", timeToWaitAfterConfirmation);
+        logger.debug("Time to wait after confirmation [in ms]: {}", timeToWaitAfterConfirmation);
         
         return timeToWaitAfterConfirmation;
     }
