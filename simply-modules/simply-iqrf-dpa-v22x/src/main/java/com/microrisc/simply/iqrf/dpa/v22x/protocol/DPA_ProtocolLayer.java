@@ -647,7 +647,7 @@ implements ProtocolStateMachineListener
             return;
         }
         
-        // creating message by conversion data comming from connected network 
+        // creating message by conversion data comming from connected network
         AbstractMessage message = null;
         try {
             message = msgConvertor.convertToDOFormat(networkData);
@@ -656,9 +656,29 @@ implements ProtocolStateMachineListener
             return;
         }
         
-        // is the incomming message the asynchronous one or not?
-        synchronized ( synchroSentRequest ) {
-            if ( message instanceof BaseCallResponse ) {
+        // all messages, which are not of the BaseCallResponse type, are handled as
+        // asynchronous messages
+        if ( !(message instanceof BaseCallResponse) ) {
+            logger.info("Message={} handled as asynchronous", message); 
+                
+            BaseAsynchronousMessage asyncMsg = new DPA_AsynchronousMessage(
+                message.getMainData(), message.getAdditionalData(), 
+                new SimpleDPA_AsynchronousMessageSource(
+                        message.getMessageSource(), 
+                        DPA_ProtocolProperties.getPeripheralNumber(networkData.getData())
+                )
+            );
+
+            // messages, which are NOT base call responses - typically asynchronous messages - 
+            // must be processed out of the Protocol State Machine
+            processMessage(asyncMsg);
+            
+            logger.debug("onGetData - end");
+            return;
+        }
+        
+        synchronized ( synchroSendOrReceive ) {
+            synchronized ( synchroSentRequest ) {
                 BaseCallResponse response = (BaseCallResponse)message;
                 TimeRequest causeRequest = getCauseRequest(response);
             
@@ -671,31 +691,10 @@ implements ProtocolStateMachineListener
                 }
             }
             
-            // handled as asychronous
-            else {
-                logger.info("Message={} handled as asynchronous", message); 
-                
-                BaseAsynchronousMessage asyncMsg = new DPA_AsynchronousMessage(
-                    message.getMainData(), message.getAdditionalData(), 
-                    new SimpleDPA_AsynchronousMessageSource(
-                            message.getMessageSource(), 
-                            DPA_ProtocolProperties.getPeripheralNumber(networkData.getData())
-                    )
-                );
-                
-                // messages, which are NOT base call responses - typically asynchronous messages - 
-                // must be processed out of the Protocol State Machine
-                processMessage(asyncMsg);
-                logger.debug("onGetData - end");
-                return;
-            }
-        }
-        
-        synchronized ( synchroSendOrReceive ) {
             // if not time unlimited
-            if (!isTimeUnlimitedRequestInProcess) {
+            if ( !isTimeUnlimitedRequestInProcess ) {
                 // if not timeout defined by user
-                if (!isTimeoutDefinedByUserRequestInProcess) {
+                if ( !isTimeoutDefinedByUserRequestInProcess ) {
                     try {
                         protoMachine.responseReceived(networkData.getData());
                     } catch ( IllegalArgumentException ex ) {
