@@ -15,7 +15,7 @@
  */
 package com.microrisc.opengateway.web;
 
-import com.microrisc.opengateway.DPA_Request;
+import com.microrisc.opengateway.dpa.DPA_Request;
 
 /**
  * Web requests parser.

@@ -15,7 +15,6 @@
  */
 package com.microrisc.opengateway.async;
 
-import com.microrisc.opengateway.async.AsyncDataForMqtt.ModuleState;
 import com.microrisc.simply.iqrf.dpa.asynchrony.DPA_AsynchronousMessage;
 import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_AdditionalInfo;
 import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
@@ -24,31 +23,10 @@ import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
  * Creator of {@link AsyncDataForMqtt} objects.
  * 
  * @author Michal Konopa
+ * @author Rostislav Spinar
  */
 public final class AsyncDataForMqttCreator {
-    
-    // returns module state
-    private static ModuleState getModuleState(short[] mainMessageData) {
-        if ( mainMessageData[0] == 0 ) {
-            return ModuleState.FREE;
-        }
-        
-        if ( mainMessageData[0] == 1 ) {
-            return ModuleState.OCCUPIED;
-        }
-        
-        return ModuleState.UNKNOWN;
-    }
-    
-    // return module ID
-    private static String getModuleId(OsInfo osInfo) {
-        if ( osInfo != null ) {
-            return osInfo.getPrettyFormatedModuleId();
-        }
-        return "uknown";
-    }
-    
-    
+            
     /**
      * From specified DPA asynchronous message creates corresponding 
      * {@link AsyncDataForMqtt} object.
@@ -107,13 +85,36 @@ public final class AsyncDataForMqttCreator {
         DPA_AdditionalInfo additionalData = (DPA_AdditionalInfo)dpaAsyncMessage.getAdditionalData();
         
         return new AsyncDataForMqtt(
-                getModuleId(osInfo), 
                 getModuleState(mainData), 
+                getModuleId(osInfo), 
                 dpaAsyncMessage.getMessageSource().getNodeId(), 
                 dpaAsyncMessage.getMessageSource().getPeripheralNumber(),
                 additionalData.getHwProfile(), 
                 additionalData.getResponseCode(), 
                 additionalData.getDPA_Value()
         );
+    }
+    
+    // return module STATE
+    private static String getModuleState(short[] moduleData) {
+    
+        String state = "unknown";
+        
+        if ((moduleData[0] & 0x01) == 0x01) {
+            state = "up";
+        } 
+        else if ((moduleData[0] & 0x02) == 0x02) {
+            state = "down";
+        }
+
+        return state;
+    }
+    
+    // return module ID
+    private static String getModuleId(OsInfo osInfo) {
+        if ( osInfo != null ) {
+            return osInfo.getPrettyFormatedModuleId();
+        }
+        return "unknown";
     }
 }

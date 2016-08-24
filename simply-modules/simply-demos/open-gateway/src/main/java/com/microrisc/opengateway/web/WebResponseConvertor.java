@@ -15,7 +15,7 @@
  */
 package com.microrisc.opengateway.web;
 
-import com.microrisc.opengateway.DPA_CompleteResult;
+import com.microrisc.opengateway.dpa.DPA_CompleteResult;
 
 /**
  * Convertor of DPA results into theirs web response form.

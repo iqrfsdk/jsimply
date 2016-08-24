@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.microrisc.opengateway.app;
+package com.microrisc.opengateway.config;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -16,9 +16,6 @@
 
 package com.microrisc.opengateway.mqtt;
 
-import java.net.NetworkInterface;
-import java.net.SocketException;
-
 /**
  * MQTT topics.
  * 
@@ -26,29 +23,60 @@ import java.net.SocketException;
  */
 public final class MqttTopics {
     
-    private final String clientId;
-    private final String stdSensorsProtronix; ;
+    private final String gwId;
+    
+    private final String stdSensorsProtronix;
     private final String stdSensorsProtronixErrors;
 
+    private final String stdActuatorsDevtech;
+    private final String stdActuatorsDevtechErrors;
+    
+    private final String lpSensorsIqHome;
+    private final String lpSensorsIqhomeErrors;
+    
+    private final String lpActuatorsTeco;
+    private final String lpActuatorsTecoErrors;
     
     /**
      * Creates new object of MQTT topics.
-     * @param clientId cliend ID
+     * @param gwId gw ID
      * @param stdSensorsProtronix
-     * @param stdSensorsProtronixErrors 
+     * @param stdSensorsProtronixErrors
+     * @param stdActuatorsDevtech
+     * @param stdActuatorsDevtechErrors
+     * @param lpActuatorsTeco
+     * @param lpActuatorsTecoErrors
      */
-    public MqttTopics(String clientId, String stdSensorsProtronix, String stdSensorsProtronixErrors) 
+    public MqttTopics(String gwId,
+            String stdSensorsProtronix,
+            String stdSensorsProtronixErrors,
+            String stdActuatorsDevtech,
+            String stdActuatorsDevtechErrors,
+            String lpSensorsIqhome,
+            String lpSensorsIqhomeErrors,
+            String lpActuatorsTeco,
+            String lpActuatorsTecoErrors) 
     {
-        this.clientId = clientId;
-        this.stdSensorsProtronix = stdSensorsProtronix;
-        this.stdSensorsProtronixErrors = stdSensorsProtronixErrors;
+        this.gwId = gwId;
+        
+        this.stdSensorsProtronix = gwId + stdSensorsProtronix;
+        this.stdSensorsProtronixErrors = gwId + stdSensorsProtronixErrors;
+        
+        this.stdActuatorsDevtech = gwId + stdActuatorsDevtech;
+        this.stdActuatorsDevtechErrors = gwId + stdActuatorsDevtechErrors;
+        
+        this.lpSensorsIqHome = gwId + lpSensorsIqhome;
+        this.lpSensorsIqhomeErrors = gwId + lpSensorsIqhomeErrors;
+        
+        this.lpActuatorsTeco = gwId + lpActuatorsTeco; 
+        this.lpActuatorsTecoErrors = gwId + lpActuatorsTecoErrors;
     }
     
     /**
      * @return the client ID
      */
-    public String getClientId() {
-        return clientId;
+    public String getGwId() {
+        return gwId;
     }
 
     /**
@@ -57,40 +85,53 @@ public final class MqttTopics {
     public String getStdSensorsProtronix() {
         return stdSensorsProtronix;
     }
-    
+
     /**
      * @return the std sensors Protronix
      */
     public String getStdSensorsProtronixErrors() {
         return stdSensorsProtronixErrors;
     }
-    
-    private static String getMac() {
-        String interfaceName = "eth0";
-        //InetAddress ip;
-        try {
-            //ip = InetAddress.getLocalHost();
-            //System.out.println("Current IP address : " + ip.getHostAddress());
 
-            NetworkInterface network = NetworkInterface.getByName(interfaceName);
+    /**
+     * @return the std actuator Devtech
+     */
+    public String getStdActuatorsDevtech() {
+        return stdActuatorsDevtech;
+    }
 
-            byte[] mac = network.getHardwareAddress();
-            System.out.print("Current MAC address : ");
+    /**
+     * @return the std actuator Devtech
+     */
+    public String getStdActuatorsDevtechErrors() {
+        return stdActuatorsDevtechErrors;
+    }
 
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < mac.length; i++) {
-                sb.append(String.format("%02x", mac[i]));
-            }
-            System.out.println(sb.toString());
-            
-            return sb.toString();
-            
-        //} catch (UnknownHostException e) {
-        //    e.printStackTrace();
-        //    return "";
-        } catch (SocketException e) {
-            e.printStackTrace();
-            return "";
-        }
+    /**
+     * @return the std sensor Iqhome
+     */
+    public String getLpSensorsIqHome() {
+        return lpSensorsIqHome;
+    }
+
+    /**
+     * @return the lp sensor Iqhome
+     */
+    public String getLpSensorsIqhomeErrors() {
+        return lpSensorsIqhomeErrors;
+    }
+
+    /**
+     * @return the lp actuators Teco
+     */
+    public String getLpActuatorsTeco() {
+        return lpActuatorsTeco;
+    }
+
+    /**
+     * @return the std actuator Teco
+     */
+    public String getLpActuatorsTecoErrors() {
+        return lpActuatorsTecoErrors;
     }
 }

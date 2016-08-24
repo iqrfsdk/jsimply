@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.microrisc.opengateway.app;
+package com.microrisc.opengateway.config;
 
 /**
  * Holds information about concrete device.

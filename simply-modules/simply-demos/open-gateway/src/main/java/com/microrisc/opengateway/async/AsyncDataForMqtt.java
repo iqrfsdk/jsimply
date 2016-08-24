@@ -21,22 +21,16 @@ import com.microrisc.simply.iqrf.dpa.DPA_ResponseCode;
  * Data from DPA asynchronous message combined with some other data for use in MQTT.
  * 
  * @author Michal Konopa
+ * @author Rostislav Spinar
  */
-public final class AsyncDataForMqtt {
+public final class AsyncDataForMqtt { 
     
-    // module state
-    public static enum ModuleState {
-        UNKNOWN,
-        FREE,
-        OCCUPIED;
-    }
-    
-    // module state
-    private final ModuleState moduleState;
+    // module data
+    private final String moduleState;
     
     // ID of source module
     private final String moduleId;
-    
+        
     // ID of source node
     private final String nodeId;
     
@@ -53,12 +47,11 @@ public final class AsyncDataForMqtt {
     private final int dpaValue;
     
     
-    
     /**
      * Creates new DPA asynchronous message data for MQTT.
-     * 
+     *
+     * @param moduleState module satte
      * @param moduleId ID of source module
-     * @param moduleState module state
      * @param nodeId source node ID
      * @param pnum source peripheral ID
      * @param hwpid HW profile ID
@@ -66,11 +59,11 @@ public final class AsyncDataForMqtt {
      * @param dpaValue DPA value
      */
     public AsyncDataForMqtt(
-            String moduleId, ModuleState moduleState, String nodeId, int pnum, 
+            String moduleState, String moduleId, String nodeId, int pnum, 
             int hwpid, DPA_ResponseCode responseCode, int dpaValue 
     ) {
-        this.moduleId = moduleId;
         this.moduleState = moduleState;
+        this.moduleId = moduleId;
         this.nodeId = nodeId;
         this.pnum = pnum;
         this.hwpid = hwpid;
@@ -79,17 +72,17 @@ public final class AsyncDataForMqtt {
     }
     
     /**
+     * @return the module data
+     */
+    public String getModuleState() {
+        return moduleState;
+    }
+    
+    /**
      * @return the module ID
      */
     public String getModuleId() {
         return moduleId;
-    }
-
-    /**
-     * @return the module state
-     */
-    public ModuleState getModuleState() {
-        return moduleState;
     }
     
     /**

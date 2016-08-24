@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.opengateway;
+package com.microrisc.opengateway.dpa;
 
 import com.microrisc.simply.errors.CallRequestProcessingError;
 import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_AdditionalInfo;

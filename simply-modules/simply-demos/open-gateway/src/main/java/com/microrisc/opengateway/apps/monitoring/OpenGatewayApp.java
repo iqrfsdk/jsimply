@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.opengateway;
+package com.microrisc.opengateway.apps.monitoring;
 
+import com.microrisc.opengateway.dpa.DPA_CompleteResult;
+import com.microrisc.opengateway.dpa.DPA_Request;
 import com.microrisc.opengateway.web.WebRequest;
 import com.microrisc.opengateway.web.WebRequestParser;
 import com.microrisc.opengateway.web.WebRequestParserException;
-import com.microrisc.opengateway.app.ApplicationConfiguration;
-import com.microrisc.opengateway.app.DeviceInfo;
+import com.microrisc.opengateway.config.ApplicationConfiguration;
+import com.microrisc.opengateway.config.DeviceInfo;
 import com.microrisc.opengateway.async.AsyncDataForMqtt;
 import com.microrisc.opengateway.async.AsyncDataForMqttCreator;
 import com.microrisc.opengateway.async.AsyncDataForMqttCreatorException;
@@ -71,7 +73,7 @@ import org.json.simple.parser.ParseException;
  * @author Rostislav Spinar
  * @author Michal Konopa
  */
-public class OpenGateway {
+public class OpenGatewayApp {
 
     // references for DPA
     private static DPA_Simply dpaSimply = null;
@@ -94,7 +96,7 @@ public class OpenGateway {
         @Override
         public void onAsynchronousMessage(DPA_AsynchronousMessage message) {
             System.out.println("New asynchronous message arrived.");
-            OpenGateway.asynchronousMessages.add(message);
+            OpenGatewayApp.asynchronousMessages.add(message);
         }
         
     }
@@ -139,14 +141,26 @@ public class OpenGateway {
             printMessageAndExit("Error in loading MQTT configuration: " + ex);
         } 
         
-        mqttCommunicator = new MqttCommunicator(mqttConfiguration);
-        
+        // to be configured from config file
+        String topicProtronix = "/std/sensors/protronix/";
+        String topicDevtech = "/std/actuators/devtech/";
+        String topicIqhome = "/std/sensors/iqhome/";
+        String topicTeco = "/lp/actuators/teco/";
+
         MqttTopics mqttTopics = new MqttTopics(
-                mqttConfiguration.getGwId(), 
-                "/sensors/protronix/", 
-                "/sensors/protronix/errors/"
+                mqttConfiguration.getGwId(),
+                topicProtronix,
+                topicProtronix + "errors/",
+                topicDevtech,
+                topicDevtech + "errors/",
+                topicIqhome,
+                topicIqhome + "errors/",
+                topicTeco,
+                topicTeco + "errors/"
         );
-        
+
+        mqttCommunicator = new MqttCommunicator(mqttConfiguration);
+
         // loading application configuration
         try {
             appConfiguration = loadApplicationConfiguration("App.json");
