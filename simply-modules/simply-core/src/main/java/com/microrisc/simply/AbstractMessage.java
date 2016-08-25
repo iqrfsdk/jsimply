@@ -22,6 +22,7 @@ package com.microrisc.simply;
  * @author Michal Konopa
  */
 public abstract class AbstractMessage {
+    
     /** Message effective main data - carrying the result. */
     protected Object mainData;
     

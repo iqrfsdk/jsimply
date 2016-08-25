@@ -26,8 +26,10 @@ import com.microrisc.simply.AbstractMessage.MessageSource;
  * @author Michal Konopa
  */
 public class BaseAsynchronousMessage extends AbstractMessage {
+    
     /**
-     * Creates new asynchronous message with specicfied data.
+     * Creates new asynchronous message with specified data.
+     * 
      * @param mainData effective main data of this message
      * @param additionalData effective additional data of this message
      * @param messageSource source of this message

@@ -16,7 +16,6 @@
 
 package com.microrisc.simply.iqrf.dpa.v22x.protocol;
 
-import com.microrisc.simply.iqrf.dpa.protocol.DPA_ProtocolProperties;
 import com.microrisc.simply.AbstractMessage;
 import com.microrisc.simply.BaseCallResponse;
 import com.microrisc.simply.CallRequest;
@@ -26,6 +25,8 @@ import com.microrisc.simply.SimpleMessageSource;
 import com.microrisc.simply.SimpleMethodMessageSource;
 import com.microrisc.simply.errors.NetworkInternalError;
 import com.microrisc.simply.iqrf.dpa.DPA_ResponseCode;
+import com.microrisc.simply.iqrf.dpa.asynchrony.DPA_AsynchronousMessage;
+import com.microrisc.simply.iqrf.dpa.asynchrony.SimpleDPA_AsynchronousMessageSource;
 import com.microrisc.simply.iqrf.dpa.broadcasting.BroadcastRequest;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.PeripheralInfoGetter;
 import com.microrisc.simply.protocol.RequestPacketCreator;
@@ -69,7 +70,32 @@ public final class DPA_MessageConvertor extends SimpleMessageConvertor {
         return  ( pCmd == 0xBF );
     }
     
+    // creates and returns DPA asynchronous message corresponding to specified network data
+    private DPA_AsynchronousMessage createAsynchronousMessage(NetworkData networkData) {
+        int nodeAddress = DPA_ProtocolProperties.getNodeAddress(networkData.getData());
+        int perNum = DPA_ProtocolProperties.getPeripheralNumber(networkData.getData());
+        short[] data = new short[
+                            networkData.getData().length - DPA_ProtocolProperties.PDATA_START
+                        ];
+        System.arraycopy(networkData.getData(), DPA_ProtocolProperties.PDATA_START, 
+                data, 0, data.length
+        );
+        
+        return new DPA_AsynchronousMessage(
+                data, null, 
+                new SimpleDPA_AsynchronousMessageSource( 
+                        new SimpleMessageSource(networkData.getNetworkId(), Integer.toString(nodeAddress)), 
+                        perNum
+                )
+        );
+    }
     
+    
+    /**
+     * Creates DPA message convertor object.
+     * 
+     * @param protocolMapping reference to protocol mapping
+     */
     public DPA_MessageConvertor(ProtocolMapping protocolMapping) {
         super(protocolMapping);
     }
@@ -120,15 +146,19 @@ public final class DPA_MessageConvertor extends SimpleMessageConvertor {
             throws ValueConversionException {
         logger.debug("convertToDOFormat - start: networkData={}", networkData);
         
-        PacketToCallResponseMapping devObjMapping = 
-                protocolMapping.getPacketToCallResponseMapping();
+        // if message is NOT a response, handle it as a asynchronous message
+        if ( !DPA_ProtocolProperties.isResponse(networkData.getData()) ) {
+            return createAsynchronousMessage(networkData);
+        }
+        
+        PacketToCallResponseMapping devObjMapping = protocolMapping.getPacketToCallResponseMapping();
         
         String networkId = networkData.getNetworkId();
         if ( networkId == null ) {
             throw new ValueConversionException("Network Id was not found");
         }
         
-        // protocol data
+        // protocol packet data
         short[] protoMsg = networkData.getData();
         
         String nodeId = devObjMapping.getNodeId(protoMsg);
