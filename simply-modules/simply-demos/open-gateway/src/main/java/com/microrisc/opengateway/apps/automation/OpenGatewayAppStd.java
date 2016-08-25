@@ -21,10 +21,14 @@ import com.microrisc.opengateway.async.AsyncDataForMqttCreatorException;
 import com.microrisc.opengateway.config.ApplicationConfiguration;
 import com.microrisc.opengateway.config.DeviceInfo;
 import com.microrisc.opengateway.dpa.DPA_CompleteResult;
+import com.microrisc.opengateway.dpa.DPA_Request;
 import com.microrisc.opengateway.mqtt.MqttCommunicator;
 import com.microrisc.opengateway.mqtt.MqttConfiguration;
 import com.microrisc.opengateway.mqtt.MqttFormatter;
 import com.microrisc.opengateway.mqtt.MqttTopics;
+import com.microrisc.opengateway.web.WebRequest;
+import com.microrisc.opengateway.web.WebRequestParser;
+import com.microrisc.opengateway.web.WebRequestParserException;
 import com.microrisc.simply.CallRequestProcessingState;
 import static com.microrisc.simply.CallRequestProcessingState.ERROR;
 import com.microrisc.simply.DeviceObject;
@@ -72,7 +76,7 @@ import org.json.simple.parser.ParseException;
  * @author Michal Konopa
  * @author Rostislav Spinar
  */
-public class OpenGatewayAppLp {
+public class OpenGatewayAppStd {
 
     // references for DPA
     private static DPA_Simply dpaSimply = null;
@@ -103,6 +107,12 @@ public class OpenGatewayAppLp {
 
     // timeout to wait for worker threads to join
     private static final long JOIN_WAIT_TIMEOUT = 2000;
+    
+    // thread synchronization mean for web requests
+    private static final Object syncProcessingWebRequest = new Object();
+    
+    // indicator, if it is possible to process web request
+    private static Boolean isPossibleToProcessWebRequest = false;
 
     
     // ASYCHRONOUS MESSAGES PROCESSING
@@ -113,7 +123,7 @@ public class OpenGatewayAppLp {
         @Override
         public void onAsynchronousMessage(DPA_AsynchronousMessage message) {
             System.out.println("New asynchronous message arrived.");
-            OpenGatewayAppLp.asynchronousMessages.add(message);
+            OpenGatewayAppStd.asynchronousMessages.add(message);
         }
     }
     
@@ -166,7 +176,7 @@ public class OpenGatewayAppLp {
         }));
 
         // Simply initialization
-        dpaSimply = getDPA_Simply("Simply-CDC.properties");
+        dpaSimply = getDPA_Simply("Simply-SPI.properties");
 
         // loading MQTT configuration
         MqttConfiguration mqttConfiguration = null;
@@ -722,6 +732,52 @@ public class OpenGatewayAppLp {
             mqttCommunicator.publish(mqttTopics.getLpSensorsIqhomeErrors() + nodeId, 2, errorMessage.getBytes());
         } catch (MqttException ex) {
             System.err.println("Error while publishing error message: " + ex);
+        }
+    }
+    
+    // waits until incomming web request will be processed - if there is present one
+    private static void waitUntilProcessIncommingWebRequest() {
+        
+        // open the space for processing a web request
+        synchronized ( syncProcessingWebRequest ) {
+            isPossibleToProcessWebRequest = true;
+            syncProcessingWebRequest.notifyAll();
+        }
+        
+        // other tread processes incomming web request ...
+        
+        // close the space for processing a web request
+        synchronized ( syncProcessingWebRequest ) {
+            isPossibleToProcessWebRequest = false;
+            syncProcessingWebRequest.notifyAll();
+        }
+    }
+    
+    // sends specified DPA request and returns result
+    private static DPA_CompleteResult sendDpaRequest(DPA_Request dpaRequest) {
+        throw new UnsupportedOperationException();
+    }
+    
+    // processes specified web request and returns result
+    private static DPA_CompleteResult processWebRequest(WebRequest webRequest) 
+        throws WebRequestParserException 
+    {
+        // parse web request into form suitable for sending over DI
+        DPA_Request dpaRequest = WebRequestParser.parse(webRequest);
+        
+        // send parsed web request into IQRF DPA network and return result
+        return sendDpaRequest(dpaRequest);
+    }
+    
+    // sends web request to IQRF DPA network and returns result
+    public static DPA_CompleteResult sendWebRequestToDpaNetwork(String topic, String data) 
+            throws InterruptedException, WebRequestParserException 
+    {
+        synchronized ( syncProcessingWebRequest ) {
+            while ( !isPossibleToProcessWebRequest ) {
+                syncProcessingWebRequest.wait();
+            }
+            return processWebRequest( new WebRequest(topic, data) );
         }
     }
 

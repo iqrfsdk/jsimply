@@ -16,8 +16,8 @@
 
 package com.microrisc.opengateway.mqtt;
 
+import com.microrisc.opengateway.apps.automation.OpenGatewayAppStd;
 import com.microrisc.opengateway.dpa.DPA_CompleteResult;
-import com.microrisc.opengateway.apps.monitoring.OpenGatewayApp;
 import com.microrisc.opengateway.web.WebRequestParserException;
 import com.microrisc.opengateway.web.WebResponseConvertor;
 import java.io.ByteArrayInputStream;
@@ -161,7 +161,7 @@ public class MqttCommunicator implements MqttCallback {
      * @param payload the set of bytes to send to the MQTT server
      * @throws MqttException
      */
-    public void publish(String topicName, int qos, byte[] payload) throws MqttException {
+    public synchronized void publish(String topicName, int qos, byte[] payload) throws MqttException {
 
         // Connect to the MQTT server
         //log("Connecting to " + brokerUrl + " with client ID " + client.getClientId());
@@ -294,7 +294,7 @@ public class MqttCommunicator implements MqttCallback {
         // getting DPA result
         DPA_CompleteResult dpaResult = null;
         try {
-            dpaResult = OpenGatewayApp.sendWebRequestToDpaNetwork(topic, msg);
+            dpaResult = OpenGatewayAppStd.sendWebRequestToDpaNetwork(topic, msg);
         } catch ( InterruptedException ex ) {
             // sending response to error topic
         } catch ( WebRequestParserException ex ) {
