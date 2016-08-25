@@ -32,11 +32,8 @@ import com.microrisc.simply.iqrf.dpa.asynchrony.DPA_AsynchronousMessage;
 import com.microrisc.simply.iqrf.dpa.asynchrony.SimpleDPA_AsynchronousMessageSource;
 import com.microrisc.simply.iqrf.dpa.broadcasting.BroadcastRequest;
 import com.microrisc.simply.iqrf.dpa.broadcasting.BroadcastResult;
-import com.microrisc.simply.iqrf.dpa.protocol.DPA_ProtocolProperties;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.Coordinator;
-import com.microrisc.simply.iqrf.dpa.v22x.devices.FRC;
 import com.microrisc.simply.iqrf.dpa.v22x.di_services.method_id_transformers.CoordinatorStandardTransformer;
-import com.microrisc.simply.iqrf.dpa.v22x.di_services.method_id_transformers.FRCStandardTransformer;
 import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.DPA_ConfirmationConvertor;
 import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_Confirmation;
 import com.microrisc.simply.iqrf.dpa.v22x.protocol.timing.TimingParamsStorage;
@@ -660,7 +657,16 @@ implements ProtocolStateMachineListener
         // asynchronous messages
         if ( !(message instanceof BaseCallResponse) ) {
             logger.info("Message={} handled as asynchronous", message); 
+            
+            // normal asynchronous message
+            if ( message instanceof BaseAsynchronousMessage ) {
+                processMessage(message);
                 
+                logger.debug("onGetData - end");
+                return;
+            }
+            
+            // create 
             BaseAsynchronousMessage asyncMsg = new DPA_AsynchronousMessage(
                 message.getMainData(), message.getAdditionalData(), 
                 new SimpleDPA_AsynchronousMessageSource(

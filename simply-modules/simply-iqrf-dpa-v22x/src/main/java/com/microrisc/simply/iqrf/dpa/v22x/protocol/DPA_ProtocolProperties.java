@@ -112,7 +112,7 @@ public final class DPA_ProtocolProperties {
             throw new AssertionError();
         }
         
-        /** Peripherals numbers. */
+        /** Numbers of standard peripherals. */
         public static final int COORDINATOR =   0x00;
         public static final int NODE =          0x01;
         public static final int OS =            0x02;
@@ -642,5 +642,17 @@ public final class DPA_ProtocolProperties {
       
         logger.debug("getReturnValue - end: {}", retValObj);
         return retValObj;
+    }
+    
+    /**
+     * Determines, if the specified message is a response.
+     * 
+     * @param protoMsg source message
+     * @return {@code true} if specified message is response <br>
+     *         {@code false} otherwise
+     */
+    public static boolean isResponse(short[] protoMsg) {
+        int command = getCommand(protoMsg);
+        return ((command & 0x80) == 0x80 );
     }
 }

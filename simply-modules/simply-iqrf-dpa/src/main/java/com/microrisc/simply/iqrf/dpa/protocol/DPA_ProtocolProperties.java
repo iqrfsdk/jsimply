@@ -479,11 +479,12 @@ public final class DPA_ProtocolProperties {
     
     /**
      * Returns NADR field of specified message.
+     * 
      * @param protoMsg source message
      * @return NADR field of specified message.
      */
-    static int getNodeAddress(short[] protoMsg) {
-        logger.debug("setUserData - start: protoMsg={}", protoMsg);
+    public static int getNodeAddress(short[] protoMsg) {
+        logger.debug("getNodeAddress - start: protoMsg={}", protoMsg);
         
         int nodeAddress = getMessageData_Int(protoMsg, NADR_START, NADR_LENGTH); 
         
@@ -569,6 +570,7 @@ public final class DPA_ProtocolProperties {
     
     /**
      * Returns converted RESPONSE_DATA field.
+     * 
      * @param protoMsg source message
      * @param typeConvertor type convertor to use     
      * @return RESPONSE_DATA field of specified message.
@@ -589,5 +591,17 @@ public final class DPA_ProtocolProperties {
       
         logger.debug("getReturnValue - end: {}", retValObj);
         return retValObj;
+    }
+    
+    /**
+     * Determines, if the specified message is a response.
+     * 
+     * @param protoMsg source message
+     * @return {@code true} if specified message is response <br>
+     *         {@code false} otherwise
+     */
+    public static boolean isResponse(short[] protoMsg) {
+        int command = getCommand(protoMsg);
+        return ((command & 0x80) == 0x80 );
     }
 }
