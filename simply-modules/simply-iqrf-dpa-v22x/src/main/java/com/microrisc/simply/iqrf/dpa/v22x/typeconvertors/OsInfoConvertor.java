@@ -26,8 +26,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Provides functionality for converting between {@code OsInfo} objects and
  * protocol packets.
+ * This convertor is adjusted for using with DPA 2.26 based on OS 3.07 as well 
+ * as DPA 2.27 based on OS 3.08. (in this version is in data length)
  * 
  * @author Michal Konopa
+ * @author Martin Strouhal
  */
 public final class OsInfoConvertor extends PrimitiveConvertor {
     /** Logger. */
@@ -118,11 +121,19 @@ public final class OsInfoConvertor extends PrimitiveConvertor {
         
         int flags = protoValue[FLAGS_POS];
         
-        int reserved = protoValue[RESERVED_POS];
-        
-        OsInfo osInfo = new OsInfo(moduleId, osVersion, mcuType, trType, osBuild, rssi, 
+        OsInfo osInfo;
+        if(osVersion >= 38){
+            int reserved = protoValue[RESERVED_POS];
+            osInfo = new OsInfo(moduleId, osVersion, mcuType, trType, osBuild, rssi, 
                 supplyVoltage, flags, reserved
-        );
+            );
+        }else{
+            osInfo = new OsInfo(moduleId, osVersion, mcuType, trType, osBuild, rssi, 
+                supplyVoltage, flags
+            );
+        }
+        
+        
         
         logger.debug("toObject - end: {}", osInfo);
         return osInfo;
