@@ -443,24 +443,27 @@ public final class DPA_ProtocolProperties {
     
     /**
      * Returns Integer-typed specified part of specified protocol message.
-     * @param protoMsg source message
+     * 
+     * @param message source message
      * @param startIndex start index in the message
      * @param dataLength number of bytes
      */
-    static private int getMessageData_Int(short[] protoMsg, int startIndex, 
+    static private int getMessageDataAsInt(short[] message, int startIndex, 
             int dataLength
     ) {
-        logger.debug("getMessageData_Integer - start:");
+        logger.debug("getMessageDataAsInt - start: message={}, startIndex={}, dataLength={}",
+            message, startIndex, dataLength
+        );
         
         ByteBuffer byteBuffer = ByteBuffer.allocate(4);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         for (int byteId = 0; byteId < dataLength; byteId++) {
-            byteBuffer.put((byte)protoMsg[startIndex + byteId]);
+            byteBuffer.put((byte)message[startIndex + byteId]);
         }
         
         Integer data = byteBuffer.getInt(0);
         
-        logger.debug("getMessageData_Integer - end: {}", data);
+        logger.debug("getMessageDataAsInt - end: {}", data);
         return data;
     }
     
@@ -538,7 +541,7 @@ public final class DPA_ProtocolProperties {
     static int getNodeAddress(short[] protoMsg) {
         logger.debug("setUserData - start: protoMsg={}", protoMsg);
         
-        int nodeAddress = getMessageData_Int(protoMsg, NADR_START, NADR_LENGTH); 
+        int nodeAddress = getMessageDataAsInt(protoMsg, NADR_START, NADR_LENGTH); 
         
         logger.debug("getNodeAddress - end: {}", nodeAddress);
         return nodeAddress;
@@ -552,7 +555,7 @@ public final class DPA_ProtocolProperties {
     public static int getPeripheralNumber(short[] protoMsg) {
         logger.debug("getPeripheralNumber - start: protoMsg={}", protoMsg);
         
-        int perNumber = getMessageData_Int(protoMsg, PNUM_START, PNUM_LENGTH);
+        int perNumber = getMessageDataAsInt(protoMsg, PNUM_START, PNUM_LENGTH);
         
         logger.debug("getPeripheralNumber - end: {}", perNumber);
         return perNumber;
@@ -566,12 +569,22 @@ public final class DPA_ProtocolProperties {
     public static int getCommand(short[] protoMsg) {
         logger.debug("getCommand - start: protoMsg={}", protoMsg);
         
-        int command = getMessageData_Int(protoMsg, PCMD_START, PCMD_LENGTH);
+        int command = getMessageDataAsInt(protoMsg, PCMD_START, PCMD_LENGTH);
         
         logger.debug("getCommand - end: {}", command);
         return command;
     }
     
+    /**
+     * Returns HWP ID.
+     * 
+     * @param message source message
+     * @return HWP ID
+     */
+    public static int getHWPID(short[] message) {
+        return getMessageDataAsInt(message, HW_PROFILE_START, HW_PROFILE_LENGTH);
+    }
+            
     /**
      * Returns RESPONSE_CODE field of specified message ( must be a response ).
      * @param protoMsg source message
@@ -582,7 +595,7 @@ public final class DPA_ProtocolProperties {
             throws ValueConversionException {
         logger.debug("getResponseCode - start: protoMsg={}", protoMsg);
         
-        int responseIntCode = getMessageData_Int(
+        int responseIntCode = getMessageDataAsInt(
                 protoMsg, RESPONSE_CODE_START, RESPONSE_CODE_LENGTH
         );
         for ( DPA_ResponseCode responseCode : DPA_ResponseCode.values() ) {

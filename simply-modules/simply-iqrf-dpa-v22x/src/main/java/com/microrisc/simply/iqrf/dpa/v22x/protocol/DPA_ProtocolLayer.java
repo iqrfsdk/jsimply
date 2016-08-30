@@ -666,18 +666,7 @@ implements ProtocolStateMachineListener
                 return;
             }
             
-            // create 
-            BaseAsynchronousMessage asyncMsg = new DPA_AsynchronousMessage(
-                message.getMainData(), message.getAdditionalData(), 
-                new SimpleDPA_AsynchronousMessageSource(
-                        message.getMessageSource(), 
-                        DPA_ProtocolProperties.getPeripheralNumber(networkData.getData())
-                )
-            );
-
-            // messages, which are NOT base call responses - typically asynchronous messages - 
-            // must be processed out of the Protocol State Machine
-            processMessage(asyncMsg);
+            logger.error("Unknown message: {}. Message will be discarded.", message);
             
             logger.debug("onGetData - end");
             return;
