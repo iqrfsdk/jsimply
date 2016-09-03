@@ -21,10 +21,17 @@ import com.microrisc.simply.asynchrony.BaseAsynchronousMessage;
 
 /**
  * DPA asynchronous message.
+ * <p>
+ * Main data field is <b>all</b> bytes from the first byte(inclusive) behind the 
+ * foursome (see IQRF DPA documentation) to the end of the message.
+ * 
+ * <p>
+ * Additional data field constitutes the HW profile ID.
  * 
  * @author Michal Konopa
  */
 public final class DPA_AsynchronousMessage extends BaseAsynchronousMessage {
+    
     
     /**
      * Message source extended with information about peripheral ID. 
@@ -39,11 +46,35 @@ public final class DPA_AsynchronousMessage extends BaseAsynchronousMessage {
        int getPeripheralNumber();
     }
     
-    
+    /**
+     * Creates new object of DPA asynchronous message.
+     * 
+     * @param mainData main data - all bytes behind the foursome(see IQRF DPA documentation)
+     * @param additionalData additional data - HWP ID
+     * @param messageSource source of the message
+     */
     public DPA_AsynchronousMessage(
-            Object mainData, Object additionalData, DPA_AsynchronousMessageSource messageSource
+            short[] mainData, Integer additionalData, DPA_AsynchronousMessageSource messageSource
     ) {
         super(mainData, additionalData, messageSource);
+    }
+    
+    /**
+     * Returns all bytes behind the foursome. 
+     * @return all bytes behind the foursome.
+     */
+    @Override
+    public short[] getMainData() {
+        return (short[]) mainData;
+    }
+    
+    /**
+     * Returns HWP ID.
+     * @return HWP ID
+     */
+    @Override
+    public Integer getAdditionalData() {
+        return (Integer) additionalData;
     }
     
     @Override
