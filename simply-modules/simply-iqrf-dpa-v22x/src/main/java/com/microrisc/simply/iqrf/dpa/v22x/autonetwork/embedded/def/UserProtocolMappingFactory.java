@@ -155,17 +155,7 @@ public class UserProtocolMappingFactory implements ProtocolMappingFactory {
         PacketToValueMapping resultMapping = new PacketToValueMapping(8,0, VoidTypeConvertor.getInstance());
         return new PacketToMethodMapping("0", packetValues, resultMapping);
     }
-    
-    static private PacketToMethodMapping createAsyncResponseInfoState(){
-        List<PacketPositionValues> packetValues = new LinkedList<>();
-        packetValues.add(new PacketPositionValues(3, (short) 0x00));
-        packetValues.add(new PacketPositionValues(4, (short) 0x3F));
-        packetValues.add(new PacketPositionValues(5, (short) 0x12));
-
-        PacketToValueMapping resultMapping = new PacketToValueMapping(8, AutonetworkStateConvertor.getInstance());
-        return new PacketToMethodMapping("2", packetValues, resultMapping);
-    }   
-
+  
     static private PacketToInterfaceMapping createResponseAutonetworkPeripheralMapping() {
         List<PacketPositionValues> packetValues = new LinkedList<>();
         packetValues.add(new PacketPositionValues(2, (short) 0x20));
@@ -174,7 +164,6 @@ public class UserProtocolMappingFactory implements ProtocolMappingFactory {
 
         methodMappings.put("0", createResponseDisapproveValue());
         methodMappings.put("1", createResponseApproveValue());
-        methodMappings.put("2", createAsyncResponseInfoState());
 
         return new PacketToInterfaceMapping(AutonetworkPeripheral.class, packetValues, methodMappings);
     }

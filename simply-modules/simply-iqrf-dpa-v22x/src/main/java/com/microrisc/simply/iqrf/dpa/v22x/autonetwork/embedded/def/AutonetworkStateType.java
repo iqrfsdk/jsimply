@@ -23,13 +23,13 @@ package com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def;
 public enum AutonetworkStateType {
 
    /**Reports state, number of nodes in the network and number of remaining waves (stored at PeripheralRam[0]) */
-   S_START(0x00, "\n\nNext wave was started\nnCount of nodes = %, count of remaing waves = %"),
+   S_START(0x00, "Next wave was started. Count of nodes = %, count of remaing waves = %"),
    S_WaitNodesStartPrebonding(0x01,"Waiting on starting for prebonding of nodes."),
    /** reported */
    S_C_StartPrebonding(0x02, "Enable prebonding at coordinator."),
    S_WaitPrebonding(0x03, "Waiting for prebonding of nodes."),
    /** Optionally reports state and lower 2 bytes of MID of node prebonded by coordinator */
-   S_DisablePrebondingCoordinator(0x04, "Disable prebonding at coordinator.\nCCoordinator prebonded MID = %, user data = %"), //reported
+   S_DisablePrebondingCoordinator(0x04, "Disable prebonding at coordinator. Coordinator prebonded MID = %, user data = %"), //reported
    S_WaitApproveNodeForCoordinator(0x05, "Waiting for approving nodes on coordinator."),
    S_DisablePrebondingNodes(0x06, "Disabling prebonding of nodes."),
    /** Reports state, address of the node, that provided prebonding and 0 */
@@ -48,7 +48,7 @@ public enum AutonetworkStateType {
    S_WaitCheckAuthorizedLoop(0x0F, "Waiting for checking authorization loop."),
    S_CheckAuthorizedNext(0x10, "Checking next authorized."),
    /** Reports state, nodes in the network and number of discovered nodes */
-   S_Discovery(0x11, "Running discovery.\nCount of nodes in network = %, discovered = %."),
+   S_Discovery(0x11, "Running discovery. Count of nodes in network = %, discovered = %."),
    S_WaitApproveNodeForNode(0x12, "Waiting for approving node for node."),
    S_ApproveNodeForNodeFinish(0x13, "Approving node for finishing node."),
    UNKNOWN(Integer.MAX_VALUE, "Unknown state.");

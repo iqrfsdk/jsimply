@@ -136,7 +136,7 @@ public class AutonetworkEmbedded {
        }
 
         
-        System.out.println("Second part:");
+        System.out.println("\nSecond part:");
         countOfWaves = 0x0A;
         builder.startAutonetwork(countOfWaves);
         

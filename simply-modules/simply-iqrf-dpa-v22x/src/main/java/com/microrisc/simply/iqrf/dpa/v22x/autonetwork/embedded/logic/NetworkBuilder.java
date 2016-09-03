@@ -23,13 +23,17 @@ import com.microrisc.simply.iqrf.dpa.asynchrony.DPA_AsynchronousMessage;
 import com.microrisc.simply.iqrf.dpa.asynchrony.DPA_AsynchronousMessageProperties;
 import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def.AutonetworkPeripheral;
 import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def.AutonetworkState;
+import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def.AutonetworkStateConvertor;
 import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def.AutonetworkStateType;
 import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def.AutonetworkValueType;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.EEPROM;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.RAM;
 import com.microrisc.simply.iqrf.dpa.v22x.types.RemotelyBondedModuleId;
+import com.microrisc.simply.typeconvertors.ValueConversionException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -200,13 +204,30 @@ public final class NetworkBuilder implements
       alogirthmState = AlgorithmState.RUNNING;
       log.debug("startAutonetwork - end");
    }
-   
+  
    @Override
    public void onAsynchronousMessage(DPA_AsynchronousMessage message) {
       log.debug("onAsynchronousMessage - start: message={}", message);
       
-      if (message.getMainData() instanceof AutonetworkState) {
-         AutonetworkState actualState = (AutonetworkState)message.getMainData();
+      if (message.getMainData() instanceof short[]) {
+          short[] mainData = (short[])message.getMainData();
+          short[] stateData = Arrays.copyOfRange(mainData, 2, mainData.length);
+          // conversion
+          Object state;
+          try {
+              state = AutonetworkStateConvertor.getInstance().toObject(stateData);
+          } catch (ValueConversionException ex) {
+              log.warn(ex.getMessage());
+              return;
+          }
+          AutonetworkState actualState;
+          if(state != null && state instanceof AutonetworkState){
+              actualState = (AutonetworkState)state;
+          }else{
+              log.warn("Converted data aren't AutonetworkState type.");
+              return;
+          }
+          
          log.info("Autonetwork message: " + actualState);
 
          // checks if algorithm is on the end
