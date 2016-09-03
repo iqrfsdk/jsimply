@@ -28,12 +28,12 @@ import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def.AutonetworkSt
 import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def.AutonetworkValueType;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.EEPROM;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.RAM;
+import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.RemotelyBondedModuleIdConvertor;
 import com.microrisc.simply.iqrf.dpa.v22x.types.RemotelyBondedModuleId;
 import com.microrisc.simply.typeconvertors.ValueConversionException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -211,46 +211,51 @@ public final class NetworkBuilder implements
       
       if (message.getMainData() instanceof short[]) {
           short[] mainData = (short[])message.getMainData();
+          System.out.println(Arrays.toString(mainData));
           short[] stateData = Arrays.copyOfRange(mainData, 2, mainData.length);
-          // conversion
-          Object state;
+          
+          // conversion to autonetwork state
+          Object state = null;
           try {
               state = AutonetworkStateConvertor.getInstance().toObject(stateData);
           } catch (ValueConversionException ex) {
-              log.warn(ex.getMessage());
-              return;
+              log.debug(ex.getMessage());
           }
-          AutonetworkState actualState;
-          if(state != null && state instanceof AutonetworkState){
-              actualState = (AutonetworkState)state;
+          // if was conversion successful, process it
+          if (state != null && state instanceof AutonetworkState) {
+              AutonetworkState actualState = (AutonetworkState) state;
+                            
+              log.info("Autonetwork message: " + actualState);
+
+              // checks if algorithm is on the end
+              checkAlgorithmEnd(actualState);
+
+              // call autonetwork listeners
+              for (AutonetworkStateListener listener : autonetworkListeners) {
+                  listener.onAutonetworkState(actualState);
+              }
+          // if conversion wasn't successful and approver isn't null, it can be
+          // remotely bonded module id for aprroving > try it
+          }else if(approver !=null){          
+              RemotelyBondedModuleId bondedModuleId = null;
+              try {
+                  bondedModuleId = (RemotelyBondedModuleId)RemotelyBondedModuleIdConvertor
+                          .getInstance().toObject(stateData);
+              } catch (ValueConversionException ex) {
+                  log.warn("Unsuportted async message.");
+                  return;
+              }
+              boolean approveResult = approver.approveNode(bondedModuleId);
+
+              if (approveResult) {
+                  autonetworkPer.async_approve();
+              } else {
+                  autonetworkPer.async_disapprove();
+              }        
           }else{
-              log.warn("Converted data aren't AutonetworkState type.");
-              return;
+              log.debug("Received unsupported async msg: " + Arrays.toString(mainData));
           }
-          
-         log.info("Autonetwork message: " + actualState);
-
-         // checks if algorithm is on the end
-         checkAlgorithmEnd(actualState);
-         
-         // call autonetwork listeners
-         for (AutonetworkStateListener listener: autonetworkListeners) {
-            listener.onAutonetworkState(actualState);
-         }
-      }
-      
-      // if required approving from NodeApprover
-      if (message.getMainData() instanceof RemotelyBondedModuleId && approver != null) {
-
-         boolean approveResult = approver.approveNode(
-                 (RemotelyBondedModuleId) message.getMainData());
-
-         if (approveResult) {
-            autonetworkPer.async_approve();
-         } else {
-            autonetworkPer.async_disapprove();
-         }
-      }
+      }                                   
 
       log.debug("onAsynchronousMessage - end");
    }
