@@ -435,6 +435,27 @@ implements ProtocolStateMachineListener
     private final Object synchroListener = new Object();
     
     
+    // creates and returns asynchronous message corresponding to specified network data
+    private static DPA_AsynchronousMessage createAsynchronousMessage(NetworkData networkData) {
+        int nodeAddress = DPA_ProtocolProperties.getNodeAddress(networkData.getData());
+        int perNum = DPA_ProtocolProperties.getPeripheralNumber(networkData.getData());
+        short[] data = new short[
+                            networkData.getData().length - DPA_ProtocolProperties.PDATA_START
+                        ];
+        System.arraycopy(networkData.getData(), DPA_ProtocolProperties.PDATA_START, 
+                data, 0, data.length
+        );
+        
+        return new DPA_AsynchronousMessage(
+                data, DPA_ProtocolProperties.getHWPID(networkData.getData()),
+                new SimpleDPA_AsynchronousMessageSource( 
+                        new SimpleMessageSource(networkData.getNetworkId(), Integer.toString(nodeAddress)), 
+                        perNum
+                )
+        );   
+    }
+    
+    
     /**
      * Creates new protocol layer object with specified network layer to use.
      * Used RF mode will be set to <b>STD</b>.
@@ -594,6 +615,7 @@ implements ProtocolStateMachineListener
             responseCode = DPA_ProtocolProperties.getResponseCode(networkData.getData());
         } catch ( ValueConversionException ex ) {
             logger.error("Error in determining response code. Network data={}", networkData);
+            logger.debug("onGetData - end");
             return;
         }
         
@@ -612,6 +634,7 @@ implements ProtocolStateMachineListener
                         getInstance().toObject(confirmData);
             } catch ( ValueConversionException ex ) {
                 logger.error("Error in conversion of confirmation. Network data={}", networkData);
+                logger.debug("onGetData - end");
                 return;
             }
             
@@ -627,9 +650,11 @@ implements ProtocolStateMachineListener
                             logger.error(
                                     "Protocol State Machine not in the WAITING_FOR_CONFIRMATION state: " + ex
                             );
+                            logger.debug("onGetData - end");
                             return;
                         } catch (StateTimeoutedException ex) {
                             logger.error("Confirmation reception too late. Waiting timeouted.");
+                            logger.debug("onGetData - end");
                             return;
                         }
 
@@ -650,6 +675,7 @@ implements ProtocolStateMachineListener
             message = msgConvertor.convertToDOFormat(networkData);
         } catch ( SimplyException e ) {
             logger.error("Conversion error on incomming data", e);
+            logger.debug("onGetData - end");
             return;
         }
         
@@ -658,7 +684,7 @@ implements ProtocolStateMachineListener
         if ( !(message instanceof BaseCallResponse) ) {
             logger.info("Message={} handled as asynchronous", message); 
             
-            // normal asynchronous message
+            // asynchronous messages
             if ( message instanceof BaseAsynchronousMessage ) {
                 processMessage(message);
                 
@@ -666,6 +692,7 @@ implements ProtocolStateMachineListener
                 return;
             }
             
+            // other(unknown) type of messages - error
             logger.error("Unknown message: {}. Message will be discarded.", message);
             
             logger.debug("onGetData - end");
@@ -681,7 +708,14 @@ implements ProtocolStateMachineListener
                     response.setRequestId(causeRequest.request.getId());
                     sentRequests.remove(causeRequest);
                 } else {
-                    logger.error("Cause request not found for response: {}", response);
+                    logger.error("Cause request not found for response: {}. "
+                        + "Response will be processed as asynchronous message", response
+                    );
+                    
+                    DPA_AsynchronousMessage asyncResponse = createAsynchronousMessage(networkData); 
+                    processMessage(asyncResponse);
+                    
+                    logger.debug("onGetData - end");
                     return;
                 }
             }
@@ -696,9 +730,11 @@ implements ProtocolStateMachineListener
                         logger.error(
                             "Protocol State Machine not in the WAITING_FOR_RESPONSE state: " + ex
                         );
+                        logger.debug("onGetData - end");
                         return;
                     } catch ( StateTimeoutedException ex ) {
                         logger.error("Response reception too late. Waiting timeouted.");
+                        logger.debug("onGetData - end");
                         return;
                     }
                 }

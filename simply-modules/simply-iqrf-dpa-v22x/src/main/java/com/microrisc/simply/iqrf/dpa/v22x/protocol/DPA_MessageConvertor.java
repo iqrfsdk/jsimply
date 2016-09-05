@@ -82,7 +82,7 @@ public final class DPA_MessageConvertor extends SimpleMessageConvertor {
         );
         
         return new DPA_AsynchronousMessage(
-                data, DPA_ProtocolProperties.getHWPID(data),
+                data, DPA_ProtocolProperties.getHWPID(networkData.getData()),
                 new SimpleDPA_AsynchronousMessageSource( 
                         new SimpleMessageSource(networkData.getNetworkId(), Integer.toString(nodeAddress)), 
                         perNum
