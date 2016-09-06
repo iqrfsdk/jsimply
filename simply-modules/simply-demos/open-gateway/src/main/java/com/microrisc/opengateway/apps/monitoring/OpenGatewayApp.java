@@ -89,8 +89,8 @@ public class OpenGatewayApp {
         }));
         
         // Simply initialization
-        dpaSimply = getDPA_Simply("Simply-CDC.properties");
-        //dpaSimply = getDPA_Simply("Simply-SPI.properties");
+        //dpaSimply = getDPA_Simply("Simply-CDC.properties");
+        dpaSimply = getDPA_Simply("Simply-SPI.properties");
         
         // loading MQTT configuration
         MqttConfiguration mqttConfiguration = null;
