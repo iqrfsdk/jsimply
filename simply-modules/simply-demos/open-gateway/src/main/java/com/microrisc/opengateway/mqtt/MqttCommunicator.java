@@ -42,6 +42,8 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -58,6 +60,40 @@ public class MqttCommunicator implements MqttCallback {
     private String password;
     private String userName;
     private String certFile;
+    
+    // in ms
+    private static final int DEFAULT_RECONNECTION_SLEEP_TIME = 60*1000;
+    private Runnable reconnectionRunnable = new Runnable() {
+        @Override
+        public void run() {
+            
+            while (client != null && !client.isConnected()) {
+                // Connect to the MQTT server
+                log("Reconnecting to" + brokerUrl + "with client ID " + client.getClientId());
+
+                conOpt = new MqttConnectOptions();
+                conOpt.setCleanSession(false);
+
+                try {
+                    client.connect(conOpt);
+                } catch (MqttException ex) {
+                    log("Reconnecting to" + brokerUrl + "with client "
+                            + "ID " + client.getClientId() + "failed! " + ex.getMessage());
+                }
+                
+                try {
+                    Thread.sleep(DEFAULT_RECONNECTION_SLEEP_TIME);
+                } catch (InterruptedException ex) {
+                    log.warn(ex.toString());                    
+                }
+            }
+            reconnectionThread = null;
+            log("Connected");
+        }
+    };
+    private Thread reconnectionThread;
+    
+    private static final Logger log = LoggerFactory.getLogger(MqttCommunicator.class);
 
     /**
      * Constructs an instance of the sample client wrapper
@@ -230,25 +266,17 @@ public class MqttCommunicator implements MqttCallback {
      * @see MqttCallback#connectionLost(Throwable)
      */
     public void connectionLost(Throwable cause) {
-	
+        log.debug("connectionLost - start: cause=" + cause.getMessage());
+        
         // Called when the connection to the server has been lost.
         // An application may choose to implement reconnection
         // logic at this point. This sample simply exits.
-        log("Connection to " + brokerUrl + " lost!" + cause);
-
-        // Connect to the MQTT server
-        log("Reconnecting to " + brokerUrl + " with client ID " + client.getClientId());
+        log("Connection to " + brokerUrl + " lost! " + cause);
         
-        conOpt = new MqttConnectOptions();
-        conOpt.setCleanSession(false);
+        reconnectionThread = new Thread(reconnectionRunnable);
+        reconnectionThread.start();
         
-        try {
-            client.connect(conOpt);
-        } catch (MqttException ex) {
-            log("Reconnecting to " + brokerUrl + " with client ID " + client.getClientId() + "failed!" + ex.getMessage());
-        }
-        
-        log("Connected");
+        log.debug("connectionLost - end");
     }
 
     /**
