@@ -105,8 +105,7 @@ public final class MqttFormatter {
         return "{\"e\":[{\"n\":\"switch\"," + "\"sv\":" + asyncMsgForMqtt.getModuleState() + "}],"
                 + "\"iqrf\":[{\"pid\":" + pidAsync++ + "," + "\"dpa\":\"resp\"," + "\"nadr\":" + asyncMsgForMqtt.getNodeId() + ","
                 + "\"pnum\":" + DPA_ProtocolProperties.PNUM_Properties.USER_PERIPHERAL_START + "," + "\"pcmd\":" + "\"" + Custom.MethodID.SEND.name().toLowerCase() + "\","
-                + "\"hwpid\":" + asyncMsgForMqtt.getHwpid() + "," + "\"rcode\":" + "\"" + asyncMsgForMqtt.getResponseCode().name().toLowerCase() + "\","
-                + "\"dpavalue\":" + asyncMsgForMqtt.getDpaValue() + "}],"
+                + "\"hwpid\":" + asyncMsgForMqtt.getHwpid() +  "}],"
                 + "\"bn\":" + "\"urn:dev:mid:" + "unknown" + "\""
                 + "}";
     }

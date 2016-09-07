@@ -23,11 +23,15 @@ import com.microrisc.simply.iqrf.dpa.asynchrony.DPA_AsynchronousMessage;
 import com.microrisc.simply.iqrf.dpa.asynchrony.DPA_AsynchronousMessageProperties;
 import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def.AutonetworkPeripheral;
 import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def.AutonetworkState;
+import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def.AutonetworkStateConvertor;
 import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def.AutonetworkStateType;
 import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def.AutonetworkValueType;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.EEPROM;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.RAM;
+import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.RemotelyBondedModuleIdConvertor;
 import com.microrisc.simply.iqrf.dpa.v22x.types.RemotelyBondedModuleId;
+import com.microrisc.simply.typeconvertors.ValueConversionException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -200,36 +204,58 @@ public final class NetworkBuilder implements
       alogirthmState = AlgorithmState.RUNNING;
       log.debug("startAutonetwork - end");
    }
-   
+  
    @Override
    public void onAsynchronousMessage(DPA_AsynchronousMessage message) {
       log.debug("onAsynchronousMessage - start: message={}", message);
       
-      if (message.getMainData() instanceof AutonetworkState) {
-         AutonetworkState actualState = (AutonetworkState)message.getMainData();
-         log.info("Autonetwork message: " + actualState);
+      if (message.getMainData() instanceof short[]) {
+          short[] mainData = (short[])message.getMainData();
+          System.out.println(Arrays.toString(mainData));
+          short[] stateData = Arrays.copyOfRange(mainData, 2, mainData.length);
+          
+          // conversion to autonetwork state
+          Object state = null;
+          try {
+              state = AutonetworkStateConvertor.getInstance().toObject(stateData);
+          } catch (ValueConversionException ex) {
+              log.debug(ex.getMessage());
+          }
+          // if was conversion successful, process it
+          if (state != null && state instanceof AutonetworkState) {
+              AutonetworkState actualState = (AutonetworkState) state;
+                            
+              log.info("Autonetwork message: " + actualState);
 
-         // checks if algorithm is on the end
-         checkAlgorithmEnd(actualState);
-         
-         // call autonetwork listeners
-         for (AutonetworkStateListener listener: autonetworkListeners) {
-            listener.onAutonetworkState(actualState);
-         }
-      }
-      
-      // if required approving from NodeApprover
-      if (message.getMainData() instanceof RemotelyBondedModuleId && approver != null) {
+              // checks if algorithm is on the end
+              checkAlgorithmEnd(actualState);
 
-         boolean approveResult = approver.approveNode(
-                 (RemotelyBondedModuleId) message.getMainData());
+              // call autonetwork listeners
+              for (AutonetworkStateListener listener : autonetworkListeners) {
+                  listener.onAutonetworkState(actualState);
+              }
+          // if conversion wasn't successful and approver isn't null, it can be
+          // remotely bonded module id for aprroving > try it
+          }else if(approver !=null){          
+              RemotelyBondedModuleId bondedModuleId = null;
+              try {
+                  bondedModuleId = (RemotelyBondedModuleId)RemotelyBondedModuleIdConvertor
+                          .getInstance().toObject(stateData);
+              } catch (ValueConversionException ex) {
+                  log.warn("Unsuportted async message.");
+                  return;
+              }
+              boolean approveResult = approver.approveNode(bondedModuleId);
 
-         if (approveResult) {
-            autonetworkPer.async_approve();
-         } else {
-            autonetworkPer.async_disapprove();
-         }
-      }
+              if (approveResult) {
+                  autonetworkPer.async_approve();
+              } else {
+                  autonetworkPer.async_disapprove();
+              }        
+          }else{
+              log.debug("Received unsupported async msg: " + Arrays.toString(mainData));
+          }
+      }                                   
 
       log.debug("onAsynchronousMessage - end");
    }

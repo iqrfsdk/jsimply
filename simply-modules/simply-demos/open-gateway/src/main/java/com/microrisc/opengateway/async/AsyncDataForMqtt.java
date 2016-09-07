@@ -40,12 +40,6 @@ public final class AsyncDataForMqtt {
     // HW profile ID
     private final int hwpid;
     
-    // response code
-    private final DPA_ResponseCode responseCode;
-    
-    // DPA value
-    private final int dpaValue;
-    
     
     /**
      * Creates new DPA asynchronous message data for MQTT.
@@ -55,20 +49,15 @@ public final class AsyncDataForMqtt {
      * @param nodeId source node ID
      * @param pnum source peripheral ID
      * @param hwpid HW profile ID
-     * @param responseCode response code
-     * @param dpaValue DPA value
      */
     public AsyncDataForMqtt(
-            String moduleState, String moduleId, String nodeId, int pnum, 
-            int hwpid, DPA_ResponseCode responseCode, int dpaValue 
+            String moduleState, String moduleId, String nodeId, int pnum, int hwpid
     ) {
         this.moduleState = moduleState;
         this.moduleId = moduleId;
         this.nodeId = nodeId;
         this.pnum = pnum;
         this.hwpid = hwpid;
-        this.responseCode = responseCode;
-        this.dpaValue = dpaValue;
     }
     
     /**
@@ -104,20 +93,6 @@ public final class AsyncDataForMqtt {
      */
     public int getHwpid() {
         return hwpid;
-    }
-
-    /**
-     * @return the response code
-     */
-    public DPA_ResponseCode getResponseCode() {
-        return responseCode;
-    }
-
-    /**
-     * @return the DPA value
-     */
-    public int getDpaValue() {
-        return dpaValue;
     }
 
 }

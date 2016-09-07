@@ -66,7 +66,7 @@ public class AutonetworkState {
               "%").countTokens() - 1;
 
       // new string containg text value of this object
-      String newString = "";
+      String newString = "(0x" + String.format("%02x", type.getId()) + ") ";
 
       newString += type.getInfo();
       int additionalDataIndex = 0;
