@@ -54,19 +54,11 @@ public final class AsyncDataForMqttCreator {
             throw new AsyncDataForMqttCreatorException("Asynchronous message main data not known.");
         }
         
-        if ( dpaAsyncMessage.getAdditionalData()== null ) {
+        if ( dpaAsyncMessage.getAdditionalData() == null ) {
             throw new AsyncDataForMqttCreatorException("Asynchronous message additional data not known.");
         }
         
-        if ( !(dpaAsyncMessage.getMainData() instanceof short[]) ) {
-            throw new AsyncDataForMqttCreatorException(
-                "Asynchronous message bad type of the main data."
-                + "Got: " + dpaAsyncMessage.getMainData().getClass()
-                + ", expected: " + short[].class    
-            );
-        }
-        
-        short[] mainData = (short[])dpaAsyncMessage.getMainData();
+        short[] mainData = dpaAsyncMessage.getMainData();
         if ( mainData.length == 0 ) {
             throw new AsyncDataForMqttCreatorException(
                 "No asynchronously received data from the node: "
@@ -74,24 +66,12 @@ public final class AsyncDataForMqttCreator {
             );
         }
         
-        if ( !(dpaAsyncMessage.getAdditionalData() instanceof DPA_AdditionalInfo) ) {
-            throw new AsyncDataForMqttCreatorException(
-                "Asynchronous message bad type of the additional data."
-                + "Got: " + dpaAsyncMessage.getAdditionalData().getClass()
-                + ", expected: " + DPA_AdditionalInfo.class    
-            );
-        }
-        
-        DPA_AdditionalInfo additionalData = (DPA_AdditionalInfo)dpaAsyncMessage.getAdditionalData();
-        
         return new AsyncDataForMqtt(
                 getModuleState(mainData), 
                 getModuleId(osInfo), 
                 dpaAsyncMessage.getMessageSource().getNodeId(), 
                 dpaAsyncMessage.getMessageSource().getPeripheralNumber(),
-                additionalData.getHwProfile(), 
-                additionalData.getResponseCode(), 
-                additionalData.getDPA_Value()
+                dpaAsyncMessage.getAdditionalData()
         );
     }
     

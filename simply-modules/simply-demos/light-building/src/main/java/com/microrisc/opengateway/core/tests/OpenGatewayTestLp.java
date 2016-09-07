@@ -69,7 +69,7 @@ public class OpenGatewayTestLp implements AsynchronousMessagesListener<DPA_Async
     public static String asyncNodeId = null;
     public static int asyncPeripheralNumber = 0;
     public static short[] asyncMainData = null;
-    public static DPA_AdditionalInfo asyncAdditionalData = null;
+    public static Integer asyncAdditionalData = null;
 
     // references for MQTT
     public static String protocol = "tcp://";
@@ -616,8 +616,7 @@ public class OpenGatewayTestLp implements AsynchronousMessagesListener<DPA_Async
                             = "{\"e\":[{\"n\":\"carplace\"," + "\"sv\":" + "\"" + STATE + "\"}],"
                             + "\"iqrf\":[{\"pid\":" + pidAsyncCitiq + "," + "\"dpa\":\"resp\"," + "\"nadr\":" + node2.getId() + ","
                             + "\"pnum\":" + DPA_ProtocolProperties.PNUM_Properties.USER_PERIPHERAL_START + "," + "\"pcmd\":" + "\"" + Custom.MethodID.SEND.name().toLowerCase() + "\","
-                            + "\"hwpid\":" + asyncAdditionalData.getHwProfile() + "," + "\"rcode\":" + "\"" + asyncAdditionalData.getResponseCode().name().toLowerCase() + "\","
-                            + "\"dpavalue\":" + asyncAdditionalData.getDPA_Value() + "}],"
+                            + "\"hwpid\":" + asyncAdditionalData + "}],"
                             + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
                             + "}";
 
@@ -652,8 +651,7 @@ public class OpenGatewayTestLp implements AsynchronousMessagesListener<DPA_Async
                             = "{\"e\":[{\"n\":\"carplace\"," + "\"sv\":" + "\"" + STATE + "\"}],"
                             + "\"iqrf\":[{\"pid\":" + pidAsyncCitiq + "," + "\"dpa\":\"resp\"," + "\"nadr\":" + node3.getId() + ","
                             + "\"pnum\":" + DPA_ProtocolProperties.PNUM_Properties.USER_PERIPHERAL_START + "," + "\"pcmd\":" + "\"" + Custom.MethodID.SEND.name().toLowerCase() + "\","
-                            + "\"hwpid\":" + asyncAdditionalData.getHwProfile() + "," + "\"rcode\":" + "\"" + asyncAdditionalData.getResponseCode().name().toLowerCase() + "\","
-                            + "\"dpavalue\":" + asyncAdditionalData.getDPA_Value() + "}],"
+                            + "\"hwpid\":" + asyncAdditionalData + "}],"
                             + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
                             + "}";
 
@@ -685,8 +683,7 @@ public class OpenGatewayTestLp implements AsynchronousMessagesListener<DPA_Async
                             = "{\"e\":[{\"n\":\"switch\"," + "\"sv\":" + "\"" + STATE + "\"}],"
                             + "\"iqrf\":[{\"pid\":" + pidAsyncTeco + "," + "\"dpa\":\"resp\"," + "\"nadr\":" + node4.getId() + ","
                             + "\"pnum\":" + DPA_ProtocolProperties.PNUM_Properties.USER_PERIPHERAL_START + "," + "\"pcmd\":" + "\"" + Custom.MethodID.SEND.name().toLowerCase() + "\","
-                            + "\"hwpid\":" + asyncAdditionalData.getHwProfile() + "," + "\"rcode\":" + "\"" + asyncAdditionalData.getResponseCode().name().toLowerCase() + "\","
-                            + "\"dpavalue\":" + asyncAdditionalData.getDPA_Value() + "}],"
+                            + "\"hwpid\":" + asyncAdditionalData + "}],"
                             + "\"bn\":" + "\"urn:dev:mid:" + "unknown" + "\""
                             + "}";
 
@@ -754,8 +751,7 @@ public class OpenGatewayTestLp implements AsynchronousMessagesListener<DPA_Async
                             = "{\"e\":[{\"n\":\"switch\"," + "\"sv\":" + "\"" + STATE + "\"}],"
                             + "\"iqrf\":[{\"pid\":" + pidAsyncTeco + "," + "\"dpa\":\"resp\"," + "\"nadr\":" + node5.getId() + ","
                             + "\"pnum\":" + DPA_ProtocolProperties.PNUM_Properties.USER_PERIPHERAL_START + "," + "\"pcmd\":" + "\"" + Custom.MethodID.SEND.name().toLowerCase() + "\","
-                            + "\"hwpid\":" + asyncAdditionalData.getHwProfile() + "," + "\"rcode\":" + "\"" + asyncAdditionalData.getResponseCode().name().toLowerCase() + "\","
-                            + "\"dpavalue\":" + asyncAdditionalData.getDPA_Value() + "}],"
+                            + "\"hwpid\":" + asyncAdditionalData + "}],"
                             + "\"bn\":" + "\"urn:dev:mid:" + "unknown" + "\""
                             + "}";
 
@@ -844,8 +840,7 @@ public class OpenGatewayTestLp implements AsynchronousMessagesListener<DPA_Async
                             = "{\"e\":[{\"n\":\"switch\"," + "\"sv\":" + "\"" + STATE + "\"}],"
                             + "\"iqrf\":[{\"pid\":" + pidAsyncTeco + "," + "\"dpa\":\"resp\"," + "\"nadr\":" + node6.getId() + ","
                             + "\"pnum\":" + DPA_ProtocolProperties.PNUM_Properties.USER_PERIPHERAL_START + "," + "\"pcmd\":" + "\"" + Custom.MethodID.SEND.name().toLowerCase() + "\","
-                            + "\"hwpid\":" + asyncAdditionalData.getHwProfile() + "," + "\"rcode\":" + "\"" + asyncAdditionalData.getResponseCode().name().toLowerCase() + "\","
-                            + "\"dpavalue\":" + asyncAdditionalData.getDPA_Value() + "}],"
+                            + "\"hwpid\":" + asyncAdditionalData + "}],"
                             + "\"bn\":" + "\"urn:dev:mid:" + "unknown" + "\""
                             + "}";
 
@@ -929,8 +924,8 @@ public class OpenGatewayTestLp implements AsynchronousMessagesListener<DPA_Async
 
         asyncNodeId = message.getMessageSource().getNodeId();
         asyncPeripheralNumber = message.getMessageSource().getPeripheralNumber();
-        asyncMainData = (short[]) message.getMainData();
-        asyncAdditionalData = (DPA_AdditionalInfo) message.getAdditionalData();
+        asyncMainData = message.getMainData();
+        asyncAdditionalData = message.getAdditionalData();
 
         // sending control message back to network based on received message
         asyncRequestReceived = true;
