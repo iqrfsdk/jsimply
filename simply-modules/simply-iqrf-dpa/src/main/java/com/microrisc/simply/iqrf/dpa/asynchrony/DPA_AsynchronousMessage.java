@@ -18,6 +18,7 @@ package com.microrisc.simply.iqrf.dpa.asynchrony;
 
 import com.microrisc.simply.AbstractMessage;
 import com.microrisc.simply.asynchrony.BaseAsynchronousMessage;
+import java.util.Arrays;
 
 /**
  * DPA asynchronous message.
@@ -80,6 +81,15 @@ public final class DPA_AsynchronousMessage extends BaseAsynchronousMessage {
     @Override
     public DPA_AsynchronousMessageSource getMessageSource() {
         return (DPA_AsynchronousMessageSource) messageSource;
+    }
+    
+    @Override
+    public String toString() {
+        return ("{ " +
+                "main data=" + Arrays.toString((short[])mainData) +
+                ", additional data=" + additionalData +
+                ", source=" + messageSource +
+                " }");
     }
     
 }

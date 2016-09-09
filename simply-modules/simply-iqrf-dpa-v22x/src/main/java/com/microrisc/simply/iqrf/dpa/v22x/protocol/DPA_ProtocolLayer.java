@@ -339,7 +339,7 @@ implements ProtocolStateMachineListener
     /**
      * Processes specified message.
      * @param message message to process
-     * @paeram msgPacket message source protocol packet
+     * @param msgPacket message source protocol packet
      */
     private void processMessage(AbstractMessage message) {
         logger.debug("processMessage - start: message={}", message);
@@ -352,8 +352,8 @@ implements ProtocolStateMachineListener
                 }
             } else {
                 logger.warn("Unknown type of the message={}, discarded", message);
-                logger.debug("processMessage - end");
             }
+            logger.debug("processMessage - end");
             return;
         }
         else { 
@@ -439,15 +439,15 @@ implements ProtocolStateMachineListener
     private static DPA_AsynchronousMessage createAsynchronousMessage(NetworkData networkData) {
         int nodeAddress = DPA_ProtocolProperties.getNodeAddress(networkData.getData());
         int perNum = DPA_ProtocolProperties.getPeripheralNumber(networkData.getData());
-        short[] data = new short[
+        short[] mainData = new short[
                             networkData.getData().length - DPA_ProtocolProperties.PDATA_START
                         ];
         System.arraycopy(networkData.getData(), DPA_ProtocolProperties.PDATA_START, 
-                data, 0, data.length
+                mainData, 0, mainData.length
         );
         
         return new DPA_AsynchronousMessage(
-                data, DPA_ProtocolProperties.getHWPID(networkData.getData()),
+                mainData, DPA_ProtocolProperties.getHWPID(networkData.getData()),
                 new SimpleDPA_AsynchronousMessageSource( 
                         new SimpleMessageSource(networkData.getNetworkId(), Integer.toString(nodeAddress)), 
                         perNum
