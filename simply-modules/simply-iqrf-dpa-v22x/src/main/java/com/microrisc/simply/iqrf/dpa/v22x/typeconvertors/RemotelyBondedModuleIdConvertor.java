@@ -76,6 +76,7 @@ public final class RemotelyBondedModuleIdConvertor extends PrimitiveConvertor {
     @Override
     public Object toObject(short[] protoValue) throws ValueConversionException {
         logger.debug("toObject - start: protoValue={}", protoValue);
+        protoValue = checkData(protoValue);
         
         short[] moduleId = new short[MODULE_ID_LENGTH];
         System.arraycopy(protoValue, MODULE_ID_POS, moduleId, 0, MODULE_ID_LENGTH);
@@ -89,5 +90,13 @@ public final class RemotelyBondedModuleIdConvertor extends PrimitiveConvertor {
         
         logger.debug("toObject - end: {}", remoteBondedModuleId);
         return remoteBondedModuleId;
+    }
+    
+    private short[] checkData(short[] data) throws ValueConversionException{
+        if(data == null || data.length != TYPE_SIZE){
+            throw new ValueConversionException("Illegal data. Data cannot be null a their length must be " + TYPE_SIZE);
+        }else{
+            return data;
+        }
     }
 }

@@ -209,9 +209,8 @@ public final class NetworkBuilder implements
    public void onAsynchronousMessage(DPA_AsynchronousMessage message) {
       log.debug("onAsynchronousMessage - start: message={}", message);
       
-      if (message.getMainData() instanceof short[]) {
+      if (message.getMainData() instanceof short[]) {          
           short[] mainData = (short[])message.getMainData();
-          System.out.println(Arrays.toString(mainData));
           short[] stateData = Arrays.copyOfRange(mainData, 2, mainData.length);
           
           // conversion to autonetwork state
@@ -221,8 +220,12 @@ public final class NetworkBuilder implements
           } catch (ValueConversionException ex) {
               log.debug(ex.getMessage());
           }
+          
           // if was conversion successful, process it
-          if (state != null && state instanceof AutonetworkState) {
+          if (state != null && state instanceof AutonetworkState
+                  && ((AutonetworkState)state).getType() != AutonetworkStateType.UNKNOWN ) 
+          {              
+              log.debug("autonetwork msg - start");
               AutonetworkState actualState = (AutonetworkState) state;
                             
               log.info("Autonetwork message: " + actualState);
@@ -242,7 +245,7 @@ public final class NetworkBuilder implements
                   bondedModuleId = (RemotelyBondedModuleId)RemotelyBondedModuleIdConvertor
                           .getInstance().toObject(stateData);
               } catch (ValueConversionException ex) {
-                  log.warn("Unsuportted async message.");
+                  log.warn("Unsuportted async message: " + Arrays.toString(mainData));
                   return;
               }
               boolean approveResult = approver.approveNode(bondedModuleId);

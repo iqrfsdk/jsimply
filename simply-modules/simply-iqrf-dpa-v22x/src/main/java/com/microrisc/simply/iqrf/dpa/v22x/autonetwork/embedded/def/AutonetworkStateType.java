@@ -81,7 +81,7 @@ public enum AutonetworkStateType {
          }
       }
       return UNKNOWN;
-   }
+   }   
 
    /**
     * Return id of state.

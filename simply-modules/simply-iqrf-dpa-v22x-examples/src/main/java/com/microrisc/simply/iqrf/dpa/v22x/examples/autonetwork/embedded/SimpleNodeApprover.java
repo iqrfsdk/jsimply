@@ -28,7 +28,6 @@ public class SimpleNodeApprover implements NodeApprover {
 
    @Override
    public boolean approveNode(RemotelyBondedModuleId approvingMsg) {
-       
       // there can be implemented logic of approving based on parameters,
       // for more details {@see RemotelyBondedModuleId}
       
