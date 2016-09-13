@@ -109,7 +109,9 @@ public final class OsInfoConvertor extends PrimitiveConvertor {
         short[] moduleId = new short[MODULE_ID_LENGTH];
         System.arraycopy(protoValue, MODULE_ID_POS, moduleId, 0, MODULE_ID_LENGTH);
         
-        short osVersion = protoValue[OS_VERSION_POS];
+        // Warning: Eg. version 37 is in data as 55 and must be parsed as hex 
+        // value and after parsed as number which correctly identify version
+        short osVersion = Short.parseShort(Integer.toHexString(protoValue[OS_VERSION_POS]));
         OsInfo.TR_Type trType = getTR_Type(protoValue[MCUTR_TYPE_POS]);
         OsInfo.MCU_Type mcuType = getMCU_Type(protoValue[MCUTR_TYPE_POS]);
         
