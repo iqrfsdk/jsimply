@@ -160,7 +160,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>com.microrisc.opengateway.OpenGateway</mainClass>
+                            <mainClass>com.microrisc.opengateway.apps.monitoring.OpenGatewayApp</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
