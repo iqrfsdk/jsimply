@@ -158,6 +158,29 @@ public final class MqttFormatter {
     }
     
     /**
+     * Returns formated value of Protronix response message.
+     *
+     * @param nodeId
+     * @param clientId
+     * @param co2
+     * @param temperature
+     * @param humidity
+     * 
+     * @return formated MQTT message
+     */
+    public static String formatDeviceProtronix(int nodeId, String clientId, String co2, String temperature, String humidity) {
+
+        String time = Long.toString(System.currentTimeMillis());
+
+        return "["
+                + "{\"bn\":" + "\"urn:clid:" + clientId + ":ba:" + nodeId + "\"," + "\"bt\":" + time + "},"
+                + "{\"n\":\"co2\"," + "\"u\":\"Cel\"," + "\"ppm\":" + co2 + "},"
+                + "{\"n\":\"humidity\"," + "\"u\":\"%RH\"," + "\"v\":" + humidity + "},"
+                + "{\"n\":\"temperature\"," + "\"u\":\"Cel\"," + "\"v\":" + temperature + "}"
+                + "]";
+    }
+    
+    /**
      * Returns formated value of specified error string.
      *
      * @param error error message

@@ -34,15 +34,16 @@ public final class MqttConfiguration {
     private final String certFilePath;
     private final String username;
     private final String password;
-    
+    private final String rootTopic;    
     
     /**
-     * Creates new object holding information about MQTT configuration parameters.
+     * Creates new object holding information about MQTT configuration
+     * parameters.
      */
     public MqttConfiguration(
-            String protocol, String broker, long port, String clientId, 
+            String protocol, String broker, long port, String clientId,
             String gwId, boolean cleanSession, boolean quiteMode, boolean ssl,
-            String certFilePath, String username, String password
+            String certFilePath, String username, String password, String rootTopic
     ) {
         this.protocol = protocol;
         this.broker = broker;
@@ -55,6 +56,7 @@ public final class MqttConfiguration {
         this.certFilePath = certFilePath;
         this.username = username;
         this.password = password;
+        this.rootTopic = rootTopic;
     }
     
     /**
@@ -133,5 +135,11 @@ public final class MqttConfiguration {
     public String getGwId() {
         return gwId;
     }
-
+    
+    /**
+     * @return the rootTopicPath
+     */
+    public String getRootTopic() {
+        return rootTopic;
+    }
 }

@@ -8,6 +8,7 @@
     "quitemode": false,
     "ssl": false,
     "certfile": "",
+    "username": "",
     "password": "",
-    "username": ""
+    "roottopic": ""
 }

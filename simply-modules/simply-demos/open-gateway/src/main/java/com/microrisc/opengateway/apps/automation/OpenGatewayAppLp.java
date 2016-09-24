@@ -165,9 +165,24 @@ public class OpenGatewayAppLp {
             }
         }));
 
+        // loading application configuration
+        try {
+            appConfiguration = loadApplicationConfiguration("App.json");
+        } catch (Exception ex) {
+            printMessageAndExit("Error in loading application configuration: " + ex);
+        }
+        
         // Simply initialization
-        dpaSimply = getDPA_Simply("Simply-CDC.properties");
-
+        if(appConfiguration.getCommunicationInterface().equalsIgnoreCase("cdc")) {
+            dpaSimply = getDPA_Simply("Simply-CDC.properties");
+        }
+        else if(appConfiguration.getCommunicationInterface().equalsIgnoreCase("spi")) {
+            dpaSimply = getDPA_Simply("Simply-SPI.properties");
+        }
+        else {
+           printMessageAndExit("No supported communication interface: " + appConfiguration.getCommunicationInterface());
+        }
+        
         // loading MQTT configuration
         MqttConfiguration mqttConfiguration = null;
         try {
@@ -195,13 +210,6 @@ public class OpenGatewayAppLp {
         );
 
         mqttCommunicator = new MqttCommunicator(mqttConfiguration);
-
-        // loading application configuration
-        try {
-            appConfiguration = loadApplicationConfiguration("App.json");
-        } catch (Exception ex) {
-            printMessageAndExit("Error in loading application configuration: " + ex);
-        }
 
         // getting reference to IQRF DPA network to use
         Network dpaNetwork = dpaSimply.getNetwork("1", Network.class);
@@ -746,7 +754,8 @@ public class OpenGatewayAppLp {
                 (boolean) jsonObject.get("ssl"),
                 (String) jsonObject.get("certfile"),
                 (String) jsonObject.get("username"),
-                (String) jsonObject.get("password")
+                (String) jsonObject.get("password"),
+                (String) jsonObject.get("roottopic")
         );
     }
 
@@ -778,6 +787,7 @@ public class OpenGatewayAppLp {
 
         return new ApplicationConfiguration(
                 (long) appJsonObjects.get("pollingPeriod"),
+                (String) appJsonObjects.get("communicationInterface"),
                 devicesInfos
         );
     }

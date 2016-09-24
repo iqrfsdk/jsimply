@@ -27,18 +27,21 @@ import java.util.Map;
  */
 public final class ApplicationConfiguration {
     private final long pollingPeriod;
+    private final String communicationInterface;
     private final Map<Integer, DeviceInfo> devicesInfoMap;
     
     
     /**
      * Creates new object holding information about application configuration parameters.
      * @param pollingPeriod polling period
+     * @param communicationInterface communication interface
      * @param devicesInfoMap info about each device
      */
     public ApplicationConfiguration(
-            long pollingPeriod, Map<Integer, DeviceInfo> devicesInfoMap
+            long pollingPeriod, String communicationInterface, Map<Integer, DeviceInfo> devicesInfoMap
     ) {
         this.pollingPeriod = pollingPeriod;
+        this.communicationInterface = communicationInterface;
         this.devicesInfoMap = new HashMap<>(devicesInfoMap);
     }
     
@@ -54,6 +57,13 @@ public final class ApplicationConfiguration {
      */
     public long getPollingPeriod() {
         return pollingPeriod;
+    }
+
+    /**
+     * @return the communication interface
+     */
+    public String getCommunicationInterface() {
+        return communicationInterface;
     }
 
     /**
