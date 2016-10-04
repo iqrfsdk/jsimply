@@ -23,7 +23,7 @@ package com.microrisc.opengateway.mqtt;
  */
 public final class MqttTopics {
     
-    private final String gwId;
+    private final String rootTopic;
     
     private final String stdSensorsProtronix;
     private final String stdSensorsProtronixErrors;
@@ -39,15 +39,17 @@ public final class MqttTopics {
     
     /**
      * Creates new object of MQTT topics.
-     * @param gwId gw ID
+     * @param rootTopic gw ID
      * @param stdSensorsProtronix
      * @param stdSensorsProtronixErrors
      * @param stdActuatorsDevtech
      * @param stdActuatorsDevtechErrors
+     * @param lpSensorsIqhome,
+     * @param lpSensorsIqhomeErrors,
      * @param lpActuatorsTeco
      * @param lpActuatorsTecoErrors
      */
-    public MqttTopics(String gwId,
+    public MqttTopics(String rootTopic,
             String stdSensorsProtronix,
             String stdSensorsProtronixErrors,
             String stdActuatorsDevtech,
@@ -57,26 +59,26 @@ public final class MqttTopics {
             String lpActuatorsTeco,
             String lpActuatorsTecoErrors) 
     {
-        this.gwId = gwId;
+        this.rootTopic = rootTopic;
         
-        this.stdSensorsProtronix = gwId + stdSensorsProtronix;
-        this.stdSensorsProtronixErrors = gwId + stdSensorsProtronixErrors;
+        this.stdSensorsProtronix = rootTopic + stdSensorsProtronix;
+        this.stdSensorsProtronixErrors = rootTopic + stdSensorsProtronixErrors;
         
-        this.stdActuatorsDevtech = gwId + stdActuatorsDevtech;
-        this.stdActuatorsDevtechErrors = gwId + stdActuatorsDevtechErrors;
+        this.stdActuatorsDevtech = rootTopic + stdActuatorsDevtech;
+        this.stdActuatorsDevtechErrors = rootTopic + stdActuatorsDevtechErrors;
         
-        this.lpSensorsIqHome = gwId + lpSensorsIqhome;
-        this.lpSensorsIqhomeErrors = gwId + lpSensorsIqhomeErrors;
+        this.lpSensorsIqHome = rootTopic + lpSensorsIqhome;
+        this.lpSensorsIqhomeErrors = rootTopic + lpSensorsIqhomeErrors;
         
-        this.lpActuatorsTeco = gwId + lpActuatorsTeco; 
-        this.lpActuatorsTecoErrors = gwId + lpActuatorsTecoErrors;
+        this.lpActuatorsTeco = rootTopic + lpActuatorsTeco; 
+        this.lpActuatorsTecoErrors = rootTopic + lpActuatorsTecoErrors;
     }
     
     /**
      * @return the client ID
      */
     public String getGwId() {
-        return gwId;
+        return rootTopic;
     }
 
     /**

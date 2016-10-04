@@ -115,13 +115,13 @@ public class OpenGatewayIntelimentsApp {
         } 
         
         // to be configured from config file
-        String topicProtronix = mqttConfiguration.getRootTopic() + "/iqrf/iaq/protronix";
+        String topicProtronix = "/iqrf/iaq/protronix";
         String topicDevtech = "";
         String topicIqhome = "";
         String topicTeco = "";
 
         MqttTopics mqttTopics = new MqttTopics(
-                mqttConfiguration.getGwId(),
+                mqttConfiguration.getRootTopic(),
                 topicProtronix,
                 topicProtronix + "/errors/",
                 topicDevtech,
