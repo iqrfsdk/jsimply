@@ -104,6 +104,7 @@
         <module>simply-network-spi</module>
         <module>simply-network-udp</module>
         <module>simply-network-usbcdc</module>
+        <module>simply-network-mqtt</module>
         <module>simply-services</module>
         <module>simply-devices</module>
         <module>simply-iqrf-dpa-v22x-examples</module>

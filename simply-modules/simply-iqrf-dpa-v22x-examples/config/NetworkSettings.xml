@@ -17,7 +17,18 @@
 		<note>Some note here.</note>
     </network>
 
-<!--    
+<!--
+    <network>
+		<id>1</id>
+		<type>MQTT</type>
+		<serverURI>tcp://127.0.0.1:1883</serverURI>               
+                <clientId>af2aec1cfae4499e88ef9c2a767615cf</clientId>               
+                <remoteMAC>74E50B186E8A</remoteMAC>
+		<note>Some note here.</note>
+    </network>
+-->
+
+<!--
     <network>
 		<id>1</id>
 		<type>UDP</type>

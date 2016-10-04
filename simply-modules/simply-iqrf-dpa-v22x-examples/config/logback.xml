@@ -376,6 +376,15 @@
             <appender-ref ref="FILE" />
     </logger>
     
+    <!-- com.microrisc.simply.network.mqtt package --> 
+    <logger name="com.microrisc.simply.network.mqtt.MQTTNetworkLayer" level="INHERITED">
+            <appender-ref ref="FILE" />
+    </logger>
+
+    <logger name="com.microrisc.simply.network.mqtt.MQTTNetworkLayerMultinet" level="INHERITED">
+            <appender-ref ref="FILE" />
+    </logger>
+    
 	
     <!-- com.microrisc.simply.network.spi package --> 
     <logger name="com.microrisc.simply.network.spi.SPINetworkLayer" level="INHERITED">
@@ -384,7 +393,6 @@
     
     
     <!-- autonetwork embedded -->
-    
     <logger name="com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.logic.AutonetworkStateConvertor" level="INHERITED">
        <appender-ref ref="AUTONETWORK_ALGO_STDOUT" />
     </logger>
@@ -394,9 +402,7 @@
     </logger>
 
 
-
-    <!-- load code service -->
-    
+    <!-- load code service -->  
     <logger name="com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.DataPreparer" level="INHERITED">
        <appender-ref ref="FILE" />
     </logger>

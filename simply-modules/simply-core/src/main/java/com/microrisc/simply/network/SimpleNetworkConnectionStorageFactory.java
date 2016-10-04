@@ -18,6 +18,7 @@ package com.microrisc.simply.network;
 
 import com.microrisc.simply.SimplyException;
 import com.microrisc.simply.network.comport.BaseCOMPortConnectionInfo;
+import com.microrisc.simply.network.mqtt.BaseMQTTConnectionInfo;
 import com.microrisc.simply.network.spi.BaseSPIPortConnectionInfo;
 import com.microrisc.simply.network.udp.BaseUDPConnectionInfo;
 import com.microrisc.simply.network.udp.UDPConnectionInfo;
@@ -45,9 +46,15 @@ import org.apache.commons.configuration.Configuration;
  *      Configuration items: <br>
  *          - port: port number <br>
  *      Implementing class: {@link BaseSPIPortConnectionInfo} <br>
+ * - MQTT<br>
+ *      Configuration items: <br>
+ *          - server URI: URI of server<br>
+ *          - clientId: id of client used for communication<br>
+ *      Implementing class: {@link BaseMQTTConnectionInfo} <br>
  * 
  * @author Michal Konopa
  * @author Rostislav Spinar
+ * @author Martin Strouhal
  */
 public final class SimpleNetworkConnectionStorageFactory 
 extends AbstractNetworkConnectionStorageFactory<Configuration, NetworkConnectionStorage> 
@@ -81,6 +88,24 @@ extends AbstractNetworkConnectionStorageFactory<Configuration, NetworkConnection
         return new BaseSPIPortConnectionInfo(port);
     }
     
+    /** Creates and returns MQTT-interface configuration settings. */
+    private BaseMQTTConnectionInfo getMQTTConnectionInfo(Configuration networkConfig) 
+            throws SimplyException {
+        String serverURI = networkConfig.getString("serverURI", "");
+        if ( serverURI.equals("") ) {
+            throw new SimplyException("Server URI not specified");
+        }
+        String clientId = networkConfig.getString("clientId", "");
+        if ( clientId.equals("") ) {
+            throw new SimplyException("Client Id not specified");
+        }
+        String remoteMAC = networkConfig.getString("remoteMAC", "");
+        if (remoteMAC.equals("") ) {
+            throw new SimplyException("Remote MAC not specified");
+        }
+        return new BaseMQTTConnectionInfo(serverURI, clientId, remoteMAC);
+    }
+    
     /** 
      * Creates and returns connection info based on type of network connection. 
      */ 
@@ -100,6 +125,10 @@ extends AbstractNetworkConnectionStorageFactory<Configuration, NetworkConnection
         
         if ( connTypeStr.equals("SPI") ) {
             return (AbstractNetworkConnectionInfo)getSPIConnectionInfo(networkConfig);
+        }
+        
+        if ( connTypeStr.equals("MQTT") ) {
+            return (AbstractNetworkConnectionInfo)getMQTTConnectionInfo(networkConfig);
         }
         
         // unknown connection type
