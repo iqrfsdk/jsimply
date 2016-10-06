@@ -17,9 +17,11 @@
 package com.microrisc.opengateway.mqtt;
 
 import com.microrisc.opengateway.apps.automation.OpenGatewayAppStd;
-import com.microrisc.opengateway.dpa.DPA_CompleteResult;
+import com.microrisc.opengateway.dpa.DPA_Request;
+import com.microrisc.opengateway.dpa.DPA_Result;
+import com.microrisc.opengateway.dpa.ResponseData;
+import com.microrisc.opengateway.web.WebRequestParser;
 import com.microrisc.opengateway.web.WebRequestParserException;
-import com.microrisc.opengateway.web.WebResponseConvertor;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -222,7 +224,7 @@ public class MqttCommunicator implements MqttCallback {
     }
 
     /**
-     * Subscribe to a topic on an MQTT server Once subscribed this method waits
+     * Subscribe to a topic on an MQTT server. Once subscribed this method waits
      * for the messages to arrive from the server that match the subscription.
      * It continues listening for messages until the enter key is pressed.
      *
@@ -316,30 +318,52 @@ public class MqttCommunicator implements MqttCallback {
                            + "  Message:\t" + new String(message.getPayload())
                            + "  QoS:\t" + message.getQos());
         
-        // get data as string
-        final String msg = new String(message.getPayload());
+        // message data
+        final String messageData = new String(message.getPayload());
         
-        // getting DPA result
-        DPA_CompleteResult dpaResult = null;
+        DPA_Request dpaRequest = null;
+        DPA_Result result = null;
         try {
-            dpaResult = OpenGatewayAppStd.sendWebRequestToDpaNetwork(topic, msg);
-        } catch ( InterruptedException ex ) {
-            // sending response to error topic
+            dpaRequest = WebRequestParser.parse( messageData );
+            result = OpenGatewayAppStd.sendWebRequestToDpaNetwork(dpaRequest, topic);
         } catch ( WebRequestParserException ex ) {
-            // sending response to error topic
+            System.err.println("Error while parsing web request: " + ex);
+            return;
         } 
         
-        // converting DPA result into web response form
-        String webResponse = WebResponseConvertor.convert(dpaResult);
-        
-        // TODO: sending of the result
-
-/*
-        if(resultToBeSent != null) {
-            publish(Topics.ACTUATORS_RESPONSES_LEDS, 2, resultToBeSent.getBytes());
+        // no result - usually in the case of error
+        if ( result == null ) {
+            System.err.println("Null result from DPA.");
+            return;
         }
-*/
         
+        // creating data of response to publish
+        ResponseData responseData = createResponseData(dpaRequest, result);
+        
+        // converting DPA result into web response form
+        String webResponse = MqttFormatter.formatResponseData(responseData);
+        try {
+            publish(topic, 2, webResponse.getBytes());
+        } catch ( MqttException ex ) {
+            System.err.println("Error while publishing web response message: " + ex);
+        }
+        
+    }
+    
+    // creates response data for publishing
+    private ResponseData createResponseData(DPA_Request request, DPA_Result result) {
+        return new ResponseData(
+                request.getN(), 
+                request.getSv(),
+                String.valueOf(request.getPid()), 
+                result.getRequest().getNadr(), 
+                String.valueOf(result.getRequest().getPnum()),
+                result.getRequest().getPcmd(),
+                String.valueOf(result.getDpaAddInfo().getHwProfile()),
+                String.valueOf(result.getDpaAddInfo().getResponseCode()),
+                String.valueOf(result.getDpaAddInfo().getDPA_Value()),
+                result.getRequest().getModuleId()
+        );
     }
     
     /**

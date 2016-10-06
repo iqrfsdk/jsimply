@@ -120,18 +120,18 @@ public class OpenGatewayIntelimentsApp {
         String topicIqhome = "";
         String topicTeco = "";
 
-        MqttTopics mqttTopics = new MqttTopics(
-                mqttConfiguration.getRootTopic(),
-                topicProtronix,
-                topicProtronix + "/errors/",
-                topicDevtech,
-                topicDevtech + "/errors/",
-                topicIqhome,
-                topicIqhome + "/errors/",
-                topicTeco,
-                topicTeco + "/errors/"
-        );
-
+        // topics initialization
+        MqttTopics mqttTopics =  new MqttTopics.Builder().gwId(mqttConfiguration.getRootTopic())
+                .stdSensorsProtronix("/std/sensors/protronix/")
+                .stdSensorsProtronixErrors("/std/sensors/protronix/errors/")
+                .stdActuatorsDevtech("/std/actuators/devtech/")
+                .stdSensorsIqHome("/std/sensors/iqhome/")
+                .stdSensorsIqHomeErrors("/std/sensors/iqhome/errors/")
+                .stdActuatorsDevtechErrors("/std/actuators/devtech/errors/")
+                .lpActuatorsTeco("/lp/actuators/teco/")
+                .lpActuatorsTecoErrors("/lp/actuators/teco/errors/")
+                .build();
+        
         mqttCommunicator = new MqttCommunicator(mqttConfiguration);
         
         // getting reference to IQRF DPA network to use

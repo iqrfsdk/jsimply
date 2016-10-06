@@ -20,7 +20,7 @@ import com.microrisc.opengateway.async.AsyncDataForMqttCreator;
 import com.microrisc.opengateway.async.AsyncDataForMqttCreatorException;
 import com.microrisc.opengateway.config.ApplicationConfiguration;
 import com.microrisc.opengateway.config.DeviceInfo;
-import com.microrisc.opengateway.dpa.DPA_CompleteResult;
+import com.microrisc.opengateway.dpa.DPA_Result;
 import com.microrisc.opengateway.mqtt.MqttCommunicator;
 import com.microrisc.opengateway.mqtt.MqttConfiguration;
 import com.microrisc.opengateway.mqtt.MqttFormatter;
@@ -191,23 +191,17 @@ public class OpenGatewayAppLp {
             printMessageAndExit("Error in loading MQTT configuration: " + ex);
         }
 
-        // to be configured from config file
-        String topicProtronix = "/std/sensors/protronix/";
-        String topicDevtech = "/std/actuators/devtech/";
-        String topicIqhome = "/std/sensors/iqhome/";
-        String topicTeco = "/lp/actuators/teco/";
-
-        mqttTopics = new MqttTopics(
-                mqttConfiguration.getGwId(),
-                topicProtronix,
-                topicProtronix + "errors/",
-                topicDevtech,
-                topicDevtech + "errors/",
-                topicIqhome,
-                topicIqhome + "errors/",
-                topicTeco,
-                topicTeco + "errors/"
-        );
+        // topics initialization
+        mqttTopics =  new MqttTopics.Builder().gwId(mqttConfiguration.getGwId())
+                .stdSensorsProtronix("/std/sensors/protronix/")
+                .stdSensorsProtronixErrors("/std/sensors/protronix/errors/")
+                .stdActuatorsDevtech("/std/actuators/devtech/")
+                .stdSensorsIqHome("/std/sensors/iqhome/")
+                .stdSensorsIqHomeErrors("/std/sensors/iqhome/errors/")
+                .stdActuatorsDevtechErrors("/std/actuators/devtech/errors/")
+                .lpActuatorsTeco("/lp/actuators/teco/")
+                .lpActuatorsTecoErrors("/lp/actuators/teco/errors/")
+                .build();
 
         mqttCommunicator = new MqttCommunicator(mqttConfiguration);
 
@@ -297,7 +291,8 @@ public class OpenGatewayAppLp {
 
     // processes specified asynchronous message
     private static void processAsynchronousMessage(
-            DPA_AsynchronousMessage dpaAsyncMessage, MqttTopics mqttTopics) {
+            DPA_AsynchronousMessage dpaAsyncMessage, MqttTopics mqttTopics
+    ) {
 
         AsyncDataForMqtt asyncDataForMqtt = null;
 
@@ -314,7 +309,7 @@ public class OpenGatewayAppLp {
         if (asyncDataForMqtt.getNodeId().equals("4")) {
             
             mqttTopic =  mqttTopics.getLpActuatorsTeco();
-            mqttMessage = MqttFormatter.formatAsyncDataForMqtt(asyncDataForMqtt);
+            mqttMessage = MqttFormatter.formatAsyncDataForMqtt(asyncDataForMqtt, 0);
             
             // inform web gui about event
             publishMqttMessage(mqttTopic, mqttMessage);
@@ -322,10 +317,10 @@ public class OpenGatewayAppLp {
             // app logic
             mqttTopic =  mqttTopics.getStdActuatorsDevtech();
             if(asyncDataForMqtt.getModuleState().equals("up")) {
-                mqttMessage = MqttFormatter.formatDeviceDevtech("on");
+                mqttMessage = MqttFormatter.formatDeviceDevtech("on", 0);
             }
             else if (asyncDataForMqtt.getModuleState().equals("down")) {
-                mqttMessage = MqttFormatter.formatDeviceDevtech("off");
+                mqttMessage = MqttFormatter.formatDeviceDevtech("off", 0);
             }
             
             // based on async event it sends request to std network via broker 
@@ -433,7 +428,7 @@ public class OpenGatewayAppLp {
             int nodeId = Integer.parseInt(entry.getKey());
             
             // node ID must be within valid interval
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
             
@@ -447,7 +442,7 @@ public class OpenGatewayAppLp {
                         devicesMap.put(entry.getKey(), (DeviceObject) custom);
                         System.out.println("Device type: " + deviceInfo.getType());
                     } else {
-                        System.err.println("Custom device periferal not found on node: " + nodeId);
+                        System.err.println("Custom device peripheral not found on node: " + nodeId);
                     }
                 break;
 
@@ -462,13 +457,14 @@ public class OpenGatewayAppLp {
     
     // returns data from devices as specicied by map
     private static Map<String, Object> getDataFromDevices(
-            Map<String, DeviceObject> devicesMap, MqttTopics mqttTopics ) {
+            Map<String, DeviceObject> devicesMap, MqttTopics mqttTopics 
+    ) {
         
         // data from devices
         Map<String, Object> dataFromDevices = new HashMap<>();
         
         // mqtt data for 1 sensor
-        List<DPA_CompleteResult> deviceData = new LinkedList<>();
+        List<DPA_Result> deviceData = new LinkedList<>();
         
         for ( Map.Entry<String, DeviceObject> entry : devicesMap.entrySet() ) {
             
@@ -514,7 +510,7 @@ public class OpenGatewayAppLp {
                     
                     if ( tempData != null) {
                         DPA_AdditionalInfo dpaAddInfo = custom.getDPA_AdditionalInfoOfLastCall();
-                        DPA_CompleteResult dpaCR = new DPA_CompleteResult(tempData, null, dpaAddInfo);
+                        DPA_Result dpaCR = new DPA_Result(tempData, null, dpaAddInfo, null);
                         deviceData.add(dpaCR);
                     } else {
                         CallRequestProcessingState requestState = custom.getCallRequestProcessingStateOfLastCall();
@@ -544,7 +540,7 @@ public class OpenGatewayAppLp {
                     
                     if ( humData != null) {
                         DPA_AdditionalInfo dpaAddInfo = custom.getDPA_AdditionalInfoOfLastCall();
-                        DPA_CompleteResult dpaCR = new DPA_CompleteResult(humData, null, dpaAddInfo);
+                        DPA_Result dpaCR = new DPA_Result(humData, null, dpaAddInfo, null);
                         deviceData.add(dpaCR);
                     } else {
                         CallRequestProcessingState requestState = custom.getCallRequestProcessingStateOfLastCall();
@@ -607,7 +603,7 @@ public class OpenGatewayAppLp {
             
             switch ( deviceInfo.getType().toLowerCase() ) {
                 case "custom":
-                    List<DPA_CompleteResult> deviceData = (List<DPA_CompleteResult>)entry.getValue();
+                    List<DPA_Result> deviceData = (List<DPA_Result>)entry.getValue();
                     
                     if ( deviceData == null ) {
                         System.err.println(
@@ -620,32 +616,33 @@ public class OpenGatewayAppLp {
                                        
                     String moduleId = getModuleId(entry.getKey(), osInfoMap);
                     
-                    DPA_CompleteResult receivedDataTemp = deviceData.get(0);
-                    DPA_CompleteResult receivedDataHum = deviceData.get(1);
+                    DPA_Result receivedDataTemp = deviceData.get(0);
+                    DPA_Result receivedDataHum = deviceData.get(1);
                     
-                    if (receivedDataTemp.getOpResult().length == 0 && receivedDataHum.getOpResult().length == 0) {
+                    short[] receivedTemperature = (short[])receivedDataTemp.getOpResult();
+                    short[] receivedHumidity = (short[])receivedDataHum.getOpResult();
+                    
+                    if ( receivedTemperature.length == 0 && receivedHumidity.length == 0) {
                         System.err.print("No received data from custom on the node " + nodeId);
                         mqttAllDevicesData.put(entry.getKey(), null);
                         break;
-                    } 
-                    else 
-                    {
+                    } else {
                         System.out.print("Received temperature from custom on the node " + nodeId + ": ");
-                        for (Short readResultLoop : receivedDataTemp.getOpResult()) {
+                        for ( Short readResultLoop : receivedTemperature ) {
                             System.out.print(Integer.toHexString(readResultLoop).toUpperCase() + " ");
                         }
                         System.out.println();
 
-                        float temperature = (receivedDataTemp.getOpResult()[1] << 8) + receivedDataTemp.getOpResult()[0];
+                        float temperature = (receivedTemperature[1] << 8) + receivedTemperature[0];
                         temperature = temperature / 16;
 
                         System.out.print("Received humidity from custom on the node " + nodeId + ": ");
-                        for (Short readResultLoop : receivedDataHum.getOpResult()) {
+                        for ( Short readResultLoop : receivedHumidity ) {
                             System.out.print(Integer.toHexString(readResultLoop).toUpperCase() + " ");
                         }
                         System.out.println();
 
-                        float humidity = (receivedDataHum.getOpResult()[1] << 8) + receivedDataHum.getOpResult()[0];
+                        float humidity = (receivedHumidity[1] << 8) + receivedHumidity[0];
                         humidity = Math.round(humidity / 16);
                         
                         String mqttDataIqhome = MqttFormatter
@@ -654,7 +651,8 @@ public class OpenGatewayAppLp {
                                         moduleId,
                                         receivedDataHum.getDpaAddInfo(),
                                         String.valueOf(sensorDataFormat.format(temperature)),
-                                        String.valueOf(sensorDataFormat.format(humidity))
+                                        String.valueOf(sensorDataFormat.format(humidity)),
+                                        0
                                 );
 
                         mqttDeviceData.add(mqttDataIqhome);
@@ -727,7 +725,7 @@ public class OpenGatewayAppLp {
     // publish error messages to specified MQTT topics
     private static void mqttPublishErrors(int nodeId, MqttTopics mqttTopics, String errorMessage) {
         try {
-            mqttCommunicator.publish(mqttTopics.getLpSensorsIqhomeErrors() + nodeId, 2, errorMessage.getBytes());
+            mqttCommunicator.publish(mqttTopics.getLpSensorsIqHomeErrors() + nodeId, 2, errorMessage.getBytes());
         } catch (MqttException ex) {
             System.err.println("Error while publishing error message: " + ex);
         }

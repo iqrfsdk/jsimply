@@ -15,6 +15,9 @@
  */
 package com.microrisc.opengateway.web;
 
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonArray;
+import com.eclipsesource.json.JsonValue;
 import com.microrisc.opengateway.dpa.DPA_Request;
 
 /**
@@ -32,10 +35,28 @@ public final class WebRequestParser {
      * @throws com.microrisc.opengateway.web.WebRequestParserException if some error
      *         occurs during parsing
      */
-    public static DPA_Request parse(WebRequest webRequest) 
-            throws WebRequestParserException 
+    public static DPA_Request parse(String webRequest) throws WebRequestParserException 
     {
-        throw new UnsupportedOperationException();
+        String n = null;
+        String sv = null;
+        int pid = 0;
+        String dpa = null;
+        int nadr = 0;
+     
+        JsonArray elements = Json.parse(webRequest).asObject().get("e").asArray();
+        for (JsonValue element : elements) {
+            n = element.asObject().getString("n", "");
+            sv = element.asObject().getString("sv", "");
+        }
+      
+        elements = Json.parse(webRequest).asObject().get("iqrf").asArray();
+        for (JsonValue element : elements) {
+            pid = element.asObject().getInt("pid", 0);
+            dpa = element.asObject().getString("dpa", "");
+            nadr = element.asObject().getInt("nadr", 0);
+        }
+        
+        return new DPA_Request(n, sv, pid, dpa, nadr);
     }
     
 }

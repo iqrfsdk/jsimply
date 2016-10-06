@@ -88,23 +88,9 @@ public class OpenGatewayO2ITSApp {
             }
         }));
         
-        // loading application configuration
-        try {
-            appConfiguration = loadApplicationConfiguration("App.json");
-        } catch (Exception ex) {
-            printMessageAndExit("Error in loading application configuration: " + ex);
-        }
-        
         // Simply initialization
-        if(appConfiguration.getCommunicationInterface().equalsIgnoreCase("cdc")) {
-            dpaSimply = getDPA_Simply("Simply-CDC.properties");
-        }
-        else if(appConfiguration.getCommunicationInterface().equalsIgnoreCase("spi")) {
-            dpaSimply = getDPA_Simply("Simply-SPI.properties");
-        }
-        else {
-            printMessageAndExit("No supported communication interface: " + appConfiguration.getCommunicationInterface());
-        }
+        //dpaSimply = getDPA_Simply("Simply-CDC.properties");
+        dpaSimply = getDPA_Simply("Simply-SPI.properties");
         
         // loading MQTT configuration
         MqttConfiguration mqttConfiguration = null;
@@ -114,25 +100,26 @@ public class OpenGatewayO2ITSApp {
             printMessageAndExit("Error in loading MQTT configuration: " + ex);
         } 
         
-        // to be configured from config file
-        String topicProtronix = "/std/sensors/protronix/";
-        String topicDevtech = "";
-        String topicIqhome = "";
-        String topicTeco = "";
-
-        MqttTopics mqttTopics = new MqttTopics(
-                mqttConfiguration.getGwId(),
-                topicProtronix,
-                topicProtronix + "errors/",
-                topicDevtech,
-                topicDevtech + "errors/",
-                topicIqhome,
-                topicIqhome + "errors/",
-                topicTeco,
-                topicTeco + "errors/"
-        );
+        // topics initialization
+        MqttTopics mqttTopics =  new MqttTopics.Builder().gwId(mqttConfiguration.getGwId())
+                .stdSensorsProtronix("/std/sensors/protronix/")
+                .stdSensorsProtronixErrors("/std/sensors/protronix/errors/")
+                .stdActuatorsDevtech("/std/actuators/devtech/")
+                .stdSensorsIqHome("/std/sensors/iqhome/")
+                .stdSensorsIqHomeErrors("/std/sensors/iqhome/errors/")
+                .stdActuatorsDevtechErrors("/std/actuators/devtech/errors/")
+                .lpActuatorsTeco("/lp/actuators/teco/")
+                .lpActuatorsTecoErrors("/lp/actuators/teco/errors/")
+                .build();
 
         mqttCommunicator = new MqttCommunicator(mqttConfiguration);
+
+        // loading application configuration
+        try {
+            appConfiguration = loadApplicationConfiguration("App.json");
+        } catch ( Exception ex ) {
+            printMessageAndExit("Error in loading application configuration: " + ex);
+        } 
         
         // getting reference to IQRF DPA network to use
         Network dpaNetwork = dpaSimply.getNetwork("1", Network.class);
@@ -153,7 +140,7 @@ public class OpenGatewayO2ITSApp {
         Map<String, CompoundDeviceObject> sensorsMap = getSensorsMap(nodesMap);
         
         // main application loop
-        while( true ) {
+        while ( true ) {
             getAndPublishSensorData(sensorsMap, mqttTopics, osInfoMap);
             Thread.sleep(appConfiguration.getPollingPeriod() * 1000);
         }
@@ -531,7 +518,7 @@ public class OpenGatewayO2ITSApp {
 
                 default:
                     printMessageAndExit("Device type not supported:" + sensorInfo.getType());
-                break;
+                break;    
             }                      
         }
         
@@ -586,19 +573,21 @@ public class OpenGatewayO2ITSApp {
 
         JSONObject jsonObject = (JSONObject) obj;
         
+        
+        
         return new MqttConfiguration(
-            (String) jsonObject.get("protocol"), 
-            (String) jsonObject.get("broker"), 
-            (long) jsonObject.get("port"),
-            (String) jsonObject.get("clientid"),
-            (String) jsonObject.get("gwid"),
-            (boolean) jsonObject.get("cleansession"),
-            (boolean) jsonObject.get("quitemode"),
-            (boolean) jsonObject.get("ssl"),
-            (String) jsonObject.get("certfile"),
-            (String) jsonObject.get("username"),
-            (String) jsonObject.get("password"),
-            (String) jsonObject.get("roottopicpath")
+                (String) jsonObject.get("protocol"),
+                (String) jsonObject.get("broker"),
+                (long) jsonObject.get("port"),
+                (String) jsonObject.get("clientid"),
+                (String) jsonObject.get("gwid"),
+                (boolean) jsonObject.get("cleansession"),
+                (boolean) jsonObject.get("quitemode"),
+                (boolean) jsonObject.get("ssl"),
+                (String) jsonObject.get("certfile"),
+                (String) jsonObject.get("username"),
+                (String) jsonObject.get("password"),
+                (String) jsonObject.get("roottopic")
         );
     }
     
