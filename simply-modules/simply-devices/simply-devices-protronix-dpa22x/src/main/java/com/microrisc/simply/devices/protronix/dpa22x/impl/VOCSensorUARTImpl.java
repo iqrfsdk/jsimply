@@ -162,6 +162,13 @@ extends CompoundDeviceObject implements VOCSensor {
         return uart.getCallRequestProcessingErrorOfLastCall();
     }
     
+    /**
+     * No supported.
+     * 
+     * @param callId
+     * @return
+     * @throws UnsupportedOperationException
+     */
     @Override
     public DPA_AdditionalInfo getDPA_AdditionalInfo(UUID callId) {
         throw new UnsupportedOperationException("Not supported yet.");

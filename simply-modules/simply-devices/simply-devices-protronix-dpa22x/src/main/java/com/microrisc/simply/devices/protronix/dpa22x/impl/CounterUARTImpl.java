@@ -13,29 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.microrisc.simply.devices.protronix.dpa22x.impl;
 
 import com.microrisc.simply.CallRequestProcessingState;
 import com.microrisc.simply.DeviceObject;
-import com.microrisc.simply.errors.CallRequestProcessingError;
 import com.microrisc.simply.compounddevices.CompoundDeviceObject;
-import com.microrisc.simply.iqrf.dpa.v22x.devices.UART;
-import com.microrisc.simply.devices.protronix.dpa22x.CO2Sensor;
+import com.microrisc.simply.devices.protronix.dpa22x.Counter;
 import com.microrisc.simply.devices.protronix.dpa22x.errors.BadResponseDataError;
-import com.microrisc.simply.devices.protronix.dpa22x.types.CO2SensorData;
 import com.microrisc.simply.devices.protronix.dpa22x.utils.ModbusCRCSetter;
+import com.microrisc.simply.errors.CallRequestProcessingError;
+import com.microrisc.simply.iqrf.dpa.v22x.devices.UART;
 import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_AdditionalInfo;
 import java.util.UUID;
 
 /**
- * Implementation of {@link com.microrisc.simply.iqrf.dpa.v22x.protronix.devices.CO2_Sensor}
+ * Implementation of {@link com.microrisc.simply.iqrf.dpa.v22x.protronix.devices.Counter}
  * using UART peripheral.
  * 
  * @author Michal Konopa
  */
-public class CO2SensorUARTImpl 
-extends CompoundDeviceObject implements CO2Sensor {
+public final class CounterUARTImpl 
+extends CompoundDeviceObject implements Counter {
     
     // UART to use for communication
     private final UART uart;
@@ -44,40 +42,17 @@ extends CompoundDeviceObject implements CO2Sensor {
     private static final short READ_TIMEOUT = 0xFE;
     
     // Protronix HWPID
-    private static final int HWPID = 0x0132;
+    private static final int HWPID = 0xFFFF;
     
     // used data to send to UART
-    private static final short[] MODBUSRequest 
-        = { 0x01, 0x42, 0x00, 0x03, 0x75, 0x31, 0x75, 0x33, 0x75, 0x32, 0x00, 0x00 }; 
+    private static final short[] REQUEST = { 0x01, 0x04, 0x75, 0x37, 0x00, 0x01 }; 
     
     // reponse length
-    private static final int MODBUS_RESPONSE_LENGTH = 18;
+    private static final int RESPONSE_LENGTH = 2;
     
     
-    // parses data from UART to CO2 Sensor Data 
-    private static class UART_DataParser {
-        
-        private static final int CO2_HIGH_BYTE_POS = 6;
-        private static final int CO2_LOW_BYTE_POS = 7;
-        
-        private static final int TEMPERATURE_HIGH_BYTE_POS = 10;
-        private static final int TEMPERATURE_LOW_BYTE_POS = 11;
-        
-        private static final int HUMIDITY_HIGH_BYTE_POS = 14;
-        private static final int HUMIDITY_LOW_BYTE_POS = 15;
-        
-        
-        public static CO2SensorData parse(short[] uartData) {
-            int co2 = (uartData[CO2_HIGH_BYTE_POS] << 8) + uartData[CO2_LOW_BYTE_POS];
-            float temperature = ((uartData[TEMPERATURE_HIGH_BYTE_POS] << 8) + uartData[TEMPERATURE_LOW_BYTE_POS])
-                    / (float) 10;
-            float humidity = ((uartData[HUMIDITY_HIGH_BYTE_POS] << 8) + uartData[HUMIDITY_LOW_BYTE_POS])
-                    / (float) 10;
-            
-            return new CO2SensorData(co2, temperature, humidity);
-        }
-    }
-            
+    // last response data error
+    private BadResponseDataError lastResponseDataError = null; 
     
     private static UART checkUartDeviceObject(DeviceObject uartDeviceObject) {
         if ( !(uartDeviceObject.getImplementedDeviceInterface() == UART.class) ) {
@@ -87,9 +62,6 @@ extends CompoundDeviceObject implements CO2Sensor {
         }
         return (UART)uartDeviceObject;
     }
-    
-    // last response data error
-    private BadResponseDataError lastResponseDataError = null; 
     
     
     /**
@@ -101,17 +73,17 @@ extends CompoundDeviceObject implements CO2Sensor {
      * @throws IllegalArgumentException if {@code uartDeviceObject} doesn't implement
      *         the {@link UART} Device Interface
      */
-    public CO2SensorUARTImpl(String networkId, String nodeId, DeviceObject uartDeviceObject) {
+    public CounterUARTImpl(String networkId, String nodeId, DeviceObject uartDeviceObject) {
         super(networkId, nodeId, uartDeviceObject);
         this.uart = checkUartDeviceObject(uartDeviceObject);
         this.uart.setRequestHwProfile(HWPID);
     }
 
     @Override
-    public CO2SensorData get() {
+    public Integer count() {
         lastResponseDataError = null;
         
-        short[] readData = uart.writeAndRead(READ_TIMEOUT, ModbusCRCSetter.set(MODBUSRequest));
+        short[] readData = uart.writeAndRead(READ_TIMEOUT, ModbusCRCSetter.set(REQUEST));
         if ( readData == null ) {
             return null;
         }
@@ -121,15 +93,15 @@ extends CompoundDeviceObject implements CO2Sensor {
             return null;
         }
                 
-        if ( readData.length != MODBUS_RESPONSE_LENGTH ) {
+        if ( readData.length != RESPONSE_LENGTH ) {
             lastResponseDataError = new BadResponseDataError(
                     "Bad lenght of data received from UART. Get data length: " + readData.length 
-                    + "Expected: " + MODBUS_RESPONSE_LENGTH
+                    + "Expected: " + RESPONSE_LENGTH
             );
             return null;
         }
         
-        return UART_DataParser.parse(readData);
+        return readData[0] + (readData[1] << 8);
     }
 
     @Override
@@ -164,7 +136,7 @@ extends CompoundDeviceObject implements CO2Sensor {
     }
     
     /**
-     * No supported.
+     * Not supported.
      * 
      * @param callId
      * @return
@@ -179,4 +151,5 @@ extends CompoundDeviceObject implements CO2Sensor {
     public DPA_AdditionalInfo getDPA_AdditionalInfoOfLastCall() {
         return uart.getDPA_AdditionalInfoOfLastCall();
     } 
+    
 }
