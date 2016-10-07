@@ -395,11 +395,13 @@ public class OpenGatewayAppLp {
                         CallRequestProcessingError error = os.getCallRequestProcessingErrorOfLastCall();
                         System.err.println("Getting OS info failed: " + error);
                         
-                        if (error.getErrorType() == CallRequestProcessingErrorType.NETWORK_INTERNAL) {
+                        if ( error.getErrorType() == CallRequestProcessingErrorType.NETWORK_INTERNAL ) {
                             // specific call error
                             DPA_AdditionalInfo dpaAddInfo = os.getDPA_AdditionalInfoOfLastCall();
-                            DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
-                            System.err.println("Getting OS info failed on the node, DPA error: " + dpaResponseCode);
+                            if ( dpaAddInfo != null ) {
+                                DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
+                                System.err.println("Getting OS info failed on the node, DPA error: " + dpaResponseCode); 
+                            }
                         }
                     } else {
                         System.err.println("Getting OS info hasn't been processed yet: " + procState);
@@ -525,8 +527,10 @@ public class OpenGatewayAppLp {
                             // specific call error
                             if (error.getErrorType() == CallRequestProcessingErrorType.NETWORK_INTERNAL) {
                                 DPA_AdditionalInfo dpaAddInfo = custom.getDPA_AdditionalInfoOfLastCall();
-                                DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
-                                System.err.println("Error while getting data from custom iqhome device, DPA error: " + dpaResponseCode);
+                                if ( dpaAddInfo != null ) {
+                                    DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
+                                    System.err.println("Error while getting data from custom iqhome device, DPA error: " + dpaResponseCode); 
+                                }
                             }
                         } else {
                             System.err.println(
@@ -555,8 +559,10 @@ public class OpenGatewayAppLp {
                             // specific call error
                             if (error.getErrorType() == CallRequestProcessingErrorType.NETWORK_INTERNAL) {
                                 DPA_AdditionalInfo dpaAddInfo = custom.getDPA_AdditionalInfoOfLastCall();
-                                DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
-                                System.err.println("Error while getting data from custom iqhome device, DPA error: " + dpaResponseCode);
+                                if ( dpaAddInfo != null ) {
+                                    DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
+                                    System.err.println("Error while getting data from custom iqhome device, DPA error: " + dpaResponseCode); 
+                                }
                             }
                         } else {
                             System.err.println(
