@@ -63,33 +63,37 @@ public class MqttCommunicator implements MqttCallback {
     private String userName;
     private String certFile;
     
-    // in ms
-    private static final int DEFAULT_RECONNECTION_SLEEP_TIME = 60*1000;
+    // time  between consecutive attempts to reconnection [in ms]
+    private static final int DEFAULT_RECONNECTION_SLEEP_TIME = 3000;
+    
     private Runnable reconnectionRunnable = new Runnable() {
         @Override
         public void run() {
             
-            while (client != null && !client.isConnected()) {
+            while ( (client != null) && !(client.isConnected()) ) {
                 // Connect to the MQTT server
                 log("Reconnecting to" + brokerUrl + "with client ID " + client.getClientId());
 
                 conOpt = new MqttConnectOptions();
                 conOpt.setCleanSession(false);
-
-                try {
-                    client.connect(conOpt);
-                } catch (MqttException ex) {
-                    log("Reconnecting to" + brokerUrl + "with client "
-                            + "ID " + client.getClientId() + "failed! " + ex.getMessage());
-                }
                 
                 try {
+                    client.connect(conOpt);
+                } catch ( MqttException ex ) {
+                    log(
+                        "Reconnecting to" + brokerUrl + "with client "
+                        + "ID " + client.getClientId() + "failed: " + ex.getMessage()
+                    );
+                }
+                
+                if ( !client.isConnected() ) {
+                   try {
                     Thread.sleep(DEFAULT_RECONNECTION_SLEEP_TIME);
-                } catch (InterruptedException ex) {
-                    log.warn(ex.toString());                    
+                    } catch ( InterruptedException ex ) {
+                        log.warn(ex.toString());                    
+                    }
                 }
             }
-            reconnectionThread = null;
             log("Connected");
         }
     };
