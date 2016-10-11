@@ -35,6 +35,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.sql.Timestamp;
+import java.util.logging.Level;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -75,7 +76,12 @@ public class MqttCommunicator implements MqttCallback {
                 log("Reconnecting to" + brokerUrl + "with client ID " + client.getClientId());
 
                 conOpt = new MqttConnectOptions();
-                conOpt.setCleanSession(false);
+                try {
+                    setConnectionOptions(false, userName, password, certFile);
+                } catch ( Exception ex ) {
+                    System.err.println("Error while reconnecting: " + ex);
+                    System.exit(1);
+                }
                 
                 try {
                     client.connect(conOpt);
@@ -100,7 +106,42 @@ public class MqttCommunicator implements MqttCallback {
     private Thread reconnectionThread;
     
     private static final Logger log = LoggerFactory.getLogger(MqttCommunicator.class);
+    
+    
+    // sets connection options
+    private void setConnectionOptions(
+            boolean isCleanSession, String password, String userName, String certFile
+    ) throws CertificateException, IOException, KeyStoreException, 
+            NoSuchAlgorithmException, KeyManagementException 
+    {
+        conOpt.setCleanSession(isCleanSession);
+            
+        if ( !password.isEmpty() ) {
+            conOpt.setPassword(password.toCharArray());
+        }
+        if ( !userName.isEmpty() ) {
+            conOpt.setUserName(userName);
+        }
 
+        if ( !certFile.isEmpty() ) {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+
+            InputStream certFileInputStream = fullStream(certFile);
+            Certificate ca = cf.generateCertificate(certFileInputStream);
+
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore.load(null);
+            keyStore.setCertificateEntry("ca", ca);
+
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(keyStore);
+
+            SSLContext sslContext = SSLContext.getInstance("TLSv1");
+            sslContext.init(null, trustManagerFactory.getTrustManagers(), new SecureRandom());
+            conOpt.setSocketFactory(sslContext.getSocketFactory());
+        }
+    }
+    
     /**
      * Constructs an instance of the sample client wrapper
      *
@@ -129,32 +170,7 @@ public class MqttCommunicator implements MqttCallback {
             // Construct the connection options object that contains connection parameters
             // such as cleanSession and LWT
             conOpt = new MqttConnectOptions();
-            conOpt.setCleanSession(clean);
-            
-            if (!password.isEmpty()) {
-                conOpt.setPassword(this.password.toCharArray());
-            }
-            if (!userName.isEmpty()) {
-                conOpt.setUserName(this.userName);
-            }
-            
-            if (!certFile.isEmpty()) {
-                CertificateFactory cf = CertificateFactory.getInstance("X.509");
-
-                InputStream certFileInputStream = fullStream(certFile);
-                Certificate ca = cf.generateCertificate(certFileInputStream);
-
-                KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-                keyStore.load(null);
-                keyStore.setCertificateEntry("ca", ca);
-
-                TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                trustManagerFactory.init(keyStore);
-
-                SSLContext sslContext = SSLContext.getInstance("TLSv1");
-                sslContext.init(null, trustManagerFactory.getTrustManagers(), new SecureRandom());
-                conOpt.setSocketFactory(sslContext.getSocketFactory());
-            }
+            setConnectionOptions(clean, userName, password, certFile);
 
             // Construct an MQTT blocking mode client
             client = new MqttClient(this.brokerUrl, mqttConfig.getClientId(), dataStore);
@@ -167,7 +183,6 @@ public class MqttCommunicator implements MqttCallback {
             
             client.connect(conOpt);
             log("Connected");
-
         } catch (MqttException e) {
             e.printStackTrace();
             log("Unable to set up client: " + e.toString());
