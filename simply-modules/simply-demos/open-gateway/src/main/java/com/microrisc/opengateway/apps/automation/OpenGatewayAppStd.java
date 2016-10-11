@@ -146,9 +146,6 @@ public class OpenGatewayAppStd {
         }
 
         // Simply initialization
-        dpaSimply = getDpaSimply("Simply-SPI.properties");
-
-        // Simply initialization
         if(appConfiguration.getCommunicationInterface().equalsIgnoreCase("cdc")) {
             dpaSimply = getDpaSimply("Simply-CDC.properties");
         }

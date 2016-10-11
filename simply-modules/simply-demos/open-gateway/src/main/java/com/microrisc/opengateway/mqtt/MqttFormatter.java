@@ -203,11 +203,12 @@ public final class MqttFormatter {
      */
     public static String formatDeviceProtronix(int nodeId, String clientId, String co2, String temperature, String humidity) {
 
-        String time = Long.toString(System.currentTimeMillis());
+        String timeSec = Long.toString( System.currentTimeMillis() / 1000);
+        String timeMsec = Long.toString( System.currentTimeMillis() % 1000);
 
         return "["
-                + "{\"bn\":" + "\"urn:clid:" + clientId + ":ba:" + nodeId + "\"," + "\"bt\":" + time + "},"
-                + "{\"n\":\"co2\"," + "\"u\":\"Cel\"," + "\"ppm\":" + co2 + "},"
+                + "{\"bn\":" + "\"urn:clid:" + clientId + ":ba:" + nodeId + "\"," + "\"bt\":" + timeSec + "." + timeMsec + "},"
+                + "{\"n\":\"co2\"," + "\"u\":\"ppm\"," + "\"v\":" + co2 + "},"
                 + "{\"n\":\"humidity\"," + "\"u\":\"%RH\"," + "\"v\":" + humidity + "},"
                 + "{\"n\":\"temperature\"," + "\"u\":\"Cel\"," + "\"v\":" + temperature + "}"
                 + "]";

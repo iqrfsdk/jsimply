@@ -88,9 +88,23 @@ public class OpenGatewayO2ITSApp {
             }
         }));
         
+        // loading application configuration
+        try {
+            appConfiguration = loadApplicationConfiguration("App.json");
+        } catch (Exception ex) {
+            printMessageAndExit("Error in loading application configuration: " + ex);
+        }
+        
         // Simply initialization
-        //dpaSimply = getDPA_Simply("Simply-CDC.properties");
-        dpaSimply = getDPA_Simply("Simply-SPI.properties");
+        if(appConfiguration.getCommunicationInterface().equalsIgnoreCase("cdc")) {
+            dpaSimply = getDPA_Simply("Simply-CDC.properties");
+        }
+        else if(appConfiguration.getCommunicationInterface().equalsIgnoreCase("spi")) {
+            dpaSimply = getDPA_Simply("Simply-SPI.properties");
+        }
+        else {
+            printMessageAndExit("No supported communication interface: " + appConfiguration.getCommunicationInterface());
+        }
         
         // loading MQTT configuration
         MqttConfiguration mqttConfiguration = null;
@@ -104,22 +118,9 @@ public class OpenGatewayO2ITSApp {
         MqttTopics mqttTopics =  new MqttTopics.Builder().gwId(mqttConfiguration.getGwId())
                 .stdSensorsProtronix("/std/sensors/protronix/")
                 .stdSensorsProtronixErrors("/std/sensors/protronix/errors/")
-                .stdActuatorsDevtech("/std/actuators/devtech/")
-                .stdSensorsIqHome("/std/sensors/iqhome/")
-                .stdSensorsIqHomeErrors("/std/sensors/iqhome/errors/")
-                .stdActuatorsDevtechErrors("/std/actuators/devtech/errors/")
-                .lpActuatorsTeco("/lp/actuators/teco/")
-                .lpActuatorsTecoErrors("/lp/actuators/teco/errors/")
                 .build();
 
         mqttCommunicator = new MqttCommunicator(mqttConfiguration);
-
-        // loading application configuration
-        try {
-            appConfiguration = loadApplicationConfiguration("App.json");
-        } catch ( Exception ex ) {
-            printMessageAndExit("Error in loading application configuration: " + ex);
-        } 
         
         // getting reference to IQRF DPA network to use
         Network dpaNetwork = dpaSimply.getNetwork("1", Network.class);
@@ -524,7 +525,7 @@ public class OpenGatewayO2ITSApp {
 
                 default:
                     printMessageAndExit("Device type not supported:" + sensorInfo.getType());
-                break;    
+                break;
             }                      
         }
         
@@ -578,8 +579,6 @@ public class OpenGatewayO2ITSApp {
         );
 
         JSONObject jsonObject = (JSONObject) obj;
-        
-        
         
         return new MqttConfiguration(
                 (String) jsonObject.get("protocol"),

@@ -196,9 +196,9 @@ public class OpenGatewayAppLp {
                 .stdSensorsProtronix("/std/sensors/protronix/")
                 .stdSensorsProtronixErrors("/std/sensors/protronix/errors/")
                 .stdActuatorsDevtech("/std/actuators/devtech/")
+                .stdActuatorsDevtechErrors("/std/actuators/devtech/errors/")
                 .stdSensorsIqHome("/std/sensors/iqhome/")
                 .stdSensorsIqHomeErrors("/std/sensors/iqhome/errors/")
-                .stdActuatorsDevtechErrors("/std/actuators/devtech/errors/")
                 .lpActuatorsTeco("/lp/actuators/teco/")
                 .lpActuatorsTecoErrors("/lp/actuators/teco/errors/")
                 .build();
@@ -234,7 +234,7 @@ public class OpenGatewayAppLp {
 
         // main application loop
         while (true) {
-            //getAndPublishDevicesData(devicesMap, mqttTopics, osInfoMap);
+            getAndPublishDevicesData(devicesMap, mqttTopics, osInfoMap);
             Thread.sleep(appConfiguration.getPollingPeriod() * 1000);
         }
     }

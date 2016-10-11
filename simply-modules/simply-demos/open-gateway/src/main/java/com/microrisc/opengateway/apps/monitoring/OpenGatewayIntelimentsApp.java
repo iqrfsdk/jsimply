@@ -112,24 +112,12 @@ public class OpenGatewayIntelimentsApp {
             mqttConfiguration = loadMqttConfiguration("Mqtt.json");
         } catch ( Exception ex ) {
            printMessageAndExit("Error in loading MQTT configuration: " + ex);
-        } 
-        
-        // to be configured from config file
-        String topicProtronix = "/iqrf/iaq/protronix";
-        String topicDevtech = "";
-        String topicIqhome = "";
-        String topicTeco = "";
+        }
 
         // topics initialization
         MqttTopics mqttTopics =  new MqttTopics.Builder().gwId(mqttConfiguration.getRootTopic())
-                .stdSensorsProtronix("/std/sensors/protronix/")
-                .stdSensorsProtronixErrors("/std/sensors/protronix/errors/")
-                .stdActuatorsDevtech("/std/actuators/devtech/")
-                .stdSensorsIqHome("/std/sensors/iqhome/")
-                .stdSensorsIqHomeErrors("/std/sensors/iqhome/errors/")
-                .stdActuatorsDevtechErrors("/std/actuators/devtech/errors/")
-                .lpActuatorsTeco("/lp/actuators/teco/")
-                .lpActuatorsTecoErrors("/lp/actuators/teco/errors/")
+                .stdSensorsProtronix("/iqrf/iaq/protronix")
+                .stdSensorsProtronixErrors("/iqrf/iaq/protronix/errors/")
                 .build();
         
         mqttCommunicator = new MqttCommunicator(mqttConfiguration);
