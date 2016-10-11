@@ -33,6 +33,17 @@
 					<class>com.microrisc.simply.compounddevices.CompoundDeviceObjectFactoryDefImpl</class>
 				</factory>
 			</device>
+                        <device>
+				<implClass>com.microrisc.simply.devices.protronix.dpa22x.impl.CounterUARTImpl</implClass>
+				<internalDevices>
+					<internalDevice>
+						<interface>com.microrisc.simply.iqrf.dpa.v22x.devices.UART</interface>
+					</internalDevice>
+				</internalDevices>
+				<factory>
+					<class>com.microrisc.simply.compounddevices.CompoundDeviceObjectFactoryDefImpl</class>
+				</factory>
+			</device>
 		</node>
                 
                 
@@ -50,6 +61,17 @@
 			</device>
                         <device>
 				<implClass>com.microrisc.simply.devices.protronix.dpa22x.impl.VOCSensorUARTImpl</implClass>
+				<internalDevices>
+					<internalDevice>
+						<interface>com.microrisc.simply.iqrf.dpa.v22x.devices.UART</interface>
+					</internalDevice>
+				</internalDevices>
+				<factory>
+					<class>com.microrisc.simply.compounddevices.CompoundDeviceObjectFactoryDefImpl</class>
+				</factory>
+			</device>
+                        <device>
+				<implClass>com.microrisc.simply.devices.protronix.dpa22x.impl.CounterUARTImpl</implClass>
 				<internalDevices>
 					<internalDevice>
 						<interface>com.microrisc.simply.iqrf.dpa.v22x.devices.UART</interface>
