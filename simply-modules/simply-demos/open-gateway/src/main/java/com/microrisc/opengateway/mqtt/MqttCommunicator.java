@@ -73,22 +73,14 @@ public class MqttCommunicator implements MqttCallback {
             
             while ( (client != null) && !(client.isConnected()) ) {
                 // Connect to the MQTT server
-                log("Reconnecting to" + brokerUrl + "with client ID " + client.getClientId());
-
-                conOpt = new MqttConnectOptions();
-                try {
-                    setConnectionOptions(false, userName, password, certFile);
-                } catch ( Exception ex ) {
-                    System.err.println("Error while reconnecting: " + ex);
-                    System.exit(1);
-                }
+                log("Reconnecting to " + brokerUrl + " with client ID " + client.getClientId());
                 
                 try {
                     client.connect(conOpt);
                 } catch ( MqttException ex ) {
                     log(
-                        "Reconnecting to" + brokerUrl + "with client "
-                        + "ID " + client.getClientId() + "failed: " + ex.getMessage()
+                        "Reconnecting to " + brokerUrl + " with client "
+                        + "ID " + client.getClientId() + " failed: " + ex.getMessage()
                     );
                 }
                 
