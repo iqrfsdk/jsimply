@@ -16,7 +16,6 @@
 package com.microrisc.opengateway.async;
 
 import com.microrisc.simply.iqrf.dpa.asynchrony.DPA_AsynchronousMessage;
-import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_AdditionalInfo;
 import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
 
 /**
@@ -66,6 +65,10 @@ public final class AsyncDataForMqttCreator {
             );
         }
         
+        //for (int i = 0; i < mainData.length; i++) {
+        //    System.out.println("Async main data: " + mainData[i]);
+        //}
+        
         return new AsyncDataForMqtt(
                 getModuleState(mainData), 
                 getModuleId(osInfo), 
@@ -80,11 +83,17 @@ public final class AsyncDataForMqttCreator {
     
         String state = "unknown";
         
-        if ((moduleData[0] & 0x01) == 0x01) {
-            state = "up";
+        if ((moduleData[2] & 0x01) == 0x01) {
+            state = "leftup";
         } 
-        else if ((moduleData[0] & 0x02) == 0x02) {
-            state = "down";
+        else if ((moduleData[2] & 0x02) == 0x02) {
+            state = "leftdown";
+        }
+        else if ((moduleData[2] & 0x04) == 0x04) {
+            state = "rightup";
+        }
+        else if ((moduleData[2] & 0x08) == 0x08) {
+            state = "rightdown";
         }
 
         return state;

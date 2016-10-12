@@ -131,7 +131,7 @@ public final class MqttFormatter {
      * @return MQTT form of {@code asyncMsgForMqtt}
      */
     public static String formatAsyncDataForMqtt(AsyncDataForMqtt asyncMsgForMqtt, int pid) {
-        return "{\"e\":[{\"n\":\"switch\"," + "\"sv\":" + asyncMsgForMqtt.getModuleState() + "}],"
+        return "{\"e\":[{\"n\":\"switch\"," + "\"sv\":" + "\"" + asyncMsgForMqtt.getModuleState() + "\"}],"
                 + "\"iqrf\":[{\"pid\":" + pid++ + "," + "\"dpa\":\"resp\"," + "\"nadr\":" + asyncMsgForMqtt.getNodeId() + ","
                 + "\"pnum\":" + DPA_ProtocolProperties.PNUM_Properties.USER_PERIPHERAL_START + "," + "\"pcmd\":" + "\"" + Custom.MethodID.SEND.name().toLowerCase() + "\","
                 + "\"hwpid\":" + asyncMsgForMqtt.getHwpid() +  "}],"
@@ -151,7 +151,7 @@ public final class MqttFormatter {
         int devtechHWPID = 0xFFFF;
         String devtechModuleId = "8100401F";
 
-        return "{\"e\":[{\"n\":\"io\"," + "\"sv\":" + state + "}],"
+        return "{\"e\":[{\"n\":\"io\"," + "\"sv\":" + "\"" + state + "\"}],"
                 + "\"iqrf\":[{\"pid\":" + pidDevtech++ + "," + "\"dpa\":\"req\"," + "\"nadr\":" + devtechNodeId + ","
                 + "\"pnum\":" + DPA_ProtocolProperties.PNUM_Properties.IO + "," + "\"pcmd\":" + "\"" + IO.MethodID.SET_OUTPUT_STATE.name().toLowerCase() + "\","
                 + "\"hwpid\":" + devtechHWPID + "}],"
@@ -222,7 +222,7 @@ public final class MqttFormatter {
      */
     public static String formatError(String error) {
         return "{\"e\":["
-                + "{\"n\":\"error\"," + "\"u\":\"description\"," + "\"v\":" + error + "}"
+                + "{\"n\":\"error\"," + "\"u\":\"description\"," + "\"v\":" + "\"" + error + "\"}"
                 + "]}";
     }
 }

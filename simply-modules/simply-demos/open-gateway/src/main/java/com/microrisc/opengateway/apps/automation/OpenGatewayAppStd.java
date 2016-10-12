@@ -172,31 +172,6 @@ public class OpenGatewayAppStd {
         mqttCommunicator.subscribe(mqttTopics.getStdActuatorsDevtech(), 2);
         mqttCommunicator.subscribe(mqttTopics.getStdActuatorsDatmolux(), 2);
         mqttCommunicator.subscribe(mqttTopics.getStdActuatorsTeco(), 2);
-
-        // getting reference to IQRF DPA network to use
-        Network dpaNetwork = dpaSimply.getNetwork("1", Network.class);
-        if (dpaNetwork == null) {
-            printMessageAndExit("DPA Network doesn't exist");
-        }
-
-        // reference to map of all nodes in the network
-        // getting node 1 - iqhome
-        // getting node 2 - citiq
-        // getting node 3 - citiq
-        // getting node 4 - sleeping switch teco
-        // getting node 5 - sleeping switch teco
-        // getting node 6 - sleeping switch teco
-        Map<String, Node> nodesMap = dpaNetwork.getNodesMap();
-
-        // reference to OS Info
-        osInfoMap = getOsInfoFromNodes(nodesMap);
-        
-        // loading application configuration
-        try {
-            appConfiguration = loadApplicationConfiguration("App.json");
-        } catch ( Exception ex ) {
-            printMessageAndExit("Error in loading application configuration: " + ex);
-        }
         
         nodesMap = getNodesMap();
         initDeviceReferences(nodesMap);
@@ -304,7 +279,7 @@ public class OpenGatewayAppStd {
             int nodeId = Integer.parseInt(entry.getKey());
             
             // node ID must be within valid interval
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
                 
@@ -387,8 +362,7 @@ public class OpenGatewayAppStd {
         DPA_AdditionalInfo dpaAddInfoIo = ioa.getDPA_AdditionalInfoOfLastCall();
         String moduleId = getModuleId(osInfoMap.get(CUSTOM_AUSTYN_NODE_ID));
         
-        // TODO
-        String webResponseTopic = "";
+        String webResponseTopic = mqttTopics.getStdActuatorsAustyn();
 
         // https://www.ietf.org/archive/id/draft-jennings-senml-10.txt
         String webResponseToBeSent
@@ -400,12 +374,13 @@ public class OpenGatewayAppStd {
                 + "\"dpavalue\":" + dpaAddInfoIo.getDPA_Value() + "}],"
                 + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
                 + "}";
-
+/*
         try {
             mqttCommunicator.publish(webResponseTopic, 2, webResponseToBeSent.getBytes());
         } catch ( MqttException ex ) {
             System.err.println("Error while publishing web response message.");
         }
+*/
     }
     
     private static void getAndSendIoStateDevtech() {
@@ -442,10 +417,9 @@ public class OpenGatewayAppStd {
 
         // getting additional info of the last call
         DPA_AdditionalInfo dpaAddInfoIo = ioa.getDPA_AdditionalInfoOfLastCall();
-        String moduleId = getModuleId(osInfoMap.get("3"));
+        String moduleId = getModuleId(osInfoMap.get(UART_DEVTECH_NODE_ID));
         
-        // TODO
-        String webResponseTopic = "";
+        String webResponseTopic = mqttTopics.getStdActuatorsDevtech();
 
         // https://www.ietf.org/archive/id/draft-jennings-senml-10.txt
         String webResponseToBeSent
@@ -458,11 +432,13 @@ public class OpenGatewayAppStd {
                 + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
                 + "}";
 
+/*        
         try {
             mqttCommunicator.publish(webResponseTopic, 2, webResponseToBeSent.getBytes());
         } catch ( MqttException ex ) {
             System.err.println("Error while publishing web response message.");
         }
+*/
     }
     
     // sets specified HW profile for UART on specified node
@@ -507,7 +483,7 @@ public class OpenGatewayAppStd {
     
     // tests, if specified node ID is in valid interval
     private static boolean isNodeIdInValidInterval(long nodeId) {
-        return ( nodeId <= 0 || nodeId > appConfiguration.getNumberOfDevices() );
+        return ( nodeId > 0 && nodeId <= 5 );
     }
     
     // sends request and returns data from UART protronix device
@@ -718,7 +694,7 @@ public class OpenGatewayAppStd {
 
         // send data to mqtt
         try {
-            mqttCommunicator.publish(mqttTopics.getStdSensorsProtronix(), 2, responseData.getBytes());
+            mqttCommunicator.publish(mqttTopics.getStdSensorsAustyn(), 2, responseData.getBytes());
         } catch ( MqttException ex ) {
             System.err.println("Error while publishing sync dpa message: " + ex);
         }
@@ -977,22 +953,25 @@ public class OpenGatewayAppStd {
     
     private static DPA_Result sendRequestToDevtechActuator(DPA_Request dpaRequest) {
         if ( !dpaRequest.getDpa().equalsIgnoreCase("REQ") ) {
+            System.out.println("Web request - SV: " + dpaRequest.getDpa());
             return null;
         }
         
         if ( !dpaRequest.getN().equalsIgnoreCase("IO") ) {
+            System.out.println("Web request - SV: " + dpaRequest.getN());
             return null;
         }
         
         IO io = nodesMap.get(UART_DEVTECH_NODE_ID).getDeviceObject(IO.class);
         if ( io == null ) {
-            printMessageAndExit("IO doesn't exist on node " + CUSTOM_AUSTYN_NODE_ID);
+            printMessageAndExit("IO doesn't exist on node " + UART_DEVTECH_NODE_ID);
         }
         
         Object result = null;
         CallRequestProcessingError error = null;
         DPA_AdditionalInfo dpaAddInfo = null;
         
+        System.out.println("Web request - SV: " + dpaRequest.getSv());
         if ( dpaRequest.getSv().equalsIgnoreCase("ON") ) {
             // set devtech pins OUT
             IO_DirectionSettings[] dirSettings = new IO_DirectionSettings[] {
@@ -1251,18 +1230,21 @@ public class OpenGatewayAppStd {
     
     // sends specified DPA request and returns result
     private static DPA_Result processWebRequest(DPA_Request dpaRequest, String topic) {
-        switch ( topic ) {
-            case MqttTopics.DEFAULT_STD_ACTUATORS_AUSTYN:
-                return sendRequestToAustynActuator(dpaRequest);
-            case MqttTopics.DEFAULT_STD_ACTUATORS_DEVTECH:
-                return sendRequestToDevtechActuator(dpaRequest);
-            case MqttTopics.DEFAULT_STD_ACTUATORS_DATMOLUX:
-                return sendRequestToDatmoluxActuator(dpaRequest);
-            case MqttTopics.DEFAULT_STD_ACTUATORS_TECO:
-                return sendRequestToTecoActuator(dpaRequest);
-            default:
-                return null;
+        
+        if(topic.equals(mqttTopics.getStdActuatorsAustyn())) {
+            return sendRequestToAustynActuator(dpaRequest);
         }
+        else if (topic.equals(mqttTopics.getStdActuatorsDevtech())) {
+            return sendRequestToDevtechActuator(dpaRequest);
+        }
+        else if (topic.equals(mqttTopics.getStdActuatorsDatmolux())) {
+            return sendRequestToDatmoluxActuator(dpaRequest);
+        }
+        else if (topic.equals(mqttTopics.getStdActuatorsTeco())) {
+            return sendRequestToTecoActuator(dpaRequest);
+        }
+
+        return null;
     }
     
     // sends request to IQRF DPA network and returns result

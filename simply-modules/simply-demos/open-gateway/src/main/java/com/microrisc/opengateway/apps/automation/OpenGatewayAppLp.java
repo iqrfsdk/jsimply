@@ -113,7 +113,11 @@ public class OpenGatewayAppLp {
         @Override
         public void onAsynchronousMessage(DPA_AsynchronousMessage message) {
             System.out.println("New asynchronous message arrived.");
-            OpenGatewayAppLp.asynchronousMessages.add(message);
+            
+            synchronized (synchroNewAsyncMessage) {
+                OpenGatewayAppLp.asynchronousMessages.add(message);
+                synchroNewAsyncMessage.notify();
+            }
         }
     }
     
@@ -144,6 +148,7 @@ public class OpenGatewayAppLp {
                 }
                 
                 while ( !asynchronousMessages.isEmpty() ) {
+                    System.out.println("Async worker thread - message processing");
                     DPA_AsynchronousMessage asyncMessage = asynchronousMessages.poll();
                     processAsynchronousMessage(asyncMessage, mqttTopics);
                 }
@@ -192,18 +197,13 @@ public class OpenGatewayAppLp {
         }
 
         // topics initialization
-        mqttTopics =  new MqttTopics.Builder().gwId(mqttConfiguration.getGwId())
-                .stdSensorsProtronix("/std/sensors/protronix/")
-                .stdSensorsProtronixErrors("/std/sensors/protronix/errors/")
-                .stdActuatorsDevtech("/std/actuators/devtech/")
-                .stdActuatorsDevtechErrors("/std/actuators/devtech/errors/")
-                .stdSensorsIqHome("/std/sensors/iqhome/")
-                .stdSensorsIqHomeErrors("/std/sensors/iqhome/errors/")
-                .lpActuatorsTeco("/lp/actuators/teco/")
-                .lpActuatorsTecoErrors("/lp/actuators/teco/errors/")
-                .build();
+        mqttTopics =  new MqttTopics.Builder().gwId(mqttConfiguration.getGwId()).build();
 
         mqttCommunicator = new MqttCommunicator(mqttConfiguration);
+        mqttCommunicator.subscribe(mqttTopics.getStdActuatorsAustyn(), 2);
+        mqttCommunicator.subscribe(mqttTopics.getStdActuatorsDevtech(), 2);
+        mqttCommunicator.subscribe(mqttTopics.getStdActuatorsDatmolux(), 2);
+        mqttCommunicator.subscribe(mqttTopics.getStdActuatorsTeco(), 2);
 
         // getting reference to IQRF DPA network to use
         Network dpaNetwork = dpaSimply.getNetwork("1", Network.class);
@@ -301,6 +301,8 @@ public class OpenGatewayAppLp {
         
         try {
             asyncDataForMqtt = AsyncDataForMqttCreator.create(dpaAsyncMessage, null);
+            System.out.println("Async node id: " + asyncDataForMqtt.getNodeId());
+
         } catch (AsyncDataForMqttCreatorException ex) {
             System.err.println("Error while creating async message: " + ex.getMessage());
             return;
@@ -316,16 +318,19 @@ public class OpenGatewayAppLp {
 
             // app logic
             mqttTopic =  mqttTopics.getStdActuatorsDevtech();
-            if(asyncDataForMqtt.getModuleState().equals("up")) {
+            if(asyncDataForMqtt.getModuleState().equals("leftup")) {
                 mqttMessage = MqttFormatter.formatDeviceDevtech("on", 0);
             }
-            else if (asyncDataForMqtt.getModuleState().equals("down")) {
+            else if (asyncDataForMqtt.getModuleState().equals("leftdown")) {
                 mqttMessage = MqttFormatter.formatDeviceDevtech("off", 0);
             }
             
             // based on async event it sends request to std network via broker 
             publishMqttMessage(mqttTopic, mqttMessage);
         }
+        
+        
+        
     }
     
     // gets data from sensors and publishes them
@@ -363,7 +368,7 @@ public class OpenGatewayAppLp {
     
     // tests, if specified node ID is in valid interval
     private static boolean isNodeIdInValidInterval(long nodeId) {
-        return ( nodeId <= 0 || nodeId > appConfiguration.getNumberOfDevices() );
+        return ( nodeId >0 && nodeId <= appConfiguration.getNumberOfDevices() );
     }
     
     // returns reference to map of OS info objects for specified nodes map
@@ -374,7 +379,7 @@ public class OpenGatewayAppLp {
             int nodeId = Integer.parseInt(entry.getKey());
             
             // node ID must be within valid interval
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
                 
@@ -476,7 +481,7 @@ public class OpenGatewayAppLp {
             int nodeId = Integer.parseInt(entry.getKey());
             
             // node ID must be within valid interval
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
             
@@ -507,71 +512,79 @@ public class OpenGatewayAppLp {
                     // custom dpa peripheral
                     Custom custom = (Custom)devObject;
 
-                    // getting temperature
-                    short[] tempData = custom.send(peripheralIdIqhome, cmdIdTemp, data);
-                    
-                    if ( tempData != null) {
-                        DPA_AdditionalInfo dpaAddInfo = custom.getDPA_AdditionalInfoOfLastCall();
-                        DPA_Result dpaCR = new DPA_Result(tempData, null, dpaAddInfo, null);
-                        deviceData.add(dpaCR);
-                    } else {
-                        CallRequestProcessingState requestState = custom.getCallRequestProcessingStateOfLastCall();
-                        if ( requestState == ERROR ) {       
-                            // call error    
-                            CallRequestProcessingError error = custom.getCallRequestProcessingErrorOfLastCall();
-                            System.err.println("Error while getting data from custom iqhome device: " + error);
-                            
-                            String mqttError = MqttFormatter.formatError( String.valueOf(error) );
-                            mqttPublishErrors(nodeId, mqttTopics, mqttError);
-                            
-                            // specific call error
-                            if (error.getErrorType() == CallRequestProcessingErrorType.NETWORK_INTERNAL) {
-                                DPA_AdditionalInfo dpaAddInfo = custom.getDPA_AdditionalInfoOfLastCall();
-                                if ( dpaAddInfo != null ) {
-                                    DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
-                                    System.err.println("Error while getting data from custom iqhome device, DPA error: " + dpaResponseCode); 
-                                }
-                            }
+                    // getting temperature, 3 attempts
+                    for (int i = 0; i < 3; i++) {
+                        System.out.println("Getting temperature, attempt: " + i);
+                        short[] tempData = custom.send(peripheralIdIqhome, cmdIdTemp, data);
+
+                        if ( tempData != null) {
+                            DPA_AdditionalInfo dpaAddInfo = custom.getDPA_AdditionalInfoOfLastCall();
+                            DPA_Result dpaCR = new DPA_Result(tempData, null, dpaAddInfo, null);
+                            deviceData.add(dpaCR);
+                            break;
                         } else {
-                            System.err.println(
-                                "Could not get data from custom iqhome device. State of the device: " + requestState
-                            );
+                            CallRequestProcessingState requestState = custom.getCallRequestProcessingStateOfLastCall();
+                            if ( requestState == ERROR ) {       
+                                // call error    
+                                CallRequestProcessingError error = custom.getCallRequestProcessingErrorOfLastCall();
+                                System.err.println("Error while getting data from custom iqhome device: " + error);
+
+                                String mqttError = MqttFormatter.formatError( String.valueOf(error) );
+                                mqttPublishErrors(nodeId, mqttTopics, mqttError);
+
+                                // specific call error
+                                if (error.getErrorType() == CallRequestProcessingErrorType.NETWORK_INTERNAL) {
+                                    DPA_AdditionalInfo dpaAddInfo = custom.getDPA_AdditionalInfoOfLastCall();
+                                    if ( dpaAddInfo != null ) {
+                                        DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
+                                        System.err.println("Error while getting data from custom iqhome device, DPA error: " + dpaResponseCode); 
+                                    }
+                                }
+                            } else {
+                                System.err.println(
+                                    "Could not get data from custom iqhome device. State of the device: " + requestState
+                                );
+                            }
                         }
                     }
                     
-                    // getting temperature
-                    short[] humData = custom.send(peripheralIdIqhome, cmdIdHum, data);
-                    
-                    if ( humData != null) {
-                        DPA_AdditionalInfo dpaAddInfo = custom.getDPA_AdditionalInfoOfLastCall();
-                        DPA_Result dpaCR = new DPA_Result(humData, null, dpaAddInfo, null);
-                        deviceData.add(dpaCR);
-                    } else {
-                        CallRequestProcessingState requestState = custom.getCallRequestProcessingStateOfLastCall();
-                        if ( requestState == ERROR ) {       
-                            // call error    
-                            CallRequestProcessingError error = custom.getCallRequestProcessingErrorOfLastCall();
-                            System.err.println("Error while getting data from custom iqhome device: " + error);
-                            
-                            String mqttError = MqttFormatter.formatError( String.valueOf(error) );
-                            mqttPublishErrors(nodeId, mqttTopics, mqttError);
-                            
-                            // specific call error
-                            if (error.getErrorType() == CallRequestProcessingErrorType.NETWORK_INTERNAL) {
-                                DPA_AdditionalInfo dpaAddInfo = custom.getDPA_AdditionalInfoOfLastCall();
-                                if ( dpaAddInfo != null ) {
-                                    DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
-                                    System.err.println("Error while getting data from custom iqhome device, DPA error: " + dpaResponseCode); 
-                                }
-                            }
+                    // getting humidity, 3 attempts
+                    for (int i = 0; i < 3; i++) {
+                        System.out.println("Getting humidity, attempt: " + i);
+                        short[] humData = custom.send(peripheralIdIqhome, cmdIdHum, data);
+
+                        if ( humData != null) {
+                            DPA_AdditionalInfo dpaAddInfo = custom.getDPA_AdditionalInfoOfLastCall();
+                            DPA_Result dpaCR = new DPA_Result(humData, null, dpaAddInfo, null);
+                            deviceData.add(dpaCR);
+                            break;
                         } else {
-                            System.err.println(
-                                "Could not get data from custom iqhome device. State of the device: " + requestState
-                            );
+                            CallRequestProcessingState requestState = custom.getCallRequestProcessingStateOfLastCall();
+                            if ( requestState == ERROR ) {       
+                                // call error    
+                                CallRequestProcessingError error = custom.getCallRequestProcessingErrorOfLastCall();
+                                System.err.println("Error while getting data from custom iqhome device: " + error);
+
+                                String mqttError = MqttFormatter.formatError( String.valueOf(error) );
+                                mqttPublishErrors(nodeId, mqttTopics, mqttError);
+
+                                // specific call error
+                                if (error.getErrorType() == CallRequestProcessingErrorType.NETWORK_INTERNAL) {
+                                    DPA_AdditionalInfo dpaAddInfo = custom.getDPA_AdditionalInfoOfLastCall();
+                                    if ( dpaAddInfo != null ) {
+                                        DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
+                                        System.err.println("Error while getting data from custom iqhome device, DPA error: " + dpaResponseCode); 
+                                    }
+                                }
+                            } else {
+                                System.err.println(
+                                    "Could not get data from custom iqhome device. State of the device: " + requestState
+                                );
+                            }
                         }
                     }
                     
-                    if(!deviceData.isEmpty()) {
+                    if(!deviceData.isEmpty() && (deviceData.size() == 2)) {
                         dataFromDevices.put(entry.getKey(), deviceData);
                     }
                 break;
@@ -595,7 +608,7 @@ public class OpenGatewayAppLp {
         for ( Map.Entry<String, Object> entry : dataFromDevicesMap.entrySet() ) {
             int nodeId = Integer.parseInt(entry.getKey());
             
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
             
@@ -691,7 +704,7 @@ public class OpenGatewayAppLp {
         for (Map.Entry<String, List<String>> entry : dataFromsDevicesMqtt.entrySet()) {
             int nodeId = Integer.parseInt(entry.getKey());
 
-            if (isNodeIdInValidInterval(nodeId)) {
+            if (!isNodeIdInValidInterval(nodeId)) {
                 continue;
             }
 

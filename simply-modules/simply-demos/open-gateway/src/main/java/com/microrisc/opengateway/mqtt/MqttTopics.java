@@ -55,6 +55,9 @@ public final class MqttTopics {
     
     private final String stdSensorsProtronix;
     private final String stdSensorsProtronixErrors;
+
+    private final String stdSensorsAustyn;
+    private final String stdSensorsAustynErrors;
     
     private final String stdActuatorsAustyn;
     private final String stdActuatorsAustynErrors;
@@ -89,6 +92,9 @@ public final class MqttTopics {
         
         private String stdSensorsProtronix;
         private String stdSensorsProtronixErrors;
+
+        private String stdSensorsAustyn;
+        private String stdSensorsAustynErrors;
         
         private String stdActuatorsAustyn;
         private String stdActuatorsAustynErrors;
@@ -127,6 +133,16 @@ public final class MqttTopics {
         
         public Builder stdSensorsProtronixErrors(String stdSensorsProtronixErrors) { 
             this.stdSensorsProtronixErrors = stdSensorsProtronixErrors;
+            return this;
+        }
+
+        public Builder stdSensorsAustyn(String stdSensorsAustyn) {
+            this.stdSensorsAustyn = stdSensorsAustyn;
+            return this;
+        }
+
+        public Builder stdSensorsAustynErrors(String stdSensorsAustynErrors) {
+            this.stdSensorsAustynErrors = stdSensorsAustynErrors;
             return this;
         }
         
@@ -224,8 +240,13 @@ public final class MqttTopics {
         
         this.stdSensorsProtronix = (builder.stdSensorsProtronix != null)? 
                 this.gwId + builder.stdSensorsProtronix : this.gwId + DEFAULT_STD_SENSORS_PROTRONIX; 
-        this.stdSensorsProtronixErrors = (builder.stdSensorsProtronixErrors != null)? 
-                this.gwId + builder.stdSensorsProtronixErrors : this.stdSensorsProtronix + DEFAULT_ERRORS;
+        this.stdSensorsProtronixErrors = (builder.stdSensorsProtronixErrors != null)
+                ? this.gwId + builder.stdSensorsProtronixErrors : this.stdSensorsProtronix + DEFAULT_ERRORS;
+
+        this.stdSensorsAustyn = (builder.stdSensorsAustyn != null)
+                ? this.gwId + builder.stdSensorsAustyn : this.gwId + DEFAULT_STD_SENSORS_AUSTYN;
+        this.stdSensorsAustynErrors = (builder.stdSensorsAustynErrors != null)
+                ? this.gwId + builder.stdSensorsAustynErrors : this.stdSensorsAustyn + DEFAULT_ERRORS;
         
         this.stdActuatorsAustyn = (builder.stdActuatorsAustyn != null)? 
                 this.gwId + builder.stdActuatorsAustyn : this.gwId + DEFAULT_STD_ACTUATORS_AUSTYN;
@@ -288,6 +309,20 @@ public final class MqttTopics {
      */
     public String getStdSensorsProtronixErrors() {
         return stdSensorsProtronixErrors;
+    }
+    
+    /**
+     * @return the full std sensors Austyn path
+     */
+    public String getStdSensorsAustyn() {
+        return stdSensorsAustyn;
+    }
+
+    /**
+     * @return the full std sensors Protronix path
+     */
+    public String getStdSensorsAustynErrors() {
+        return stdSensorsAustynErrors;
     }
     
     /**
