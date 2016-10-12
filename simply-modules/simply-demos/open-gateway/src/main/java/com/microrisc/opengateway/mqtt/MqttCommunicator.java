@@ -170,7 +170,7 @@ public class MqttCommunicator implements MqttCallback {
             // Construct the connection options object that contains connection parameters
             // such as cleanSession and LWT
             conOpt = new MqttConnectOptions();
-            setConnectionOptions(clean, userName, password, certFile);
+            setConnectionOptions(clean, password, userName, certFile);
 
             // Construct an MQTT blocking mode client
             client = new MqttClient(this.brokerUrl, mqttConfig.getClientId(), dataStore);
