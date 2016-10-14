@@ -15,32 +15,27 @@
  */
 package com.microrisc.simply.tcpcloud;
 
-import com.microrisc.opengateway.config.ApplicationConfiguration;
-import com.microrisc.opengateway.config.DeviceInfo;
-import com.microrisc.opengateway.mqtt.MqttConfiguration;
-import com.microrisc.opengateway.mqtt.MqttTopics;
-import com.microrisc.opengateway.mqtt.MqttCommunicator;
-import com.microrisc.opengateway.mqtt.MqttFormatter;
 import com.microrisc.simply.CallRequestProcessingState;
 import static com.microrisc.simply.CallRequestProcessingState.ERROR;
 import com.microrisc.simply.Network;
 import com.microrisc.simply.Node;
 import com.microrisc.simply.SimplyException;
 import com.microrisc.simply.compounddevices.CompoundDeviceObject;
-import com.microrisc.simply.devices.protronix.dpa22x.CO2Sensor;
-import com.microrisc.simply.devices.protronix.dpa22x.types.CO2SensorData;
+import com.microrisc.simply.devices.protronix.dpa22x.Counter;
 import com.microrisc.simply.errors.CallRequestProcessingError;
-import com.microrisc.simply.errors.CallRequestProcessingErrorType;
-import com.microrisc.simply.iqrf.dpa.DPA_ResponseCode;
 import com.microrisc.simply.iqrf.dpa.DPA_Simply;
 import com.microrisc.simply.iqrf.dpa.v22x.DPA_SimplyFactory;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.OS;
-import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_AdditionalInfo;
 import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
+import com.microrisc.simply.tcpcloud.config.ApplicationConfiguration;
+import com.microrisc.simply.tcpcloud.config.DeviceInfo;
+import com.microrisc.simply.tcpcloud.mqtt.MqttCommunicator;
+import com.microrisc.simply.tcpcloud.mqtt.MqttConfiguration;
+import com.microrisc.simply.tcpcloud.mqtt.MqttFormatter;
+import com.microrisc.simply.tcpcloud.mqtt.MqttTopics;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -63,11 +58,23 @@ public final class App {
     // references for DPA
     private static DPA_Simply simply = null;
     
+    // map of counters
+    private static Map<String, CompoundDeviceObject> deviceMap = null;
+    
+    // OS info map
+    private static Map<String, OsInfo> osInfoMap = null;
+    
+    
+    // MQTT elements
+    // references for MQTT configuration
+    private static MqttConfiguration mqttConfiguration = null;
+    
     // references for MQTT communication
     private static MqttCommunicator mqttCommunicator = null;
     
-    // references for MQTT configuration
-    private static MqttConfiguration mqttConfiguration = null;
+    // topics
+    private static MqttTopics mqttTopics = null;
+    
     
     // application related references
     private static ApplicationConfiguration appConfiguration = null;
@@ -76,15 +83,27 @@ public final class App {
     private static int pid = 0;
     
     
+    
     // MAIN PROCESSING
-    public static void main(String[] args) throws InterruptedException, MqttException 
-    {
+    public static void main(String[] args) {
         init();
         
         // main application loop
-        while( true ) {
-            getAndPublishSensorData(sensorsMap, mqttTopics, osInfoMap);
-            Thread.sleep(appConfiguration.getPollingPeriod() * 1000);
+        while ( true ) {
+            // getting data from devices
+            Map<String, Object> dataFromDevices = getDataFromDevices();
+
+            // converting data to MQTT form
+            Map<String, List<String>> mqttDataFromDevices = toMqttForm(dataFromDevices);
+
+            // publishing converted data
+            mqttSendAndPublish(mqttDataFromDevices);
+            
+            try {
+                Thread.sleep(appConfiguration.getPollingPeriod() * 1000);
+            } catch ( InterruptedException ex ) {
+                printMessageAndExit("Application interrupted");
+            }
         }
     }
     
@@ -103,12 +122,18 @@ public final class App {
         } catch ( MqttException ex ) {
             printMessageAndExit("Error while creating MQTT commnicator: " + ex);
         }
+        
+        // topics initialization
+        mqttTopics =  new MqttTopics.Builder().gwId(mqttConfiguration.getRootTopic())
+                .stdSensorsProtronix("/iqrf/iaq/protronix")
+                .stdSensorsProtronixErrors("/iqrf/iaq/protronix/errors/")
+                .build();
     }
     
     // main initialization method
     private static void init() {
         // application exit hook
-        Runtime.getRuntime().addShutdownHook( new Thread(new Runnable() {
+        Runtime.getRuntime().addShutdownHook( new Thread( new Runnable() {
 
             @Override
             public void run() {
@@ -132,7 +157,7 @@ public final class App {
         } else if ( appConfiguration.getCommunicationInterface().equalsIgnoreCase("spi") ) {
             simplyConfigFile = "Simply-SPI.properties";
         } else {
-            printMessageAndExit("No supported communication interface: " + appConfiguration.getCommunicationInterface());
+            printMessageAndExit("Not supported communication interface: " + appConfiguration.getCommunicationInterface());
         }
         
         try {
@@ -151,13 +176,12 @@ public final class App {
         Map<String, Node> nodesMap = dpaNetwork.getNodesMap();
         
         // reference to OS Info
-        Map<String, OsInfo> osInfoMap = getOsInfoFromNodes(nodesMap);
+        osInfoMap = getOsInfoFromNodes(nodesMap);
         
         // printing MIDs of nodes in the network
         printMIDs(osInfoMap);
         
-        // reference to sensors
-        Map<String, CompoundDeviceObject> sensorsMap = getSensorsMap(nodesMap);
+        deviceMap = getDevicesMap(nodesMap);
         
         initMqttElements();
     }
@@ -169,31 +193,9 @@ public final class App {
         System.exit(1);
     }
     
-    // gets data from sensors and publishes them
-    /*
-         task:
-         1. Obtain data from sensors.
-         2. Creation of MQTT form of obtained sensor's data. 
-         3. Sending MQTT form of sensor's data through MQTT to destination point.
-    */
-    private static void getAndPublishSensorData(
-            Map<String, CompoundDeviceObject> sensorsMap, MqttTopics mqttTopics,
-            Map<String, OsInfo> osInfoMap
-    ) {
-        Map<String, Object> dataFromSensorsMap = getDataFromSensors(sensorsMap, mqttTopics, osInfoMap);
-
-        // getting MQTT form of data from sensors
-        Map<String, List<String>> dataFromsSensorsMqtt = toMqttForm(dataFromSensorsMap, osInfoMap);
-
-        // sending data
-        mqttSendAndPublish(dataFromsSensorsMqtt, mqttTopics);
-    }
-    
-    
-    
     // tests, if specified node ID is in valid interval
     private static boolean isNodeIdInValidInterval(long nodeId) {
-        return ( nodeId <= 0 || nodeId > appConfiguration.getNumberOfDevices() );
+        return ( nodeId > 0 && nodeId <= appConfiguration.getNumberOfDevices() );
     }
     
     // returns reference to map of OS info objects for specified nodes map
@@ -204,7 +206,7 @@ public final class App {
             int nodeId = Integer.parseInt(entry.getKey());
             
             // node ID must be within valid interval
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
                 
@@ -220,19 +222,9 @@ public final class App {
                     osInfoMap.put(entry.getKey(), osInfo);
                 } else {
                     CallRequestProcessingState procState = os.getCallRequestProcessingStateOfLastCall();
-                    if ( procState == ERROR ) {
-                        // general call error    
+                    if ( procState == ERROR ) { 
                         CallRequestProcessingError error = os.getCallRequestProcessingErrorOfLastCall();
                         System.err.println("Getting OS info failed: " + error);
-                        
-                        if (error.getErrorType() == CallRequestProcessingErrorType.NETWORK_INTERNAL) {
-                            // specific call error
-                            DPA_AdditionalInfo dpaAddInfo = os.getDPA_AdditionalInfoOfLastCall();
-                            if ( dpaAddInfo != null ) {
-                                DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
-                                System.err.println("Getting OS info failed on the node, DPA error: " + dpaResponseCode);
-                            }     
-                        }
                     } else {
                         System.err.println("Getting OS info hasn't been processed yet: " + procState);
                     }
@@ -252,15 +244,15 @@ public final class App {
         }
     }
     
-    // returns map of CO2 and VOC sensors from specified map of nodes
-    private static Map<String, CompoundDeviceObject> getSensorsMap(Map<String, Node> nodesMap) {
-        Map<String, CompoundDeviceObject> sensorsMap = new LinkedHashMap<>();
+    // returns map devices from specified map of nodes
+    private static Map<String, CompoundDeviceObject> getDevicesMap(Map<String, Node> nodesMap) {
+        Map<String, CompoundDeviceObject> devicesMap = new LinkedHashMap<>();
         
         for ( Map.Entry<String, Node> entry : nodesMap.entrySet() ) {
             int nodeId = Integer.parseInt(entry.getKey());
             
             // node ID must be within valid interval
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
             
@@ -268,13 +260,13 @@ public final class App {
             DeviceInfo sensorInfo = appConfiguration.getDevicesInfoMap().get(nodeId);
 
             switch ( sensorInfo.getType() ) {
-                case "co2-t-h":
-                    CO2Sensor co2Sensor = entry.getValue().getDeviceObject(CO2Sensor.class);
-                    if ( co2Sensor != null ) {
-                        sensorsMap.put(entry.getKey(), (CompoundDeviceObject) co2Sensor);
+                case "counter":
+                    Counter counter = entry.getValue().getDeviceObject(Counter.class);
+                    if ( counter != null ) {
+                        devicesMap.put(entry.getKey(), (CompoundDeviceObject) counter);
                         System.out.println("Device type: " + sensorInfo.getType());
                     } else {
-                        System.err.println("CO2 sensor not found on node: " + nodeId);
+                        System.err.println("Counter sensor not found on node: " + nodeId);
                     }
                 break;
 
@@ -284,122 +276,93 @@ public final class App {
             }
         }
         
-        return sensorsMap;
+        return devicesMap;
     }
     
-    // returns data from sensors as specicied by map
-    private static Map<String, Object> getDataFromSensors(
-            Map<String, CompoundDeviceObject> sensorsMap, MqttTopics mqttTopics,
-            Map<String, OsInfo> osInfoMap
-    ) {
-        // data from sensors
-        Map<String, Object> dataFromSensors = new HashMap<>();
+    // returns data from devices indexed by node ID
+    private static Map<String, Object> getDataFromDevices() {
+        Map<String, Object> dataFromDevices = new HashMap<>();
         
-        for ( Map.Entry<String, CompoundDeviceObject> entry : sensorsMap.entrySet() ) {
-            
+        for ( Map.Entry<String, CompoundDeviceObject> entry : deviceMap.entrySet() ) {
             int nodeId = Integer.parseInt(entry.getKey());
-            
-            // node ID must be within valid interval
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
             
             DeviceInfo sensorInfo = appConfiguration.getDevicesInfoMap().get(nodeId);
-            System.out.println("Getting data from sensor: " + entry.getKey());
-
-            switch ( sensorInfo.getType() ) {
-                case "co2-t-h":
-                    CompoundDeviceObject compDevObject = entry.getValue();
-                    if ( compDevObject == null ) {
-                        System.err.println("Sensor not found. Id: " + entry.getKey());
-                        break;
-                    }
-                    
-                    if ( !(compDevObject instanceof CO2Sensor) ) {
-                        System.err.println("Bad type of sensor. Got: " + compDevObject.getClass() 
-                            + ", expected: " + CO2Sensor.class
-                        );
-                        break;
-                    }
-                    
-                    CO2Sensor co2Sensor = (CO2Sensor)compDevObject;
-                    CO2SensorData co2SensorData = co2Sensor.get();
-                    if ( co2SensorData != null ) {
-                        dataFromSensors.put(entry.getKey(), co2SensorData);
-                    } else {
-                        CallRequestProcessingState requestState = co2Sensor.getCallRequestProcessingStateOfLastCall();
-                        if ( requestState == ERROR ) {                      
-                            // call error    
-                            CallRequestProcessingError error = co2Sensor.getCallRequestProcessingErrorOfLastCall();
-                            System.err.println("Error while getting data from CO2 sensor: " + error);
-                            
-                            String mqttError = MqttFormatter.formatError( String.valueOf(error) );
-                            mqttPublishErrors(nodeId, mqttTopics, mqttError);
-                            
-                            // specific call error
-                            if ( error.getErrorType() == CallRequestProcessingErrorType.NETWORK_INTERNAL ) {
-                                DPA_AdditionalInfo dpaAddInfo = co2Sensor.getDPA_AdditionalInfoOfLastCall();
-                                if ( dpaAddInfo != null ) {
-                                    DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
-                                    System.err.println("Error while getting data from CO2 sensor, DPA error: " + dpaResponseCode);   
-                                }
-                            }
-                        } else {
-                            System.err.println(
-                                "Could not get data from CO2 sensor. State of the sensor: " + requestState
-                            );
-                        }
-                    } 
-                break;
-
-                default:
-                    printMessageAndExit("Device type not supported:" + sensorInfo.getType());
-                break;
+            System.out.println("Getting data from device: " + entry.getKey());
+            
+            // we are interested only in Counter DI
+            String sensorType = sensorInfo.getType();
+            if ( !sensorType.equalsIgnoreCase("counter") ) {
+                continue;
             }
+            
+            CompoundDeviceObject compDevObject = entry.getValue();
+            if ( compDevObject == null ) {
+                System.err.println("Device not found. Id: " + entry.getKey());
+                continue;
+            }
+            
+            if ( !(compDevObject instanceof Counter) ) {
+                System.err.println("Bad type of device. Got: " + compDevObject.getClass() 
+                    + ", expected: " + Counter.class
+                );
+                continue;
+            }
+                    
+            Counter counter = (Counter)compDevObject;
+            Integer countedObjectsNum = counter.count();
+            if ( countedObjectsNum != null ) {
+                dataFromDevices.put(entry.getKey(), countedObjectsNum);
+            } else {
+                CallRequestProcessingState requestState = counter.getCallRequestProcessingStateOfLastCall();
+                if ( requestState == ERROR ) {                        
+                    CallRequestProcessingError error = counter.getCallRequestProcessingErrorOfLastCall();
+                    System.err.println("Error while getting data from counter: " + error);
+
+                    String mqttError = MqttFormatter.formatError( String.valueOf(error) );
+                    mqttPublishErrors(nodeId, mqttTopics, mqttError);
+                } else {
+                    System.err.println(
+                        "Could not get data from counter. State of the request: " + requestState
+                    );
+                }
+            } 
         }
         
-        return dataFromSensors;
+        return dataFromDevices;
     }
     
-    // returns ID of module for specified sensor ID
-    private static String getModuleId(String sensorId, Map<String, OsInfo> osInfoMap) {
-        if ( osInfoMap.get(sensorId) != null ) {
-            return osInfoMap.get(sensorId).getPrettyFormatedModuleId();
-        }
-        return "not-known";
-    }
-    
-    // for specified sensor's data returns their equivalent MQTT form
+    // for specified devices data returns their equivalent MQTT form
     private static Map<String, List<String>> toMqttForm(
-            Map<String, Object> dataFromSensorsMap, Map<String, OsInfo> osInfoMap
+            Map<String, Object> dataFromDevices
     ) {
-        Map<String, List<String>> mqttAllSensorsData = new LinkedHashMap<>();
+        Map<String, List<String>> mqttAllData = new LinkedHashMap<>();
         
         // for each sensor's data
-        for ( Map.Entry<String, Object> entry : dataFromSensorsMap.entrySet() ) {
-            int nodeId=  Integer.parseInt(entry.getKey());
+        for ( Map.Entry<String, Object> entry : dataFromDevices.entrySet() ) {
+            int nodeId = Integer.parseInt(entry.getKey());
             
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
             
-            // mqtt data for 1 sensor
-            List<String> mqttSensorData = new LinkedList<>();
+            // mqtt data for 1 device
+            List<String> deviceData = new LinkedList<>();
             
-            DeviceInfo sensorInfo = appConfiguration.getDevicesInfoMap().get(nodeId);
+            DeviceInfo devicesInfo = appConfiguration.getDevicesInfoMap().get(nodeId);
             System.out.println("Preparing MQTT message for node: " + entry.getKey());
             
-            DecimalFormat sensorDataFormat = new DecimalFormat("##.#");
-            
-            switch ( sensorInfo.getType().toLowerCase() ) {
-                case "co2-t-h":
-                    CO2SensorData co2SensorData = (CO2SensorData)entry.getValue();
-                    if ( co2SensorData == null ) {
+            switch ( devicesInfo.getType().toLowerCase() ) {
+                case "counter":
+                    Integer countedValue = (Integer)entry.getValue();
+                    if ( countedValue == null ) {
                         System.out.println(
                             "No data received from device, check log for details "
-                            + "about protronix uart data"
+                            + "about protronix counter data"
                         );
-                        mqttAllSensorsData.put(entry.getKey(), null);
+                        mqttAllData.put(entry.getKey(), null);
                         break;
                     }
                     
@@ -410,36 +373,32 @@ public final class App {
                     String clientId = mqttConfiguration.getClientId();
                     
                     String mqttDataProtronix = MqttFormatter
-                                .formatDeviceProtronix(
-                                    nodeId,
-                                    clientId,
-                                    String.valueOf(co2SensorData.getCo2()), 
-                                    sensorDataFormat.format(co2SensorData.getTemperature()), 
-                                    sensorDataFormat.format(co2SensorData.getHumidity())
-                                );
+                            .formatCountedObjectsNum(
+                                    "people", 
+                                    String.valueOf(countedValue), 
+                                    clientId
+                            );
 
-                    mqttSensorData.add(mqttDataProtronix);
-                    mqttAllSensorsData.put(entry.getKey(), mqttSensorData);
+                    deviceData.add(mqttDataProtronix);
+                    mqttAllData.put(entry.getKey(), deviceData);
                 break;
 
                 default:
-                    printMessageAndExit("Device type not supported:" + sensorInfo.getType());
+                    printMessageAndExit("Device type not supported:" + devicesInfo.getType());
                 break;
             }                      
         }
         
-        return mqttAllSensorsData;
+        return mqttAllData;
     }
     
     // sends and publishes prepared json messages with data from sensors to 
     // specified MQTT topics
-    private static void mqttSendAndPublish(
-        Map<String, List<String>> dataFromsSensorsMqtt, MqttTopics mqttTopics
-    ) { 
+    private static void mqttSendAndPublish(Map<String, List<String>> dataFromsSensorsMqtt) { 
         for ( Map.Entry<String, List<String>> entry : dataFromsSensorsMqtt.entrySet() ) {        
             int nodeId = Integer.parseInt(entry.getKey());
             
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
             
