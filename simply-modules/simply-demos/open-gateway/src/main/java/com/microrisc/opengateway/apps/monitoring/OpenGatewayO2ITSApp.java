@@ -61,7 +61,7 @@ import org.json.simple.parser.ParseException;
  * @author Rostislav Spinar
  * @author Michal Konopa
  */
-public class OpenGatewayO2ITSApp {
+public final class OpenGatewayO2ITSApp {
 
     // references for DPA
     private static DPA_Simply dpaSimply = null;
@@ -190,7 +190,7 @@ public class OpenGatewayO2ITSApp {
     
     // tests, if specified node ID is in valid interval
     private static boolean isNodeIdInValidInterval(long nodeId) {
-        return ( nodeId <= 0 || nodeId > appConfiguration.getNumberOfDevices() );
+        return ( nodeId > 0 && nodeId <= appConfiguration.getNumberOfDevices() );
     }
     
     // returns reference to map of OS info objects for specified nodes map
@@ -201,7 +201,7 @@ public class OpenGatewayO2ITSApp {
             int nodeId = Integer.parseInt(entry.getKey());
             
             // node ID must be within valid interval
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
                 
@@ -227,7 +227,7 @@ public class OpenGatewayO2ITSApp {
                             DPA_AdditionalInfo dpaAddInfo = os.getDPA_AdditionalInfoOfLastCall();
                             if ( dpaAddInfo != null ) {
                                 DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
-                                System.err.println("Getting OS info failed on the node, DPA error: " + dpaResponseCode);
+                                System.err.println("DPA response code: " + dpaResponseCode);
                             }
                         }
                     } else {
@@ -257,7 +257,7 @@ public class OpenGatewayO2ITSApp {
             int nodeId = Integer.parseInt(entry.getKey());
             
             // node ID must be within valid interval
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
             
@@ -307,12 +307,12 @@ public class OpenGatewayO2ITSApp {
             int nodeId = Integer.parseInt(entry.getKey());
             
             // node ID must be within valid interval
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
             
             DeviceInfo sensorInfo = appConfiguration.getDevicesInfoMap().get(nodeId);
-            System.out.println("Getting data from sensor: " + entry.getKey());
+            System.out.println("Getting data from sensor " + entry.getKey());
 
             switch ( sensorInfo.getType() ) {
                 case "co2-t-h":
@@ -348,7 +348,7 @@ public class OpenGatewayO2ITSApp {
                                 DPA_AdditionalInfo dpaAddInfo = co2Sensor.getDPA_AdditionalInfoOfLastCall();
                                 if ( dpaAddInfo != null ) {
                                     DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
-                                    System.err.println("Error while getting data from CO2 sensor, DPA error: " + dpaResponseCode);  
+                                    System.err.println("DPA response code: " + dpaResponseCode);  
                                 }
                             }
                         } else {
@@ -392,7 +392,7 @@ public class OpenGatewayO2ITSApp {
                                 DPA_AdditionalInfo dpaAddInfo = vocSensor.getDPA_AdditionalInfoOfLastCall();
                                 if ( dpaAddInfo != null ) {
                                     DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
-                                    System.err.println("Error while getting data from VOC sensor, DPA error: " + dpaResponseCode);
+                                    System.err.println("DPA response code: " + dpaResponseCode);
                                 }
                             }
                         } else {
@@ -428,9 +428,9 @@ public class OpenGatewayO2ITSApp {
         
         // for each sensor's data
         for ( Map.Entry<String, Object> entry : dataFromSensorsMap.entrySet() ) {
-            int nodeId=  Integer.parseInt(entry.getKey());
+            int nodeId = Integer.parseInt(entry.getKey());
             
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
             
@@ -540,13 +540,12 @@ public class OpenGatewayO2ITSApp {
         for ( Map.Entry<String, List<String>> entry : dataFromsSensorsMqtt.entrySet() ) {        
             int nodeId = Integer.parseInt(entry.getKey());
             
-            if ( isNodeIdInValidInterval(nodeId) ) {
+            if ( !isNodeIdInValidInterval(nodeId) ) {
                 continue;
             }
             
             if ( entry.getValue() != null ) {
                 System.out.println("Sending parsed data for node: " + entry.getKey());
-
                 for ( String mqttData : entry.getValue() ) {
                     try {
                         mqttCommunicator.publish(mqttTopics.getStdSensorsProtronix() + entry.getKey(), 2, mqttData.getBytes());
