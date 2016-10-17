@@ -728,8 +728,7 @@ public class OpenGatewayAppLp {
 
     // publish mqtt message
     private static void publishMqttMessage(String topic, String message) {
-
-        if (topic != null || message != null) {
+        if (topic != null && message != null) {
             try {
                 mqttCommunicator.publish(topic, 2, message.getBytes());
             } catch (MqttException ex) {
