@@ -329,8 +329,59 @@ public class OpenGatewayAppLp {
             publishMqttMessage(mqttTopic, mqttMessage);
         }
         
+        if (asyncDataForMqtt.getNodeId().equals("5")) {
+            
+            mqttTopic =  mqttTopics.getLpActuatorsTeco();
+            mqttMessage = MqttFormatter.formatAsyncDataForMqtt(asyncDataForMqtt, 0);
+            
+            // inform web gui about event
+            publishMqttMessage(mqttTopic, mqttMessage);
+            
+            // app logic
+            mqttTopic =  mqttTopics.getStdActuatorsDatmolux();
+            if(asyncDataForMqtt.getModuleState().equals("leftup")) {
+                mqttMessage = MqttFormatter.formatDeviceDatmolux("on", 0);
+            }
+            else if (asyncDataForMqtt.getModuleState().equals("leftdown")) {
+                mqttMessage = MqttFormatter.formatDeviceDatmolux("off", 0);
+            }
+            else if(asyncDataForMqtt.getModuleState().equals("rightup")) {
+                mqttMessage = MqttFormatter.formatDeviceDatmolux("up", 0);
+            }
+            else if (asyncDataForMqtt.getModuleState().equals("rightdown")) {
+                mqttMessage = MqttFormatter.formatDeviceDatmolux("down", 0);
+            }
+            
+            // based on async event it sends request to std network via broker 
+            publishMqttMessage(mqttTopic, mqttMessage);
+        }
         
-        
+        if (asyncDataForMqtt.getNodeId().equals("6")) {
+            
+            mqttTopic =  mqttTopics.getLpActuatorsTeco();
+            mqttMessage = MqttFormatter.formatAsyncDataForMqtt(asyncDataForMqtt, 0);
+            
+            // inform web gui about event
+            publishMqttMessage(mqttTopic, mqttMessage);
+            
+            // app logic
+            mqttTopic =  mqttTopics.getStdActuatorsDatmolux();
+            if(asyncDataForMqtt.getModuleState().equals("leftup")) {
+                mqttMessage = MqttFormatter.formatDeviceAustyn("on", 0);
+            }
+            else if (asyncDataForMqtt.getModuleState().equals("leftdown")) {
+                mqttMessage = MqttFormatter.formatDeviceAustyn("off", 0);
+            }
+            else if(asyncDataForMqtt.getModuleState().equals("rightup")) {
+                mqttMessage = MqttFormatter.formatDeviceTeco("on", 0);
+            }
+            else if (asyncDataForMqtt.getModuleState().equals("rightdown")) {
+                mqttMessage = MqttFormatter.formatDeviceTeco("off", 0);
+            }
+            
+            // based on async event it sends request to std network via broker 
+            publishMqttMessage(mqttTopic, mqttMessage);
+        }
     }
     
     // gets data from sensors and publishes them

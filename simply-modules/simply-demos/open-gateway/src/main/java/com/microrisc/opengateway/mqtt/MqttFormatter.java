@@ -162,6 +162,66 @@ public final class MqttFormatter {
     /**
      * Returns formated value of Devtech request message.
      *
+     * @param state to be set
+     * @param pidDatmolux identifier of packet
+     * @return formated MQTT message
+     */
+    public static String formatDeviceDatmolux(String state, int pidDatmolux) {
+        int datmoluxNodeId = 0x04;
+        int datmoluxHWPID = 0xFFFF;
+        String datmoluxModuleId = "8100401F";
+
+        return "{\"e\":[{\"n\":\"custom\"," + "\"sv\":" + "\"" + state + "\"}],"
+                + "\"iqrf\":[{\"pid\":" + pidDatmolux + "," + "\"dpa\":\"req\"," + "\"nadr\":" + datmoluxNodeId + ","
+                + "\"pnum\":" + DPA_ProtocolProperties.PNUM_Properties.USER_PERIPHERAL_START + "," + "\"pcmd\":" + "\"" + Custom.MethodID.SEND.name().toLowerCase() + "\","
+                + "\"hwpid\":" + datmoluxHWPID + "}],"
+                + "\"bn\":" + "\"urn:dev:mid:" + datmoluxModuleId + "\""
+                + "}";
+    }
+    
+    /**
+     * Returns formated value of Devtech request message.
+     *
+     * @param state to be set
+     * @param pidAustyn identifier of packet
+     * @return formated MQTT message
+     */
+    public static String formatDeviceAustyn(String state, int pidAustyn) {
+        int austynNodeId = 0x02;
+        int austynHWPID = 0xFFFF;
+        String austynModuleId = "8100401F";
+
+        return "{\"e\":[{\"n\":\"io\"," + "\"sv\":" + "\"" + state + "\"}],"
+                + "\"iqrf\":[{\"pid\":" + pidAustyn++ + "," + "\"dpa\":\"req\"," + "\"nadr\":" + austynNodeId + ","
+                + "\"pnum\":" + DPA_ProtocolProperties.PNUM_Properties.IO + "," + "\"pcmd\":" + "\"" + IO.MethodID.SET_OUTPUT_STATE.name().toLowerCase() + "\","
+                + "\"hwpid\":" + austynHWPID + "}],"
+                + "\"bn\":" + "\"urn:dev:mid:" + austynModuleId + "\""
+                + "}";
+    }
+    
+    /**
+     * Returns formated value of Devtech request message.
+     *
+     * @param state to be set
+     * @param pidTeco identifier of packet
+     * @return formated MQTT message
+     */
+    public static String formatDeviceTeco(String state, int pidTeco) {
+        int tecoNodeId = 0x05;
+        int tecoHWPID = 0xFFFF;
+        String tecoModuleId = "8100401F";
+
+        return "{\"e\":[{\"n\":\"custom\"," + "\"sv\":" + "\"" + state + "\"}],"
+                + "\"iqrf\":[{\"pid\":" + pidTeco + "," + "\"dpa\":\"req\"," + "\"nadr\":" + tecoNodeId + ","
+                + "\"pnum\":" + DPA_ProtocolProperties.PNUM_Properties.USER_PERIPHERAL_START + "," + "\"pcmd\":" + "\"" + Custom.MethodID.SEND.name().toLowerCase() + "\","
+                + "\"hwpid\":" + tecoHWPID + "}],"
+                + "\"bn\":" + "\"urn:dev:mid:" + tecoModuleId + "\""
+                + "}";
+    }
+    
+    /**
+     * Returns formated value of Devtech request message.
+     *
      * @param nodeId
      * @param moduleId
      * @param dpaAddInfo
