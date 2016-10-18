@@ -13,7 +13,6 @@ simply-modules/simply-services/target/
 simply-modules/simply-demos/auto-network/target/
 simply-modules/simply-demos/open-gateway/target/
 simply-modules/simply-web-services/
-
 /simply-modules/simply-iqrf-dpa-v22x/nbproject/
 /simply-modules/simply-compound_devices/target/
 /simply-modules/simply-compound_devices/nbproject/
@@ -24,3 +23,4 @@ simply-modules/simply-web-services/
 /simply-modules/simply-demos/dustbin/target/
 /simply-modules/simply-demos/tcpcloud/target/
 /simply-modules/simply-demos/counter/target/
+/simply-modules/simply-devices/target/

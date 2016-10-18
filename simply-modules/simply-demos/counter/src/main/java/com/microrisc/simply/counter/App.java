@@ -52,6 +52,7 @@ import org.json.simple.parser.ParseException;
  * Sending number of counted objects over MQTT in JSON SENML format.
  *
  * @author Michal Konopa
+ * @author Rostislav Spinar
  */
 public final class App {
 
@@ -125,8 +126,8 @@ public final class App {
         
         // topics initialization
         mqttTopics =  new MqttTopics.Builder().gwId(mqttConfiguration.getRootTopic())
-                .stdSensorsProtronix("/iqrf/iaq/protronix")
-                .stdSensorsProtronixErrors("/iqrf/iaq/protronix/errors/")
+                .stdSensorsProtronix("/iqrf/protronix/")
+                .stdSensorsProtronixErrors("/iqrf/protronix/errors/")
                 .build();
     }
     
@@ -334,6 +335,14 @@ public final class App {
         return dataFromDevices;
     }
     
+    // returns ID of module for specified sensor ID
+    private static String getModuleId(String sensorId, Map<String, OsInfo> osInfoMap) {
+        if (osInfoMap.get(sensorId) != null) {
+            return osInfoMap.get(sensorId).getPrettyFormatedModuleId();
+        }
+        return "not-known";
+    }
+    
     // for specified devices data returns their equivalent MQTT form
     private static Map<String, List<String>> toMqttForm(
             Map<String, Object> dataFromDevices
@@ -369,14 +378,14 @@ public final class App {
                     // packet id
                     //pid++;
                     
-                    //String moduleId = getModuleId(entry.getKey(), osInfoMap);
-                    String clientId = mqttConfiguration.getClientId();
+                    String moduleId = getModuleId(entry.getKey(), osInfoMap);
+                    //String clientId = mqttConfiguration.getClientId();
                     
                     String mqttDataProtronix = MqttFormatter
                             .formatCountedObjectsNum(
                                     "people", 
                                     String.valueOf(countedValue), 
-                                    clientId
+                                    moduleId
                             );
 
                     deviceData.add(mqttDataProtronix);
@@ -407,7 +416,7 @@ public final class App {
 
                 for ( String mqttData : entry.getValue() ) {
                     try {
-                       mqttCommunicator.publish(mqttTopics.getStdSensorsProtronix(), 2, mqttData.getBytes());
+                       mqttCommunicator.publish(mqttTopics.getStdSensorsProtronix() + nodeId, 2, mqttData.getBytes());
                     } catch ( MqttException ex ) {
                         System.err.println("Error while publishing sync dpa message: " + ex);
                     }
