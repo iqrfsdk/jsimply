@@ -155,8 +155,22 @@ public class OpenGatewayAppLp {
             }
         }
     }
-    
-    
+
+    // data to publish using MQQT
+    private static class PublishData {
+
+        String topic;
+        String message;
+
+        public PublishData(String message, String topic) {
+            this.message = message;
+            this.topic = topic;
+        }
+    }
+
+    // data of asynchronous messages to publish
+    private static Queue<PublishData> asyncDataToPublish = new ConcurrentLinkedQueue<>();
+
     // MAIN
     public static void main(String[] args) throws InterruptedException, MqttException {
 
@@ -235,7 +249,19 @@ public class OpenGatewayAppLp {
         // main application loop
         while (true) {
             getAndPublishDevicesData(devicesMap, mqttTopics, osInfoMap);
-            Thread.sleep(appConfiguration.getPollingPeriod() * 1000);
+            
+            for (int i = 0; i < appConfiguration.getPollingPeriod() * 10; i++) {
+                Thread.sleep(100);
+                publishAsyncData();
+            }
+        }
+    }
+    
+    // publishes data from DPA asynchronous messages
+    private static void publishAsyncData() {
+        while (!asyncDataToPublish.isEmpty()) {
+            PublishData asyncData = asyncDataToPublish.poll();
+            publishMqttMessage(asyncData.topic, asyncData.message);
         }
     }
 
@@ -314,7 +340,8 @@ public class OpenGatewayAppLp {
             mqttMessage = MqttFormatter.formatAsyncDataForMqtt(asyncDataForMqtt, 0);
             
             // inform web gui about event
-            publishMqttMessage(mqttTopic, mqttMessage);
+            //publishMqttMessage(mqttTopic, mqttMessage);
+            asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
 
             // app logic
             mqttTopic =  mqttTopics.getStdActuatorsDevtech();
@@ -326,7 +353,8 @@ public class OpenGatewayAppLp {
             }
             
             // based on async event it sends request to std network via broker 
-            publishMqttMessage(mqttTopic, mqttMessage);
+            //publishMqttMessage(mqttTopic, mqttMessage);
+            asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
         }
         
         if (asyncDataForMqtt.getNodeId().equals("5")) {
@@ -335,7 +363,8 @@ public class OpenGatewayAppLp {
             mqttMessage = MqttFormatter.formatAsyncDataForMqtt(asyncDataForMqtt, 0);
             
             // inform web gui about event
-            publishMqttMessage(mqttTopic, mqttMessage);
+            //publishMqttMessage(mqttTopic, mqttMessage);
+            asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
             
             // app logic
             mqttTopic =  mqttTopics.getStdActuatorsDatmolux();
@@ -353,7 +382,8 @@ public class OpenGatewayAppLp {
             }
             
             // based on async event it sends request to std network via broker 
-            publishMqttMessage(mqttTopic, mqttMessage);
+            //publishMqttMessage(mqttTopic, mqttMessage);
+            asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
         }
         
         if (asyncDataForMqtt.getNodeId().equals("6")) {
@@ -362,7 +392,8 @@ public class OpenGatewayAppLp {
             mqttMessage = MqttFormatter.formatAsyncDataForMqtt(asyncDataForMqtt, 0);
             
             // inform web gui about event
-            publishMqttMessage(mqttTopic, mqttMessage);
+            //publishMqttMessage(mqttTopic, mqttMessage);
+            asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
             
             // app logic
             mqttTopic =  mqttTopics.getStdActuatorsDatmolux();
@@ -380,7 +411,8 @@ public class OpenGatewayAppLp {
             }
             
             // based on async event it sends request to std network via broker 
-            publishMqttMessage(mqttTopic, mqttMessage);
+            //publishMqttMessage(mqttTopic, mqttMessage);
+            asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
         }
     }
     
