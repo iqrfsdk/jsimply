@@ -214,10 +214,6 @@ public class OpenGatewayAppLp {
         mqttTopics =  new MqttTopics.Builder().gwId(mqttConfiguration.getGwId()).build();
 
         mqttCommunicator = new MqttCommunicator(mqttConfiguration);
-        mqttCommunicator.subscribe(mqttTopics.getStdActuatorsAustyn(), 2);
-        mqttCommunicator.subscribe(mqttTopics.getStdActuatorsDevtech(), 2);
-        mqttCommunicator.subscribe(mqttTopics.getStdActuatorsDatmolux(), 2);
-        mqttCommunicator.subscribe(mqttTopics.getStdActuatorsTeco(), 2);
 
         // getting reference to IQRF DPA network to use
         Network dpaNetwork = dpaSimply.getNetwork("1", Network.class);
@@ -342,7 +338,9 @@ public class OpenGatewayAppLp {
             // inform web gui about event
             //publishMqttMessage(mqttTopic, mqttMessage);
             asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
-
+            System.out.println("Async Topic: " + mqttTopic);
+            System.out.println("Async Message: " + mqttMessage);
+        
             // app logic
             mqttTopic =  mqttTopics.getStdActuatorsDevtech();
             if(asyncDataForMqtt.getModuleState().equals("leftup")) {
@@ -355,6 +353,8 @@ public class OpenGatewayAppLp {
             // based on async event it sends request to std network via broker 
             //publishMqttMessage(mqttTopic, mqttMessage);
             asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
+            System.out.println("Async Topic: " + mqttTopic);
+            System.out.println("Async Message: " + mqttMessage);
         }
         
         if (asyncDataForMqtt.getNodeId().equals("5")) {
@@ -365,7 +365,9 @@ public class OpenGatewayAppLp {
             // inform web gui about event
             //publishMqttMessage(mqttTopic, mqttMessage);
             asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
-            
+            System.out.println("Async Topic: " + mqttTopic);
+            System.out.println("Async Message: " + mqttMessage);
+                   
             // app logic
             mqttTopic =  mqttTopics.getStdActuatorsDatmolux();
             if(asyncDataForMqtt.getModuleState().equals("leftup")) {
@@ -384,6 +386,8 @@ public class OpenGatewayAppLp {
             // based on async event it sends request to std network via broker 
             //publishMqttMessage(mqttTopic, mqttMessage);
             asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
+            System.out.println("Async Topic: " + mqttTopic);
+            System.out.println("Async Message: " + mqttMessage);
         }
         
         if (asyncDataForMqtt.getNodeId().equals("6")) {
@@ -394,6 +398,8 @@ public class OpenGatewayAppLp {
             // inform web gui about event
             //publishMqttMessage(mqttTopic, mqttMessage);
             asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
+            System.out.println("Async Topic: " + mqttTopic);
+            System.out.println("Async Message: " + mqttMessage);
             
             // app logic
             mqttTopic =  mqttTopics.getStdActuatorsDatmolux();
@@ -413,6 +419,8 @@ public class OpenGatewayAppLp {
             // based on async event it sends request to std network via broker 
             //publishMqttMessage(mqttTopic, mqttMessage);
             asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
+            System.out.println("Async Topic: " + mqttTopic);
+            System.out.println("Async Message: " + mqttMessage);
         }
     }
     
@@ -796,6 +804,10 @@ public class OpenGatewayAppLp {
 
                 if(nodeId == 1) {
                     for (String mqttData : entry.getValue()) {
+                        
+                        System.out.println("IQHome Topic: " + mqttTopics.getLpSensorsIqHome());
+                        System.out.println("IQHome Message: " + mqttData);
+                        
                         try {
                             mqttCommunicator.publish(mqttTopics.getLpSensorsIqHome(), 2, mqttData.getBytes());
                         } catch (MqttException ex) {
