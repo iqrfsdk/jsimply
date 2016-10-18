@@ -156,20 +156,6 @@ public class OpenGatewayAppLp {
         }
     }
 
-    // data to publish using MQQT
-    private static class PublishData {
-
-        String topic;
-        String message;
-
-        public PublishData(String message, String topic) {
-            this.message = message;
-            this.topic = topic;
-        }
-    }
-
-    // data of asynchronous messages to publish
-    private static Queue<PublishData> asyncDataToPublish = new ConcurrentLinkedQueue<>();
 
     // MAIN
     public static void main(String[] args) throws InterruptedException, MqttException {
@@ -243,21 +229,9 @@ public class OpenGatewayAppLp {
         initAsynchronousFunctionality();
 
         // main application loop
-        while (true) {
+        while ( true ) {
             getAndPublishDevicesData(devicesMap, mqttTopics, osInfoMap);
-            
-            for (int i = 0; i < appConfiguration.getPollingPeriod() * 10; i++) {
-                Thread.sleep(100);
-                publishAsyncData();
-            }
-        }
-    }
-    
-    // publishes data from DPA asynchronous messages
-    private static void publishAsyncData() {
-        while (!asyncDataToPublish.isEmpty()) {
-            PublishData asyncData = asyncDataToPublish.poll();
-            publishMqttMessage(asyncData.topic, asyncData.message);
+            Thread.sleep(appConfiguration.getPollingPeriod() * 1000);
         }
     }
 
@@ -336,8 +310,7 @@ public class OpenGatewayAppLp {
             mqttMessage = MqttFormatter.formatAsyncDataForMqtt(asyncDataForMqtt, 0);
             
             // inform web gui about event
-            //publishMqttMessage(mqttTopic, mqttMessage);
-            asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
+            publishMqttMessage(mqttTopic, mqttMessage);
             System.out.println("Async Topic: " + mqttTopic);
             System.out.println("Async Message: " + mqttMessage);
         
@@ -351,8 +324,7 @@ public class OpenGatewayAppLp {
             }
             
             // based on async event it sends request to std network via broker 
-            //publishMqttMessage(mqttTopic, mqttMessage);
-            asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
+            publishMqttMessage(mqttTopic, mqttMessage);
             System.out.println("Async Topic: " + mqttTopic);
             System.out.println("Async Message: " + mqttMessage);
         }
@@ -363,8 +335,7 @@ public class OpenGatewayAppLp {
             mqttMessage = MqttFormatter.formatAsyncDataForMqtt(asyncDataForMqtt, 0);
             
             // inform web gui about event
-            //publishMqttMessage(mqttTopic, mqttMessage);
-            asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
+            publishMqttMessage(mqttTopic, mqttMessage);
             System.out.println("Async Topic: " + mqttTopic);
             System.out.println("Async Message: " + mqttMessage);
                    
@@ -384,8 +355,7 @@ public class OpenGatewayAppLp {
             }
             
             // based on async event it sends request to std network via broker 
-            //publishMqttMessage(mqttTopic, mqttMessage);
-            asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
+            publishMqttMessage(mqttTopic, mqttMessage);
             System.out.println("Async Topic: " + mqttTopic);
             System.out.println("Async Message: " + mqttMessage);
         }
@@ -396,8 +366,7 @@ public class OpenGatewayAppLp {
             mqttMessage = MqttFormatter.formatAsyncDataForMqtt(asyncDataForMqtt, 0);
             
             // inform web gui about event
-            //publishMqttMessage(mqttTopic, mqttMessage);
-            asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
+            publishMqttMessage(mqttTopic, mqttMessage);
             System.out.println("Async Topic: " + mqttTopic);
             System.out.println("Async Message: " + mqttMessage);
             
@@ -417,8 +386,7 @@ public class OpenGatewayAppLp {
             }
             
             // based on async event it sends request to std network via broker 
-            //publishMqttMessage(mqttTopic, mqttMessage);
-            asyncDataToPublish.add( new PublishData(mqttMessage, mqttTopic));
+            publishMqttMessage(mqttTopic, mqttMessage);
             System.out.println("Async Topic: " + mqttTopic);
             System.out.println("Async Message: " + mqttMessage);
         }
@@ -565,10 +533,6 @@ public class OpenGatewayAppLp {
         List<DPA_Result> deviceData = new LinkedList<>();
         
         for ( Map.Entry<String, DeviceObject> entry : devicesMap.entrySet() ) {
-            
-            // process new incomming asynchonous web request
-            //waitUntilProcessIncommingWebRequest();
-            
             int nodeId = Integer.parseInt(entry.getKey());
             
             // node ID must be within valid interval
@@ -628,7 +592,7 @@ public class OpenGatewayAppLp {
                                     DPA_AdditionalInfo dpaAddInfo = custom.getDPA_AdditionalInfoOfLastCall();
                                     if ( dpaAddInfo != null ) {
                                         DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
-                                        System.err.println("Error while getting data from custom iqhome device, DPA error: " + dpaResponseCode); 
+                                        System.err.println("DPA reponse code: " + dpaResponseCode); 
                                     }
                                 }
                             } else {
@@ -664,7 +628,7 @@ public class OpenGatewayAppLp {
                                     DPA_AdditionalInfo dpaAddInfo = custom.getDPA_AdditionalInfoOfLastCall();
                                     if ( dpaAddInfo != null ) {
                                         DPA_ResponseCode dpaResponseCode = dpaAddInfo.getResponseCode();
-                                        System.err.println("Error while getting data from custom iqhome device, DPA error: " + dpaResponseCode); 
+                                        System.err.println("DPA reponse code: " + dpaResponseCode); 
                                     }
                                 }
                             } else {

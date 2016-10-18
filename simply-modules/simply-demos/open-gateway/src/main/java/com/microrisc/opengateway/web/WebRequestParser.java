@@ -19,6 +19,8 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonValue;
 import com.microrisc.opengateway.dpa.DPA_Request;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Web requests parser.
@@ -27,9 +29,14 @@ import com.microrisc.opengateway.dpa.DPA_Request;
  */
 public final class WebRequestParser {
     
+    /** Logger. */
+    private static final Logger logger = LoggerFactory.getLogger(WebRequestParser.class);
+    
+    
     /**
      * Parses specified web request and returns its corresponding DPA request
      * representation.
+     * 
      * @param webRequest web request to parse
      * @return DPA request corresponding to {@code webRequest}
      * @throws com.microrisc.opengateway.web.WebRequestParserException if some error
@@ -56,7 +63,7 @@ public final class WebRequestParser {
             nadr = element.asObject().getInt("nadr", 0);
         }
         
-        System.out.println("WebRequest: " + n + "," + sv + "," + pid + "," + dpa + "," + nadr);
+        logger.info("n = {}, sv = {}, pid = {}, dpa = {}, nadr = {}", n, sv, pid, dpa, nadr);
         return new DPA_Request(n, sv, pid, dpa, nadr);
     }
 }

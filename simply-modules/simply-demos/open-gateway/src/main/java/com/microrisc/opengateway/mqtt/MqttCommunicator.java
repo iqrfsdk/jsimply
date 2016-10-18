@@ -53,8 +53,6 @@ import org.slf4j.LoggerFactory;
  * @author Rostislav Spinar
  */
 public class MqttCommunicator implements MqttCallback {
-
-    // Private instance variables
     private MqttClient client;
     private String brokerUrl;
     private boolean quietMode;
@@ -353,9 +351,6 @@ public class MqttCommunicator implements MqttCallback {
         
         // converting DPA result into web response form
         String webResponse = MqttFormatter.formatResponseData(responseData);
-        
-        System.out.println("WebResponse Topic: " + topic);
-        System.out.println("WebResponse Message: " + webResponse);
         
         try {
             publish(topic, 2, webResponse.getBytes());

@@ -27,6 +27,7 @@ import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_AdditionalInfo;
  * Formats various types od sensor data to MQTT form.
  *
  * @author Michal Konopa
+ * @author Rostislav Spinar
  */
 public final class MqttFormatter {
     
