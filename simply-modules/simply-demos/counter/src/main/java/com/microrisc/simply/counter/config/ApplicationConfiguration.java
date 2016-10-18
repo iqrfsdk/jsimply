@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.microrisc.simply.tcpcloud.config;
+package com.microrisc.simply.counter.config;
 
 import java.util.HashMap;
 import java.util.Map;

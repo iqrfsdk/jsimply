@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.microrisc.simply.tcpcloud.config;
+package com.microrisc.simply.counter.config;
 
 /**
  * Holds information about concrete device.

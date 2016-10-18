@@ -39,6 +39,6 @@
         <module>open-gateway</module>
         <module>light-building</module>
         <module>dustbin</module>
-        <module>tcpcloud</module>
+        <module>counter</module>
     </modules>
 </project>

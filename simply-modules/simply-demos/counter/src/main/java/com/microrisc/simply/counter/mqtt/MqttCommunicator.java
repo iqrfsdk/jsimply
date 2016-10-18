@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.microrisc.simply.tcpcloud.mqtt;
+package com.microrisc.simply.counter.mqtt;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;

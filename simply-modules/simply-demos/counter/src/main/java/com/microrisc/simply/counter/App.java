@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.tcpcloud;
+package com.microrisc.simply.counter;
 
 import com.microrisc.simply.CallRequestProcessingState;
 import static com.microrisc.simply.CallRequestProcessingState.ERROR;
@@ -27,12 +27,12 @@ import com.microrisc.simply.iqrf.dpa.DPA_Simply;
 import com.microrisc.simply.iqrf.dpa.v22x.DPA_SimplyFactory;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.OS;
 import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
-import com.microrisc.simply.tcpcloud.config.ApplicationConfiguration;
-import com.microrisc.simply.tcpcloud.config.DeviceInfo;
-import com.microrisc.simply.tcpcloud.mqtt.MqttCommunicator;
-import com.microrisc.simply.tcpcloud.mqtt.MqttConfiguration;
-import com.microrisc.simply.tcpcloud.mqtt.MqttFormatter;
-import com.microrisc.simply.tcpcloud.mqtt.MqttTopics;
+import com.microrisc.simply.counter.config.ApplicationConfiguration;
+import com.microrisc.simply.counter.config.DeviceInfo;
+import com.microrisc.simply.counter.mqtt.MqttCommunicator;
+import com.microrisc.simply.counter.mqtt.MqttConfiguration;
+import com.microrisc.simply.counter.mqtt.MqttFormatter;
+import com.microrisc.simply.counter.mqtt.MqttTopics;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
