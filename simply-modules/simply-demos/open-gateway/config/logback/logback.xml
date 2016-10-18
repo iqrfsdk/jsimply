@@ -362,7 +362,15 @@
             <appender-ref ref="FILE" />
     </logger>
 
-
+    
+    
+    
+    <!-- com.microrisc.opengateway.web package --> 
+    <logger name="com.microrisc.opengateway.web.WebRequestParser" level="DEBUG">
+            <appender-ref ref="FILE" />
+    </logger>
+    
+    
     <!-- root -->
     <root level="OFF">
         <!-- appender-ref ref="STDOUT" / -->
