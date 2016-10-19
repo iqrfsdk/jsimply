@@ -45,7 +45,7 @@ extends CompoundDeviceObject implements Counter {
     private static final int HWPID = 0xFFFF;
     
     // used data to send to UART
-    private static final short[] REQUEST = { 0x01, 0x04, 0x75, 0x37, 0x00, 0x01 }; 
+    private static final short[] REQUEST = { 0x01, 0x04, 0x75, 0x37, 0x00, 0x01, 0x00, 0x00 }; 
     
     // reponse length
     private static final int RESPONSE_LENGTH = 2;
@@ -65,7 +65,7 @@ extends CompoundDeviceObject implements Counter {
     
     
     /**
-     * Creates a new object representing the CO2 sensor.
+     * Creates a new object representing the Counter sensor.
      * 
      * @param networkId identifier of network, which this sensor belongs to.
      * @param nodeId identifier of node, which this sensor belongs to.
