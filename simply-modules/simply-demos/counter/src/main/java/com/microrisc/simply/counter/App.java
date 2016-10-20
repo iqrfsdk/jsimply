@@ -125,7 +125,7 @@ public final class App {
         }
         
         // topics initialization
-        mqttTopics =  new MqttTopics.Builder().gwId(mqttConfiguration.getRootTopic())
+        mqttTopics =  new MqttTopics.Builder().gwId(mqttConfiguration.getGwId())
                 .stdSensorsProtronix("/iqrf/protronix/")
                 .stdSensorsProtronixErrors("/iqrf/protronix/errors/")
                 .build();
