@@ -645,7 +645,7 @@ public class OpenGatewayAppStd {
 
         // send result's data to mqtt
         try {
-            mqttCommunicator.publish(mqttTopics.getStdSensorsProtronix(), 2, responseData.getBytes());
+            mqttCommunicator.publish(mqttTopics.getStdSensorsProtronix(), 0, responseData.getBytes());
         } catch ( MqttException ex ) {
             System.err.println("Error while publishing sync dpa message: " + ex);
         }
@@ -694,7 +694,7 @@ public class OpenGatewayAppStd {
 
         // send data to mqtt
         try {
-            mqttCommunicator.publish(mqttTopics.getStdSensorsAustyn(), 2, responseData.getBytes());
+            mqttCommunicator.publish(mqttTopics.getStdSensorsAustyn(), 0, responseData.getBytes());
         } catch ( MqttException ex ) {
             System.err.println("Error while publishing sync dpa message: " + ex);
         }
@@ -757,7 +757,7 @@ public class OpenGatewayAppStd {
         // send data to mqtt
         
         try {
-            mqttCommunicator.publish(mqttTopics.getStdStatusDevtech(), 2, responseData.getBytes());
+            mqttCommunicator.publish(mqttTopics.getStdStatusDevtech(), 0, responseData.getBytes());
         } catch ( MqttException ex ) {
             System.err.println("Error while publishing sync dpa message: " + ex);
         }
@@ -803,7 +803,7 @@ public class OpenGatewayAppStd {
         
         // send data to mqtt
         try {
-            mqttCommunicator.publish(mqttTopics.getStdStatusDatmolux(), 2, responseData.getBytes());
+            mqttCommunicator.publish(mqttTopics.getStdStatusDatmolux(), 0, responseData.getBytes());
         } catch ( MqttException ex ) {
             System.err.println("Error while publishing sync dpa message: " + ex);
         }
@@ -1202,7 +1202,7 @@ public class OpenGatewayAppStd {
 
         if ( dpaRequest.getSv().equalsIgnoreCase("OFF") ) {
             for ( int i = 0; i < 3; i++ ) {
-                result = customTeco.send((short) 0x20, (short) 0x00, new short[] {});
+                result = customTeco.send((short) 0x20, (short) 0x01, new short[] {});
                 if ( result != null ) {
                     break;
                 }

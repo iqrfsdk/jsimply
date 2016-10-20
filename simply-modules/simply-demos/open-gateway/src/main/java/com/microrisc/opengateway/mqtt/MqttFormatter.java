@@ -106,11 +106,11 @@ public final class MqttFormatter {
         ) {
             levelStr = ", \"v\":" + "0";
         }
-                
+                        
         String firstLine = "{\"e\":[{\"n\":\"" + responseData.getN().toLowerCase() 
-                + "\"," + "\"sv\":" + "\"" + responseData.getSv().toLowerCase()
+                + "\"," + "\"sv\":" + "\"" + responseData.getSv().toLowerCase() + "\""
                 + levelStr
-                + "\"}],";
+                + "}],";
         
         return firstLine
                 + "\"iqrf\":[{\"pid\":" + responseData.getPid() + "," 

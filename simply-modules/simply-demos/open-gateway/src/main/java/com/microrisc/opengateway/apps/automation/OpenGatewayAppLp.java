@@ -371,17 +371,20 @@ public class OpenGatewayAppLp {
             System.out.println("Async Message: " + mqttMessage);
             
             // app logic
-            mqttTopic =  mqttTopics.getStdActuatorsDatmolux();
             if(asyncDataForMqtt.getModuleState().equals("leftup")) {
+                mqttTopic =  mqttTopics.getStdActuatorsAustyn();
                 mqttMessage = MqttFormatter.formatDeviceAustyn("on", 0);
             }
             else if (asyncDataForMqtt.getModuleState().equals("leftdown")) {
+                mqttTopic =  mqttTopics.getStdActuatorsAustyn();
                 mqttMessage = MqttFormatter.formatDeviceAustyn("off", 0);
             }
             else if(asyncDataForMqtt.getModuleState().equals("rightup")) {
+                mqttTopic =  mqttTopics.getStdActuatorsTeco();
                 mqttMessage = MqttFormatter.formatDeviceTeco("on", 0);
             }
             else if (asyncDataForMqtt.getModuleState().equals("rightdown")) {
+                mqttTopic =  mqttTopics.getStdActuatorsTeco();
                 mqttMessage = MqttFormatter.formatDeviceTeco("off", 0);
             }
             
@@ -773,7 +776,7 @@ public class OpenGatewayAppLp {
                         System.out.println("IQHome Message: " + mqttData);
                         
                         try {
-                            mqttCommunicator.publish(mqttTopics.getLpSensorsIqHome(), 2, mqttData.getBytes());
+                            mqttCommunicator.publish(mqttTopics.getLpSensorsIqHome(), 0, mqttData.getBytes());
                         } catch (MqttException ex) {
                             System.err.println("Error while publishing sync dpa message: " + ex);
                         }
@@ -789,7 +792,7 @@ public class OpenGatewayAppLp {
     private static void publishMqttMessage(String topic, String message) {
         if (topic != null && message != null) {
             try {
-                mqttCommunicator.publish(topic, 2, message.getBytes());
+                mqttCommunicator.publish(topic, 0, message.getBytes());
             } catch (MqttException ex) {
                 System.err.println("Error while publishing mqtt message: " + ex.getMessage());
             }
@@ -802,7 +805,7 @@ public class OpenGatewayAppLp {
     // publish error messages to specified MQTT topics
     private static void mqttPublishErrors(int nodeId, MqttTopics mqttTopics, String errorMessage) {
         try {
-            mqttCommunicator.publish(mqttTopics.getLpSensorsIqHomeErrors() + nodeId, 2, errorMessage.getBytes());
+            mqttCommunicator.publish(mqttTopics.getLpSensorsIqHomeErrors() + nodeId, 0, errorMessage.getBytes());
         } catch (MqttException ex) {
             System.err.println("Error while publishing error message: " + ex);
         }

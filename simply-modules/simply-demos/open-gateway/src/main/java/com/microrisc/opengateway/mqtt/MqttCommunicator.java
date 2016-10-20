@@ -35,7 +35,11 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.sql.Timestamp;
-import java.util.logging.Level;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -51,8 +55,10 @@ import org.slf4j.LoggerFactory;
 /**
  *
  * @author Rostislav Spinar
+ * @author Michal Konopa
  */
 public class MqttCommunicator implements MqttCallback {
+    
     private MqttClient client;
     private String brokerUrl;
     private boolean quietMode;
@@ -93,10 +99,47 @@ public class MqttCommunicator implements MqttCallback {
             log("Connected");
         }
     };
+    
     private Thread reconnectionThread;
     
-    private static final Logger log = LoggerFactory.getLogger(MqttCommunicator.class);
+    private Runnable responseMessagesProcessorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            System.out.println("Response worker thread - message processing");
+            
+            if(!responseDataToPublish.isEmpty()) {
+                Map<String, ResponseData> responseDataMap = responseDataToPublish.poll();
+                processResponseData(responseDataMap);
+            } else {
+                System.out.println("Response worker thread - message buffer is empty");
+            }
+        }
+    };
     
+    private Thread responseMessagesThread;
+    
+    // response messages to publish
+    private Queue<Map<String, ResponseData>> responseDataToPublish = new ConcurrentLinkedQueue<>();
+
+    private void processResponseData(Map<String, ResponseData> responseDataMap) {
+
+        Set<String> topics = responseDataMap.keySet();
+        String topic = (String) topics.toArray()[0];
+
+        // converting DPA result into web response form
+        String webResponse = MqttFormatter.formatResponseData(responseDataMap.get(topic));
+
+        System.out.println("Web topic: " + topic);
+        System.out.println("Web response: " + webResponse);
+
+        try {
+            publish(topic, 0, webResponse.getBytes());
+        } catch (MqttException ex) {
+            System.err.println("Error while publishing web response message: " + ex);
+        }
+    }
+    
+    private static final Logger log = LoggerFactory.getLogger(MqttCommunicator.class);
     
     // sets connection options
     private void setConnectionOptions(
@@ -334,7 +377,10 @@ public class MqttCommunicator implements MqttCallback {
         DPA_Result result = null;
         try {
             dpaRequest = WebRequestParser.parse( messageData );
-            result = OpenGatewayAppStd.sendWebRequestToDpaNetwork(dpaRequest, topic);
+            
+            if(dpaRequest.getDpa().equalsIgnoreCase("req")) {
+                result = OpenGatewayAppStd.sendWebRequestToDpaNetwork(dpaRequest, topic);
+            }
         } catch ( WebRequestParserException ex ) {
             System.err.println("Error while parsing web request: " + ex);
             return;
@@ -346,17 +392,21 @@ public class MqttCommunicator implements MqttCallback {
             return;
         }
         
+        // holding topic and response data
+        Map<String, ResponseData> responseDataMap = new LinkedHashMap<>();
+        
         // creating data of response to publish
         ResponseData responseData = createResponseData(dpaRequest, result);
         
-        // converting DPA result into web response form
-        String webResponse = MqttFormatter.formatResponseData(responseData);
+        // adding topic and response data
+        responseDataMap.put(topic, responseData);
         
-        try {
-            publish(topic, 2, webResponse.getBytes());
-        } catch ( MqttException ex ) {
-            System.err.println("Error while publishing web response message: " + ex);
-        }
+        // buffer and notify
+        responseDataToPublish.add(responseDataMap);
+        
+        // process it
+        responseMessagesThread = new Thread(responseMessagesProcessorRunnable);
+        responseMessagesThread.start();
     }
     
     // creates response data for publishing
