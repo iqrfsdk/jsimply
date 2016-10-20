@@ -48,8 +48,12 @@ extends CompoundDeviceObject implements Counter {
     private static final short[] REQUEST = { 0x01, 0x04, 0x75, 0x37, 0x00, 0x01, 0x00, 0x00 }; 
     
     // reponse length
-    private static final int RESPONSE_LENGTH = 2;
+    private static final int RESPONSE_LENGTH = 7;
     
+    // starting position of data to extract
+    private static final int DATA_POS = 3;
+            
+            
     
     // last response data error
     private BadResponseDataError lastResponseDataError = null; 
@@ -96,12 +100,12 @@ extends CompoundDeviceObject implements Counter {
         if ( readData.length != RESPONSE_LENGTH ) {
             lastResponseDataError = new BadResponseDataError(
                     "Bad lenght of data received from UART. Get data length: " + readData.length 
-                    + "Expected: " + RESPONSE_LENGTH
+                    + " Expected: " + RESPONSE_LENGTH
             );
             return null;
         }
         
-        return readData[0] + (readData[1] << 8);
+        return readData[DATA_POS] + (readData[DATA_POS+1] << 8);
     }
 
     @Override
