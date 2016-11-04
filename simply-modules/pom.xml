@@ -108,6 +108,6 @@
         <module>simply-services</module>
         <module>simply-devices</module>
         <module>simply-iqrf-dpa-v22x-examples</module>
-        <module>simply-demos/tcpcloud</module>
+        <module>simply-demos</module>
     </modules>
 </project>

@@ -37,7 +37,7 @@
     <modules>
         <module>air-quality</module>
         <module>auto-network</module>
-	<module>automation</module>
+    	<module>automation</module>
         <module>counter</module>
         <module>dustbin</module>
         <module>monitoring</module>
