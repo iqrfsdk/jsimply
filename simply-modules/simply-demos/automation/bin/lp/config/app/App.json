@@ -1,0 +1,8 @@
+{
+    "pollingPeriod":600,
+    "communicationInterface":"cdc",
+    "devices":
+        [
+            {"device":1, "manufacturer":"iqhome", "type":"custom"}
+        ]
+}

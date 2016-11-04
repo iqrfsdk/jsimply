@@ -24,3 +24,6 @@ simply-modules/simply-web-services/
 /simply-modules/simply-demos/tcpcloud/target/
 /simply-modules/simply-demos/counter/target/
 /simply-modules/simply-devices/target/
+/simply-modules/simply-demos/air-quality/target/
+/simply-modules/simply-demos/automation/target/
+/simply-modules/simply-demos/monitoring/target/

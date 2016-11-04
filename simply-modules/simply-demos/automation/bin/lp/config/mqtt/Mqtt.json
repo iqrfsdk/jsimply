@@ -1,0 +1,14 @@
+{
+    "protocol": "tcp://",
+    "broker": "localhost",
+    "port": 1883,
+    "clientid": "opengateway-automation-app-lp",
+    "gwid": "b827eb26c73d",
+    "cleansession": true,
+    "quitemode": false,
+    "ssl": false,
+    "certfile": "",
+    "password": "",
+    "username": "",
+    "roottopic": ""
+}

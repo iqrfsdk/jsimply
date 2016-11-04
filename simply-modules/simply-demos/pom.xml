@@ -35,10 +35,11 @@
     </distributionManagement>
 
     <modules>
+        <module>air-quality</module>
         <module>auto-network</module>
-        <module>open-gateway</module>
-        <module>light-building</module>
-        <module>dustbin</module>
+	<module>automation</module>
         <module>counter</module>
+        <module>dustbin</module>
+        <module>monitoring</module>
     </modules>
 </project>

@@ -1,0 +1,14 @@
+{
+    "protocol": "ssl://",
+    "broker": "mqtt.online",
+    "port": 49300,
+    "clientid": "36jED0YwXNCpVeCiDNoGXS",
+    "gwid": "bacedfb3a263",
+    "cleansession": true,
+    "quitemode": false,
+    "ssl": true,
+    "certfile": "/cert/IntelimentsRootCA.crt",
+    "username": "36jED0YwXNCpVeCiDNoGXS",
+    "password": "Hq9Fdx5ZVR7SLldMk2zce343W1zF6bKWGoGb",
+    "roottopic": "76fwcpD2oI7bToDuRmqy4A"
+}

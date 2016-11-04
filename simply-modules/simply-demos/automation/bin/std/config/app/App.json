@@ -1,0 +1,7 @@
+{
+    "pollingPeriod":600,
+    "communicationInterface":"spi",
+    "devices":
+        [
+        ]
+}

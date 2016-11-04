@@ -1,0 +1,14 @@
+{
+    "protocol": "ssl://",
+    "broker": "provides-inteliments",
+    "port": 1883,
+    "clientid": "provides-inteliments",
+    "gwid": "your-mac",
+    "cleansession": true,
+    "quitemode": false,
+    "ssl": true,
+    "certfile": "/cert/IntelimentsRootCA.crt",
+    "username": "provides-inteliments",
+    "password": "provides-inteliments",
+    "roottopic": "provides-inteliments"
+}
