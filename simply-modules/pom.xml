@@ -107,7 +107,7 @@
         <module>simply-network-mqtt</module>
         <module>simply-services</module>
         <module>simply-devices</module>
+        <module>simply-demos</module>
         <module>simply-iqrf-dpa-v22x-examples</module>
-        <module>simply-demos/tcpcloud</module>
     </modules>
 </project>
