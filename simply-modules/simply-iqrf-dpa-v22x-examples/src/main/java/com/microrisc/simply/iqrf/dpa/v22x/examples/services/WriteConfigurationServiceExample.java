@@ -88,7 +88,7 @@ public final class WriteConfigurationServiceExample {
             System.out.println("Configuration write was NOT successful.");
             
             // find out details about errors
-            // is there some principal error?
+            // are there any principal error?
             WriteConfigurationProcessingInfo procInfo = serviceResult.getProcessingInfo();
             WriteConfigurationError error = procInfo.getError();
             if ( error != null ) {
