@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2016 MICRORISC s.r.o.
+ * Copyright 2016 MICRORISC s.r.o..
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code;
+package com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.errors;
 
 /**
- * Information about processing of code load.
+ * Types of errors, which encounter during run of Write Configuration Service.
+ * 
+ * @author Michal Konopa
  */
-public final class LoadCodeProcessingInfo {
-   
-    private String infoMsg;
-
-    public LoadCodeProcessingInfo(String infoMsg){
-       this.infoMsg = infoMsg;
-    }
-
-    public String getInfoMsg() {
-       return infoMsg;
-    }
-
-    @Override
-    public String toString() {
-       return "LoadCodeProcessingInfo{" + "infoMsg=" + infoMsg + '}';
-    }
+public enum WriteConfigurationErrorType {
+    
+    /** Parsing of configuration files failed. */
+    CONFIG_FILE_PARSING,
+    
+    /** No configuration data to write. */
+    NO_CONFIGURATION_DATA,
+    
+    /** Missing OS peripheral. */
+    MISSING_OS,
+    
+    /** Processing of request failed. */
+    REQUEST_PROCESSING
 }

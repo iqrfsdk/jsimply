@@ -17,9 +17,12 @@ package com.microrisc.simply.iqrf.dpa.v22x.init;
 
 import com.microrisc.simply.DeviceObject;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.EEEPROM;
+import com.microrisc.simply.iqrf.dpa.v22x.devices.FRC;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.OS;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeService;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.SimpleLoadCodeService;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.WriteConfigurationService;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.WriteConfigurationServiceImpl;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -57,12 +60,35 @@ public final class NodeServiceFactory {
         }
     }
     
+    // load code service creator
+    private static class WriteConfigurationServiceCreator extends ServiceCreator<WriteConfigurationService> {
+        @Override
+        WriteConfigurationService create(Map<Class, DeviceObject> devices) {
+            Map<Class, DeviceObject> servDevices = new HashMap<>();
+
+            DeviceObject os = devices.get(OS.class);
+            if ( os == null ) {
+                return null;
+            }
+            servDevices.put(OS.class, os);
+
+            DeviceObject frc = devices.get(FRC.class);
+            if ( frc == null ) {
+                return null;
+            }
+            servDevices.put(FRC.class, frc);
+            
+            return new WriteConfigurationServiceImpl(servDevices);
+        }
+    }
+    
     
     private static Map<Class, ServiceCreator> creators = null;
     
     private static void initCreators() {
         creators = new HashMap<>();
         creators.put(LoadCodeService.class, new LoadCodeServiceCreator());
+        creators.put(WriteConfigurationService.class, new WriteConfigurationServiceCreator());
     }
     
     static {

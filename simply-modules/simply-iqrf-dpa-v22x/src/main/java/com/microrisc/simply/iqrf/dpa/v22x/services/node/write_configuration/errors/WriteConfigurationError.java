@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2016 MICRORISC s.r.o.
  *
@@ -14,25 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code;
+package com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.errors;
 
 /**
- * Information about processing of code load.
+ * Information about errors, which encounter during run of Write 
+ * Configuration Service.
+ * 
+ * @author Michal Konopa
  */
-public final class LoadCodeProcessingInfo {
-   
-    private String infoMsg;
-
-    public LoadCodeProcessingInfo(String infoMsg){
-       this.infoMsg = infoMsg;
-    }
-
-    public String getInfoMsg() {
-       return infoMsg;
-    }
-
-    @Override
-    public String toString() {
-       return "LoadCodeProcessingInfo{" + "infoMsg=" + infoMsg + '}';
-    }
+public interface WriteConfigurationError {
+    
+    /**
+     * Returns type of error.
+     * @return type of error.
+     */
+    WriteConfigurationErrorType getErrorType();
+    
+    /**
+     * Returns message about error.
+     * @return message
+     */
+    String getMessage();
+    
+    /**
+     * Returns cause of error.
+     * @return cause of error
+     */
+    Throwable getCause();
 }

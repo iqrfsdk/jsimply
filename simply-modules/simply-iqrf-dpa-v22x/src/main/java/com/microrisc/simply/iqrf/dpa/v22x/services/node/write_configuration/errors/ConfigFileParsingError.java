@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2016 MICRORISC s.r.o.
  *
@@ -14,25 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code;
+package com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.errors;
 
 /**
- * Information about processing of code load.
+ * Configuration file parsing error.
+ * 
+ * @author Michal Konopa
  */
-public final class LoadCodeProcessingInfo {
-   
-    private String infoMsg;
-
-    public LoadCodeProcessingInfo(String infoMsg){
-       this.infoMsg = infoMsg;
+public final class ConfigFileParsingError extends AbstractWriteConfigurationError {
+    
+    private final WriteConfigurationErrorType errorType 
+            = WriteConfigurationErrorType.CONFIG_FILE_PARSING;
+    
+    public ConfigFileParsingError(String message) {
+        super(message);
     }
-
-    public String getInfoMsg() {
-       return infoMsg;
+    
+    public ConfigFileParsingError(Throwable cause) {
+        super(cause);
     }
-
+    
     @Override
-    public String toString() {
-       return "LoadCodeProcessingInfo{" + "infoMsg=" + infoMsg + '}';
+    public WriteConfigurationErrorType getErrorType() {
+        return errorType;
     }
+    
 }

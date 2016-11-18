@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2016 MICRORISC s.r.o.
+ * Copyright 2016 MICRORISC s.r.o..
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code;
+package com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration;
 
 /**
- * Information about processing of code load.
+ * Exceptions of XML Configuration Parser.
+ * 
+ * @author Michal Konopa
  */
-public final class LoadCodeProcessingInfo {
-   
-    private String infoMsg;
-
-    public LoadCodeProcessingInfo(String infoMsg){
-       this.infoMsg = infoMsg;
+public final class XmlConfigurationParserException extends Exception {
+    
+    public XmlConfigurationParserException(String message) {
+        super(message);
     }
-
-    public String getInfoMsg() {
-       return infoMsg;
+    
+    public XmlConfigurationParserException(String message, Throwable cause) {
+        super(message, cause);
     }
-
-    @Override
-    public String toString() {
-       return "LoadCodeProcessingInfo{" + "infoMsg=" + infoMsg + '}';
+    
+    public XmlConfigurationParserException(Throwable cause) {
+        super(cause);
     }
+    
 }

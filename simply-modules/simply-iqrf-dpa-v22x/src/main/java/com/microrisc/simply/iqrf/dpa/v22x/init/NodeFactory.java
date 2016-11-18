@@ -27,6 +27,7 @@ import com.microrisc.simply.compounddevices.CompoundDeviceObject;
 import com.microrisc.simply.compounddevices.CompoundDeviceObjectFactory;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.PeripheralInfoGetter;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeService;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.WriteConfigurationService;
 import com.microrisc.simply.services.Service;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -103,6 +104,12 @@ public final class NodeFactory {
         LoadCodeService loadCodeService = NodeServiceFactory.createService(LoadCodeService.class, devices);
         if ( loadCodeService != null ) {
             services.put(LoadCodeService.class, loadCodeService);
+        }
+        
+        WriteConfigurationService writeConfigurationService 
+                = NodeServiceFactory.createService(WriteConfigurationService.class, devices);
+        if ( writeConfigurationService != null ) {
+            services.put(WriteConfigurationService.class, writeConfigurationService);
         }
         
         return services;

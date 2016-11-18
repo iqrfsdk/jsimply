@@ -142,7 +142,7 @@ public final class FRC_AcknowledgedBroadcastBits extends AbstractFRC_Command {
     public FRC_AcknowledgedBroadcastBits() {
     }
 
-        /**
+    /**
      * Creates new object of {@code FRC_AcknowledgedBroadcastBits} with specified user data.
      *
      * @param userData user data

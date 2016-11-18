@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2016 MICRORISC s.r.o.
+ * Copyright 2016 MICRORISC s.r.o..
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code;
+package com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.errors;
 
 /**
- * Information about processing of code load.
+ * Base class of errors, which encounter during Write Configuration Service run.
+ * 
+ * @author Michal Konopa
  */
-public final class LoadCodeProcessingInfo {
-   
-    private String infoMsg;
-
-    public LoadCodeProcessingInfo(String infoMsg){
-       this.infoMsg = infoMsg;
+public abstract class AbstractWriteConfigurationError 
+extends Exception implements WriteConfigurationError 
+{
+    protected AbstractWriteConfigurationError() {
     }
-
-    public String getInfoMsg() {
-       return infoMsg;
+    
+    protected AbstractWriteConfigurationError(String message) {
+        super(message);
     }
-
-    @Override
-    public String toString() {
-       return "LoadCodeProcessingInfo{" + "infoMsg=" + infoMsg + '}';
+    
+    protected AbstractWriteConfigurationError(Throwable cause) {
+        super(cause);
     }
 }

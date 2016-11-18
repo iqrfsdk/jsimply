@@ -81,12 +81,13 @@ public final class LoadCodeServiceParameters {
         
     /**
      * Creates object of parameters for Load Code Service.
+     * 
      * @param fileName full source file name including path  
      * @param startAddress start address on which will be saved data into memory
      * @param loadingAction type of action to do
      * @param loadingContent type of content to load
      * @throws IllegalArgumentException if: <br>
-     *          - {@code fileName} is not valid file name <br>
+     *          - {@code fileName} is not valid file name or file does not exist <br>
      *          - {@code codeSize} is negative <br>
      *          - {@code startAddress} is negative or greater than ...<br>
      *          - {@code loadingAction} is {@code null} <br>
