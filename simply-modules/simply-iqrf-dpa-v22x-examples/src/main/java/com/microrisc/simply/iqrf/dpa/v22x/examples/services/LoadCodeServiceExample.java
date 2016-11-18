@@ -32,6 +32,7 @@ import java.io.File;
  * Usage of Load Code Service.
  * 
  * @author Michal Konopa
+ * @author Martin Strouhal
  */
 public class LoadCodeServiceExample {
     private static DPA_Simply simply = null;
@@ -77,7 +78,7 @@ public class LoadCodeServiceExample {
         ServiceResult<LoadingResult, LoadCodeProcessingInfo> serviceResult 
             = loadCodeService.loadCode( 
                     new LoadCodeServiceParameters(
-                        "D:\\Plocha\\IQRF_OS307_7xD\\Examples\\DPA\\CustomDpaHandlerExamples\\hex\\CustomDpaHandler-FRC-Minimalistic-7xD-V224-151201.hex", 
+                        "CustomDpaHandler-FRC-Minimalistic-7xD-V224-151201.hex", 
                         0x0000,
                         LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithoutCodeLoading,
                         LoadingCodeProperties.LoadingContent.Hex 
@@ -88,7 +89,7 @@ public class LoadCodeServiceExample {
         ServiceResult<LoadingResult, LoadCodeProcessingInfo> serviceResult 
             = loadCodeService.loadCode( 
                     new LoadCodeServiceParameters(
-                        "D:\\Plocha\\IQRF_OS308_7xD\\Examples\\DPA\\StartUp\\DemoPlug-ins\\CustomDpaHandler-ChangeIQRFOS-7xD-V226-160303.iqrf", 
+                        "CustomDpaHandler-ChangeIQRFOS-7xD-V226-160303.iqrf", 
                         0x0000,
                         LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithoutCodeLoading,
                         LoadingCodeProperties.LoadingContent.IQRF_Plugin
