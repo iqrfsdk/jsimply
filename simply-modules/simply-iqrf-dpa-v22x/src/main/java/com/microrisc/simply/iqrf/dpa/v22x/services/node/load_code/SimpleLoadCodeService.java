@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Simple Load Code Service implementation.
  * 
- * @author Michal Konopa
+ * @author Martin Strouhal
  */
 public final class SimpleLoadCodeService 
 extends BaseService implements LoadCodeService {
