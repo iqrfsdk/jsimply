@@ -549,7 +549,6 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
         }
     }
     
-    
     // updates information about nodes
     private void updateNodesInfo(Coordinator coordinator) throws Exception {
         logger.debug("updateNodesInfo - start: coordinator={}", coordinator);
@@ -574,6 +573,7 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
                 notDiscovered.add(bondedNodeId);
             }
         }
+        
         logger.info("NOT discovered nodes: {}", getGentleListOfNodes(notDiscovered));
         logger.debug("updateNodesInfo - end: ");
     }
@@ -978,49 +978,26 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
                 throw new Exception("Node interface at " + nodeAddr + " node not found.");
             }
 
-            RemotelyBondedModuleId remoBondedModuleId = nodeIface.readRemotelyBondedModuleId();
+            RemotelyBondedModuleId[] remoBondedModuleIds = nodeIface.readRemotelyBondedModuleId();
+            if ( remoBondedModuleIds == null ) {
+                logger.error("Unable to read prebonded MIDs from node {}", nodeAddr);
+                continue;
+            }
             
-            // getting lowest 2 bytes of module ID
-            short[] lowest2bytes = new short[2];
-            System.arraycopy(remoBondedModuleId.getModuleId(), 0, lowest2bytes, 0, 2);
-            
-            if (remoBondedModuleId != null) {
+            for ( RemotelyBondedModuleId remoBondedModuleId : remoBondedModuleIds ) {
                 logger.info("Node {} prebonded MID={}, UserData={}",
                         nodeAddr, toHexaFromLastByteString(remoBondedModuleId.getModuleId()),
                         toHexaFromLastByteString(remoBondedModuleId.getUserData())
                 );
-
-                if (!prebondedMIDs.contains(remoBondedModuleId)) {
-
-                    boolean duplicate = false;
-
-                    // check all modules in the list
-                    for (RemotelyBondedModuleId moduleId : prebondedMIDs) {
-
-                        // getting lowest 2 bytes of module ID
-                        short[] lowest2bytesfromlist = new short[2];
-                        System.arraycopy(moduleId.getModuleId(), 0, lowest2bytesfromlist, 0, 2);
-
-                        // double check that there are no modules with same ID (2 lowest bytes)
-                        boolean result = Arrays.equals(lowest2bytesfromlist, lowest2bytes);
-
-                        if (result) {
-                            // if the lowest 2 bytes are same then remove even the module which is in the list already
-                            duplicate = true;
-                            prebondedMIDs.remove(moduleId);
-                            logger.info("Prebonded MID={} removed from the list, same 2B of MID.", toHexaFromLastByteString(moduleId.getModuleId()));
-                        }
-                    }
-
-                    // add module only with unique ID (2B) otherwise they would get same address during authorization
-                    if (!duplicate) {
-                        // adding module into list for authorization
-                        prebondedMIDs.add(remoBondedModuleId);
-                        logger.info("Prebonded MID={} added to the list.", toHexaFromLastByteString(remoBondedModuleId.getModuleId()));
-                    }
+                
+                if ( !prebondedMIDs.contains(remoBondedModuleId) ) {
+                    // adding module into list for authorization
+                    prebondedMIDs.add(remoBondedModuleId);
+                    logger.info(
+                            "Prebonded MID={} added to the list.", 
+                            toHexaFromLastByteString(remoBondedModuleId.getModuleId())
+                    );
                 }
-            } else {
-                logger.error("Unable to read prebonded MID from node {}", nodeAddr);
             }
         }
     }
@@ -1475,10 +1452,7 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
             return false;
         }
         
-        if ( numberOfNodesToBond == newBondedNodesCount ) {
-            return true;
-        }
-        return false;
+        return (numberOfNodesToBond == newBondedNodesCount);
     }
     
     
@@ -1510,12 +1484,12 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
         Coordinator coordinator = coordNode.getDeviceObject(Coordinator.class);
         if ( coordinator == null ) {
             setState(State.ERROR);
-            logger.error("Coordinator interface not found.");
+            logger.error("Coordinator interface not found on coordinator node.");
             logger.debug("runAlgorithm - end");
             return;
         }
         
-        // storing previous value to be able to restore it later
+        // storing previous value to restore it later
         long prevDefaultWaitingTimeout = coordinator.getDefaultWaitingTimeout();
         
         // IMPORTANT: SET DEFAULT TIMEOUT FOR GETTING RESULT TO 'UNLIMITED', 
@@ -1525,7 +1499,7 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
         OS coordOs = coordNode.getDeviceObject(OS.class);
         if ( coordOs == null ) {
             setState(State.ERROR);
-            logger.error("OS interface not found.");
+            logger.error("OS interface not found on coordinator node.");
             logger.debug("runAlgorithm - end");
             return;
         }
@@ -1648,7 +1622,7 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
                     forceRemovalofNodesWithTemporaryAddress();
                 }
 
-                if(!newAddrs.isEmpty()) {
+                if( !newAddrs.isEmpty()) {
                     logger.info( "Running discovery ...");
                     runDiscovery(coordinator);
                 }
@@ -1787,6 +1761,7 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
      * running - the method returns the actual result. <br>
      * The returned value is the copy of the network instance the algorithm
      * is running on. 
+     * 
      * @return result network
      */
     public Network getResultNetwork() {

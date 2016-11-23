@@ -41,6 +41,7 @@ public final class RemotelyBondedModuleId {
     
     /**
      * Creates new remotely bonded module ID.
+     * 
      * @param moduleId module ID of the remotely bonded node
      * @param userData optional bonding user data specified at Reset Custom DPA Handler event
      */

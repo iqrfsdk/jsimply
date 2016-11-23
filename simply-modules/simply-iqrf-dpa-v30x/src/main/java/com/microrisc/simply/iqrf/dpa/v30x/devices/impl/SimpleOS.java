@@ -133,7 +133,7 @@ extends DPA_DeviceObject implements OS {
                         getDefaultWaitingTimeout()
                 );
 
-            case SETSECURITY:
+            case SET_SECURITY:
                 MethodArgumentsChecker.checkArgumentTypes(args, new Class[]{Integer.class, short[].class});
                 return dispatchCall(
                         methodIdStr,

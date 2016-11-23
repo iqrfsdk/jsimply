@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
  * @author Michal Konopa
  */
 public final class RemotelyBondedModuleIdConvertor extends PrimitiveConvertor {
+    
     /** Logger. */
     private static final Logger logger = LoggerFactory.getLogger(RemotelyBondedModuleIdConvertor.class);
     
@@ -54,13 +55,13 @@ public final class RemotelyBondedModuleIdConvertor extends PrimitiveConvertor {
     }
     
     /** Size of returned response. */
-    static public final int TYPE_SIZE = 6;
+    static public final int TYPE_SIZE = 8;
     
     // postitions of fields
     static private final int MODULE_ID_POS = 0;
     static private final int MODULE_ID_LENGTH = 4;
     static private final int USER_DATA_POS = 4;
-    static private final int USER_DATA_LENGTH = 2;
+    static private final int USER_DATA_LENGTH = 4;
     
     
     
@@ -93,10 +94,12 @@ public final class RemotelyBondedModuleIdConvertor extends PrimitiveConvertor {
     }
     
     private short[] checkData(short[] data) throws ValueConversionException{
-        if(data == null || data.length != TYPE_SIZE){
-            throw new ValueConversionException("Illegal data. Data cannot be null a their length must be " + TYPE_SIZE);
-        }else{
-            return data;
-        }
+        if ( (data == null) || (data.length != TYPE_SIZE) ){
+            throw new ValueConversionException(
+                    "Illegal data. Data cannot be null and their length must be: " + TYPE_SIZE
+            );
+        } 
+        
+        return data;
     }
 }

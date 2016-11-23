@@ -43,10 +43,10 @@ public final class FRC_ResultParser {
     private static final int SECOND_BIT_END_INDEX = 61;
 
     private static final int BYTE_START_INDEX = 1;
-    private static final int BYTE_END_INDEX = 62;
+    private static final int BYTE_END_INDEX = 63;
     
     private static final int TWO_BYTE_START_INDEX = 2;
-    private static final int TWO_BYTE_END_INDEX = 61;
+    private static final int TWO_BYTE_END_INDEX = 63;
 
     
     private static short[] checkFrcData(short[] frcData) {

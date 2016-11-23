@@ -156,8 +156,7 @@ extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
      * data. Discovery data can be used for instance for IQMESH network visualization 
      * and traffic optimization. <br>
      * Discovery data structure is documented at IQRF OS Operating System User's Guide.
-     * @param address address of discovery data to read. Discovery data is read 
-     *        from address 16 * Address from the external EEPROM.
+     * @param address address of discovery data to read.
      * @return unique identifier of sent request
      */
     UUID async_discoveryData(int address);
@@ -318,8 +317,7 @@ extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
     /**
      * Synchronous wrapper for {@link #async_discoveryData(int) async_discoveryData}
      * method.
-     * @param address address of discovery data to read. Discovery data is read 
-     *        from address 16 * Address from the external EEPROM.
+     * @param address address of discovery data to read.
      * @return Discovery data read from the coordinator private storage
      */
     short[] discoveryData(int address);

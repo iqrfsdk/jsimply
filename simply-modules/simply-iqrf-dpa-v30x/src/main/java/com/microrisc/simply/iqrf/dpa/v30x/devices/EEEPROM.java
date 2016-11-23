@@ -36,6 +36,7 @@ import java.util.UUID;
 @DeviceInterface
 public interface EEEPROM 
 extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
+    
     /**
      * Identifiers of this device interface's methods.
      */

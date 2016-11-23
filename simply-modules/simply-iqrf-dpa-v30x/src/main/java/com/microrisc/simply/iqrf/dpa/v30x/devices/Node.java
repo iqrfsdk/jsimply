@@ -83,7 +83,9 @@ extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
     UUID async_enableRemoteBonding(int bondingMask, int control, short[] userData);
     
     /**
-     * Sends method call request for reading module ID of the remotely bonded node.
+     * Sends method call request for reading module IDs and user data of the 
+     * remotely pre-bonded nodes.
+     * 
      * @return unique identifier of sent request
      */
     UUID async_readRemotelyBondedModuleId();
@@ -155,9 +157,9 @@ extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
     /**
      * Synchronous wrapper for {@link 
      * #async_readRemotelyBondedModuleId() async_readRemotelyBondedModuleId} method.
-     * @return module ID of the remotely bonded node
+     * @return module IDs and user data of the remotely pre-bonded nodes
      */
-    RemotelyBondedModuleId readRemotelyBondedModuleId();
+    RemotelyBondedModuleId[] readRemotelyBondedModuleId();
     
     /**
      * Synchronous wrapper for {@link 

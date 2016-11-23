@@ -80,7 +80,7 @@ public final class SleepInfo {
         RUN_CALIBRATION_BEFORE_SLEEP            (0b000010),
         GREEN_LED_FLASH_AFTER_SLEEP             (0b000100),
         WAKEUP_ON_PORTB4_POSITIVE_EDGE_CHANGE   (0b001000),
-        USE32MSUNIT                             (0b010000),
+        USE_32MS_UNIT                             (0b010000),
         USE_DEEP_SLEEP                          (0b100000);
         
         private final int bitsValue;
@@ -140,8 +140,9 @@ public final class SleepInfo {
    /**
     * Creates new {@code SleepInfo} object.
     * <p>
-    * @param time Sleep time defined in ms. Sleep time value and choosing time 
-    *             unit is calculated automatically.    
+    * @param time Sleep time defined in ms. Sleep time value is then automatically
+    *             recalculated to 2.097s or 32.768 ms units according to the value 
+    *             of {@code use32msUnit} parameter.
     * @param wakeUpNegativeEdge If it's true wake up on PORTB.4 pin negative
     *                           edge change. See iqrfSleep() method for more information.
     * @param runCalibration If it's true runs calibration process before going
@@ -167,38 +168,43 @@ public final class SleepInfo {
     * @throws IllegalArgumentException if: <br>
     *         calculated sleep time is out of [{@code TIME_LOWER_BOUND}..{@code TIME_UPPER_BOUND}] interval
     */
-    public SleepInfo(int time,
-                     boolean wakeUpNegativeEdge , 
-                     boolean runCalibration,
-                     boolean flashLedAfterWakeUp, 
-                     boolean wakeUpPositiveEdge,
-                     boolean use32msUnit,
-                     boolean useDeepSleep) {        
+    public SleepInfo(
+            int time,
+            boolean wakeUpNegativeEdge, 
+            boolean runCalibration,
+            boolean flashLedAfterWakeUp, 
+            boolean wakeUpPositiveEdge,
+            boolean use32msUnit,
+            boolean useDeepSleep
+    ) {        
         int control = 0;
         
-        control += useDeepSleep ? 1 : 0;
-        control <<=1;
+        if ( wakeUpNegativeEdge ) {
+            control |= ControlBits.WAKEUP_ON_PORTB4_NEGATIVE_EDGE_CHANGE.getIntValue();
+        }
         
-        if(time > 2147450){
-           control += 0;
-           this.time = checkTime(Math.round((float)time / 2097f));
-        }else{
-           control += 1;
-           this.time = checkTime(Math.round((float)time / 32.768f));
-        }        
-        control <<=1;
+        if ( runCalibration ) {
+            control |= ControlBits.RUN_CALIBRATION_BEFORE_SLEEP.getIntValue();
+        }
         
-        control += wakeUpPositiveEdge ? 1 : 0;
-        control <<=1;
+        if ( flashLedAfterWakeUp ) {
+            control |= ControlBits.GREEN_LED_FLASH_AFTER_SLEEP.getIntValue();
+        }
         
-        control += flashLedAfterWakeUp? 1 : 0;
-        control <<=1;
+        if ( wakeUpPositiveEdge ) {
+            control |= ControlBits.WAKEUP_ON_PORTB4_POSITIVE_EDGE_CHANGE.getIntValue();
+        }
         
-        control += runCalibration ? 1 : 0;
-        control <<=1;
+        if ( use32msUnit ) {
+            control |= ControlBits.USE_32MS_UNIT.getIntValue();
+            this.time = checkTime(Math.round((float)time / 32.768f));
+        } else {
+            this.time = checkTime(Math.round((float)time / 2097f));
+        }
         
-        control += wakeUpNegativeEdge ? 1 : 0;
-        control <<=1;
+        if ( useDeepSleep ) {
+            control |= ControlBits.USE_DEEP_SLEEP.getIntValue();
+        }
         
         this.control = checkControl(control);
     }

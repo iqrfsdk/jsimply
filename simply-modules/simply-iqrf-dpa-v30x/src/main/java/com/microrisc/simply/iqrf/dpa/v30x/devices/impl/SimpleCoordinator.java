@@ -46,7 +46,7 @@ extends DPA_DeviceObject implements Coordinator {
     public static final int NETWORK_DATA_LENGTH = 18;
     
     /** Network data length. */
-    public static final int MODULE_ID_LENGTH = 2;
+    public static final int MODULE_ID_LENGTH = 4;
     
     /** User data length. */
     public static final int USER_DATA_LENGTH = 2;

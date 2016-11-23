@@ -33,7 +33,14 @@ import java.util.UUID;
 public final class SimpleEEEPROM
 extends DPA_DeviceObject implements EEEPROM {
     
-    private static int checkAddress(int address){
+    private static int checkAddressForRead(int address){
+        if ( address < 0 ) {
+            throw new IllegalArgumentException("Address out of bounds.");
+        }
+        return address;
+    }
+    
+    private static int checkAddressForWrite(int address){
         if (address < 0 || address > 0x3FFF) {
             throw new IllegalArgumentException("Address out of bounds.");
         }
@@ -41,20 +48,22 @@ extends DPA_DeviceObject implements EEEPROM {
     }
     
     private static void checkExtendedDataToWrite(int address, short[] dataToWrite){
-        if(dataToWrite.length < 1 || dataToWrite.length > 54){
+        if (dataToWrite.length < 1 || dataToWrite.length > 54){
             throw new IllegalArgumentException("Length of data to write out of bounds (1 - 54 bytes)");
         }
-        if((address % 64) + dataToWrite.length > 64){
+        
+        if ((address % 64) + dataToWrite.length > 64){
             throw new IllegalArgumentException("Writing to multiple adjacent 64 byte pages of the EEPROM chip or behind maximum address range by one extended write command is unsupported and undefined.");
         }
     }
     
     private static int checkExtendedDataLenToRead(int dataLen){
-        if(dataLen < 0 || dataLen > 54){
+        if (dataLen < 0 || dataLen > 54) {
             throw new IllegalArgumentException("Data length out of allowed range (0 - 54 bytes)");
         }
         return dataLen;
     }
+    
     
     public SimpleEEEPROM(String networkId, String nodeId, ConnectorService connector, 
             CallRequestProcessingInfoContainer resultsContainer
@@ -74,7 +83,7 @@ extends DPA_DeviceObject implements EEEPROM {
                 MethodArgumentsChecker.checkArgumentTypes(
                         args, new Class[] { Integer.class, Integer.class } 
                 );
-                checkAddress((Integer)args[0]);
+                checkAddressForRead((Integer)args[0]);
                 checkExtendedDataLenToRead((Integer)args[1]);
                 return dispatchCall(
                         methodIdStr, 
@@ -85,7 +94,7 @@ extends DPA_DeviceObject implements EEEPROM {
                 MethodArgumentsChecker.checkArgumentTypes(
                         args, new Class[] { Integer.class, short.class } 
                 );
-                checkAddress((Integer)args[0]);
+                checkAddressForWrite((Integer)args[0]);
                 checkExtendedDataToWrite((Integer)args[0], (short[])args[1]);
                 return dispatchCall(
                         methodIdStr, 
@@ -108,7 +117,7 @@ extends DPA_DeviceObject implements EEEPROM {
     
     @Override
     public UUID async_extendedRead(int address, int length) {
-        checkAddress(address);
+        checkAddressForRead(address);
         checkExtendedDataLenToRead(length);
         return dispatchCall(
                 "1", new Object[] { getRequestHwProfile(), address, length },
@@ -118,7 +127,7 @@ extends DPA_DeviceObject implements EEEPROM {
 
     @Override
     public UUID async_extendedWrite(int address, short[] data) {
-        checkAddress(address);
+        checkAddressForWrite(address);
         checkExtendedDataToWrite(address, data);
         return dispatchCall(
                 "2", new Object[] { getRequestHwProfile(), address, data },
@@ -132,7 +141,7 @@ extends DPA_DeviceObject implements EEEPROM {
 
     @Override
     public short[] extendedRead(int address, int length) {
-        checkAddress(address);
+        checkAddressForRead(address);
         checkExtendedDataLenToRead(length);
         UUID uid = dispatchCall(
                 "1", new Object[] { getRequestHwProfile(), address, length }, 
@@ -146,7 +155,7 @@ extends DPA_DeviceObject implements EEEPROM {
 
     @Override
     public VoidType extendedWrite(int address, short[] data) {
-        checkAddress(address);
+        checkAddressForWrite(address);
         checkExtendedDataToWrite(address, data);
         UUID uid = dispatchCall(
                 "2", new Object[] { getRequestHwProfile(), address, data }, 

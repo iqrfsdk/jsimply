@@ -171,14 +171,14 @@ final class ProtocolStateMachine implements ManageableObject {
     
     private static long countTimeslotLengthForSTD_Mode(
             TR_Type.TR_TypeSeries trSeries, int responseDataLength) {
-        if(trSeries == TR_Type.TR_TypeSeries.TR72x){
-            if(responseDataLength < 6) {
+        if ( trSeries == TR_Type.TR_TypeSeries.TR72x ) {
+            if ( responseDataLength < 6 ) {
                 return 3;
             }
-            if(responseDataLength < 29){
+            if ( responseDataLength < 29 ){
                 return 4;
             }
-            if(responseDataLength < 52){
+            if ( responseDataLength < 52 ){
                 return 5;
             }
             return 6;
@@ -189,22 +189,23 @@ final class ProtocolStateMachine implements ManageableObject {
     
     private static long countTimeslotLengthForLP_Mode(
             TR_Type.TR_TypeSeries trSeries, int responseDataLength) {
-        if(trSeries == TR_Type.TR_TypeSeries.TR72x){            
-            if(responseDataLength < 20){
+        if ( trSeries == TR_Type.TR_TypeSeries.TR72x ){            
+            if ( responseDataLength < 20 ){
                 return 9;
             }
-            if(responseDataLength < 43){
+            if ( responseDataLength < 43 ){
                 return 10;
             }
             return 11;
-        }else{
+        } else {
             throw new IllegalStateException("Not supported TR mode used: " + trSeries);
         }
     }
     
     // counts timeslot length in 10 ms units
-    private static long countTimeslotLength(TR_Type.TR_TypeSeries trSer, 
-            RF_Mode rfMode, int responseDataLength) {
+    private static long countTimeslotLength(
+            TR_Type.TR_TypeSeries trSer, RF_Mode rfMode, int responseDataLength
+    ) {
         switch ( rfMode ) {
             case STD:
                 return countTimeslotLengthForSTD_Mode(trSer, responseDataLength);

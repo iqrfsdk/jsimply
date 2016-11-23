@@ -34,6 +34,7 @@ import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.AddressingInfoConvertor
 import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.ArrayIO_CommandConvertor;
 import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.ArrayIO_DirectionSettingsConvertor;
 import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.ArrayPeripheralInfoConvertor;
+import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.ArrayRemotelyBondedModuleIdConvertor;
 import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.BatchCommandConvertor;
 import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.BaudRateConvertor;
 import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.BondedDeviceConvertor;
@@ -1347,7 +1348,7 @@ public final class DPA_StandardPerProtocolMappingFactory implements ProtocolMapp
         packetValues.add(new PacketPositionValues(3, (short) 0x82));
 
         PacketToValueMapping resultMapping = new PacketToValueMapping(
-                8, RemotelyBondedModuleIdConvertor.getInstance()
+                8, ArrayRemotelyBondedModuleIdConvertor.getInstance()
         );
         return new PacketToMethodMapping("4", packetValues, resultMapping);
     }
@@ -1471,7 +1472,7 @@ public final class DPA_StandardPerProtocolMappingFactory implements ProtocolMapp
         return new PacketToMethodMapping("6", packetValues, resultMapping);
     }
 
-    static private PacketToMethodMapping createResponseSetUSEC() {
+    static private PacketToMethodMapping createResponseSetSecurity() {
         List<PacketPositionValues> packetValues = new LinkedList<>();
         packetValues.add(new PacketPositionValues(3, (short) 0x86));
 
@@ -1481,16 +1482,6 @@ public final class DPA_StandardPerProtocolMappingFactory implements ProtocolMapp
         return new PacketToMethodMapping("7", packetValues, resultMapping);
     }
 
-    static private PacketToMethodMapping createResponseSetMID() {
-        List<PacketPositionValues> packetValues = new LinkedList<>();
-        packetValues.add(new PacketPositionValues(3, (short) 0x87));
-
-        PacketToValueMapping resultMapping = new PacketToValueMapping(
-                8, 0, VoidTypeConvertor.getInstance()
-        );
-        return new PacketToMethodMapping("8", packetValues, resultMapping);
-    }
-
     static private PacketToMethodMapping createResponseRestart() {
         List<PacketPositionValues> packetValues = new LinkedList<>();
         packetValues.add(new PacketPositionValues(3, (short) 0x88));
@@ -1498,7 +1489,7 @@ public final class DPA_StandardPerProtocolMappingFactory implements ProtocolMapp
         PacketToValueMapping resultMapping = new PacketToValueMapping(
                 8, 0, VoidTypeConvertor.getInstance()
         );
-        return new PacketToMethodMapping("9", packetValues, resultMapping);
+        return new PacketToMethodMapping("8", packetValues, resultMapping);
     }
     
     static private PacketToMethodMapping createResponseWriteHWPConfig() {
@@ -1508,7 +1499,7 @@ public final class DPA_StandardPerProtocolMappingFactory implements ProtocolMapp
         PacketToValueMapping resultMapping = new PacketToValueMapping(
                 8, 0, VoidTypeConvertor.getInstance()
         );
-        return new PacketToMethodMapping("10", packetValues, resultMapping);
+        return new PacketToMethodMapping("9", packetValues, resultMapping);
     }
     
     static private PacketToMethodMapping createResponseWriteHWPConfigByte() {
@@ -1518,7 +1509,7 @@ public final class DPA_StandardPerProtocolMappingFactory implements ProtocolMapp
         PacketToValueMapping resultMapping = new PacketToValueMapping(
                 8, 0, VoidTypeConvertor.getInstance()
         );
-        return new PacketToMethodMapping("11", packetValues, resultMapping);
+        return new PacketToMethodMapping("10", packetValues, resultMapping);
     }
     
     static private PacketToMethodMapping createResponseLoadCode() {
@@ -1528,7 +1519,7 @@ public final class DPA_StandardPerProtocolMappingFactory implements ProtocolMapp
         PacketToValueMapping resultMapping = new PacketToValueMapping(
                 8, 1, LoadingResultConvertor.getInstance()
         );
-        return new PacketToMethodMapping("12", packetValues, resultMapping);
+        return new PacketToMethodMapping("11", packetValues, resultMapping);
     }
     
     static private PacketToInterfaceMapping createResponseOsMapping() {
@@ -1543,13 +1534,12 @@ public final class DPA_StandardPerProtocolMappingFactory implements ProtocolMapp
         methodMappings.put("4", createResponseRunRFPGM());
         methodMappings.put("5", createResponseSleep());
         methodMappings.put("6", createResponseBatch());
-        methodMappings.put("7", createResponseSetUSEC());
-        methodMappings.put("8", createResponseSetMID());
-        methodMappings.put("9", createResponseRestart());
-        methodMappings.put("10", createResponseWriteHWPConfig());
-        methodMappings.put("11", createResponseWriteHWPConfigByte());
-        methodMappings.put("12", createResponseLoadCode());
-
+        methodMappings.put("7", createResponseSetSecurity());
+        methodMappings.put("8", createResponseRestart());
+        methodMappings.put("9", createResponseWriteHWPConfig());
+        methodMappings.put("10", createResponseWriteHWPConfigByte());
+        methodMappings.put("11", createResponseLoadCode());
+        
         return new PacketToInterfaceMapping(OS.class, packetValues, methodMappings);
     }
 

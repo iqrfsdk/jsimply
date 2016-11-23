@@ -156,7 +156,9 @@ public final class SleepInfo {
     * @throws IllegalArgumentException if: <br>
     *         calculated sleep time is out of [{@code TIME_LOWER_BOUND}..{@code TIME_UPPER_BOUND}] interval
     */
-    public SleepInfo(int time, boolean wakeUpNegativeEdge, boolean runCalibration, boolean flashLedAfterWakeUp, boolean wakeUpPositiveEdge) {        
+    public SleepInfo(int time, boolean wakeUpNegativeEdge, boolean runCalibration, 
+            boolean flashLedAfterWakeUp, boolean wakeUpPositiveEdge
+    ) {        
         int control;
         if(time > 2147450){
            control = 0;
@@ -197,7 +199,7 @@ public final class SleepInfo {
         
         strBuilder.append(this.getClass().getSimpleName() + " { " + NEW_LINE);
         strBuilder.append(" Time: " + time + NEW_LINE);
-        strBuilder.append(" Control bit: " + control + NEW_LINE);
+        strBuilder.append(" Control bits: " + control + NEW_LINE);
         strBuilder.append("}");
         
         return strBuilder.toString();

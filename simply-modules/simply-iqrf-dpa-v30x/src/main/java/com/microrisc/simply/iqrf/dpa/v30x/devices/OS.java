@@ -53,7 +53,7 @@ public interface OS
       RUN_RFPGM,
       SLEEP,
       BATCH,
-      SETSECURITY,
+      SET_SECURITY,
       RESTART,
       WRITE_HWP_CONFIGURATION,
       WRITE_HWP_CONFIGURATION_BYTE,
