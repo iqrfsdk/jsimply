@@ -16,11 +16,11 @@
 package com.microrisc.simply.iqrf.dpa.v22x.types;
 
 /**
- * Identify result of code loading.
+ * Result of a code load on a node.
  * 
  * @author Martin Strouhal
  */
-public final class LoadingResult {
+public final class LoadResult {
    
    private boolean result;
    
@@ -29,7 +29,7 @@ public final class LoadingResult {
     * 
     * @param result must be {@code true} if all successful.
     */
-   public LoadingResult(boolean result){
+   public LoadResult(boolean result){
       this.result = result;
    }
    

@@ -16,23 +16,55 @@
  */
 package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code;
 
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.LoadCodeError;
+
 /**
  * Information about processing of code load.
+ * 
+ * @author Martin Strouhal
+ * @author Michal Konopa
  */
 public final class LoadCodeProcessingInfo {
-   
-    private String infoMsg;
-
-    public LoadCodeProcessingInfo(String infoMsg){
-       this.infoMsg = infoMsg;
+    
+    // error
+    private final LoadCodeError error;
+    
+    
+    /**
+     * Creates new object of Load Code Processing Info with no error.
+     */
+    public LoadCodeProcessingInfo() {
+        this.error = null;
     }
-
-    public String getInfoMsg() {
-       return infoMsg;
+    
+    /**
+     * Creates new object of Load Code Processing Info with specified error.
+     * 
+     * @param error error object to store in newly created object
+     */
+    public LoadCodeProcessingInfo(LoadCodeError error) {
+        this.error = null;
     }
-
+    
+    /**
+     * Returns information abour error. 
+     * 
+     * @return information a error
+     *         {@code null}, if no error has been encountered during processing
+     */
+    public LoadCodeError getError() {
+        return error;
+    }
+    
     @Override
     public String toString() {
-       return "LoadCodeProcessingInfo{" + "infoMsg=" + infoMsg + '}';
+        StringBuilder strBuilder = new StringBuilder();
+        String NEW_LINE = System.getProperty("line.separator");
+        
+        strBuilder.append(this.getClass().getSimpleName() + " { " + NEW_LINE);
+        strBuilder.append("   error: " + error + NEW_LINE);
+        strBuilder.append("}");
+        
+        return strBuilder.toString();
     }
 }

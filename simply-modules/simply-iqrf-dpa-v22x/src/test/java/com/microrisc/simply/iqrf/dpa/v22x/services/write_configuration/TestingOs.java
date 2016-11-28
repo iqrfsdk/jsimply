@@ -24,7 +24,7 @@ import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_Request;
 import com.microrisc.simply.iqrf.dpa.v22x.types.HWP_Configuration;
 import com.microrisc.simply.iqrf.dpa.v22x.types.HWP_ConfigurationByte;
 import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingCodeProperties;
-import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingResult;
+import com.microrisc.simply.iqrf.dpa.v22x.types.LoadResult;
 import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
 import com.microrisc.simply.iqrf.dpa.v22x.types.SleepInfo;
 import com.microrisc.simply.iqrf.types.VoidType;
@@ -178,7 +178,7 @@ public final class TestingOs implements DeviceObject, OS {
     }
 
     @Override
-    public LoadingResult loadCode(LoadingCodeProperties properties) {
+    public LoadResult loadCode(LoadingCodeProperties properties) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

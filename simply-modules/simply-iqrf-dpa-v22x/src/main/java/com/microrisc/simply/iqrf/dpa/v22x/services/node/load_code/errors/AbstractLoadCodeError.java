@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.services.network;
-
-import com.microrisc.simply.Network;
-import com.microrisc.simply.services.Service;
+package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors;
 
 /**
- * Factory for creation of services in the context of networks.
+ * Base class of errors, which encounter during Load Code Service run.
  * 
  * @author Michal Konopa
  */
-public interface ServiceFactory {
+public abstract class AbstractLoadCodeError 
+extends Exception implements LoadCodeError 
+{
+    protected AbstractLoadCodeError() {
+    }
     
-    /**
-     * Creates new object of network-context service.
-     * 
-     * @param network context network
-     * @param args arguments for factory
-     * @return service object
-     * @throws java.lang.Exception if some error occured during creation of 
-     *         a service object
-     */
-    Service create(Network network, Object[] args) throws Exception;
+    protected AbstractLoadCodeError(String message) {
+        super(message);
+    }
+    
+    protected AbstractLoadCodeError(Throwable cause) {
+        super(cause);
+    }
 }

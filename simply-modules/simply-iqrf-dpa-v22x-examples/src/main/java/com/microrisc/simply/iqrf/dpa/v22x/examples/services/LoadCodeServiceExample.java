@@ -21,10 +21,10 @@ import com.microrisc.simply.iqrf.dpa.DPA_Node;
 import com.microrisc.simply.iqrf.dpa.DPA_Simply;
 import com.microrisc.simply.iqrf.dpa.v22x.DPA_SimplyFactory;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeProcessingInfo;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeResult;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeService;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeServiceParameters;
 import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingCodeProperties;
-import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingResult;
 import com.microrisc.simply.services.ServiceResult;
 import java.io.File;
 
@@ -86,7 +86,7 @@ public class LoadCodeServiceExample {
             );
         */
         
-        ServiceResult<LoadingResult, LoadCodeProcessingInfo> serviceResult 
+        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
             = loadCodeService.loadCode( 
                     new LoadCodeServiceParameters(
                         "CustomDpaHandler-ChangeIQRFOS-7xD-V226-160303.iqrf", 

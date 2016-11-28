@@ -92,11 +92,11 @@ extends BaseService implements WriteConfigurationService {
         return resultMap;
     }
     
-    // writes configuration to this node
+    // writes configuration to this contextNode
     private ServiceResult<WriteResult, WriteConfigurationProcessingInfo>  
         writeConfigurationToThisNode(HWP_ConfigurationByte[] hwpConfigBytes, int hwpId) 
     {
-        OS os = this.getDeviceObject(OS.class);
+        OS os = this.contextNode.getDeviceObject(OS.class);
         if ( os == null ) {
             return new BaseServiceResult<>(
                     ServiceResult.Status.ERROR, 
@@ -166,7 +166,7 @@ extends BaseService implements WriteConfigurationService {
         return writingFailedBytes;
     }
     
-    // adds configuration bytes into node results map for specified node
+    // adds configuration bytes into contextNode results map for specified contextNode
     private void addConfigBytesIntoMap(
             Map<Integer, HWP_ConfigurationByte> bytesToWrite,
             Map<Integer, HWP_ConfigurationByte> writingFailedBytes, 
@@ -183,8 +183,8 @@ extends BaseService implements WriteConfigurationService {
         }
     } 
     
-    // adds configuration bytes into node results map for
-    // each node in the specified collection
+    // adds configuration bytes into contextNode results map for
+    // each contextNode in the specified collection
     private void addConfigBytesIntoNodeResultsMap(
             Map<Integer, HWP_ConfigurationByte> bytesToWrite,
             Map<Integer, HWP_ConfigurationByte> writingFailedBytes, 
@@ -218,7 +218,7 @@ extends BaseService implements WriteConfigurationService {
                 HWP_ConfigurationByte[] hwpConfigBytes, Collection<Node> targetNodes,
                 int hwpId
     ) {
-        FRC frc = this.getDeviceObject(FRC.class);
+        FRC frc = this.contextNode.getDeviceObject(FRC.class);
         if ( frc == null ) {
             return new BaseServiceResult<>(
                     ServiceResult.Status.ERROR, 
@@ -355,10 +355,14 @@ extends BaseService implements WriteConfigurationService {
     /**
      * Creates new object of Write Configuration Service.
      * 
-     * @param deviceObjects map of device objects on this node
+     * @param node contextNode in context
+     * @throws IllegalArgumentException if {@code contextNode} is empty
      */
-    public WriteConfigurationServiceImpl(Map<Class, DeviceObject> deviceObjects) {
-        super(deviceObjects);
+    public WriteConfigurationServiceImpl(Node node) {
+        super(node);
+        if ( node == null ) {
+            throw new IllegalArgumentException("Node in context cannot be null.");
+        }
     }
     
     @Override

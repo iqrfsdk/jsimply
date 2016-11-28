@@ -15,7 +15,7 @@
  */
 package com.microrisc.simply.iqrf.dpa.v22x.typeconvertors;
 
-import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingResult;
+import com.microrisc.simply.iqrf.dpa.v22x.types.LoadResult;
 import com.microrisc.simply.protocol.mapping.ConvertorFactoryMethod;
 import com.microrisc.simply.typeconvertors.PrimitiveConvertor;
 import com.microrisc.simply.typeconvertors.ValueConversionException;
@@ -23,29 +23,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Provides functionality for converting from {@link LoadingResultConvertor}
- * type values to proto values.
+ * Provides functionality for converting bytes of underlaying protocol to objects
+ * of the {@link LoadResultConvertor} class.
  *
  * @author Martin Strouhal
  */
-public final class LoadingResultConvertor extends PrimitiveConvertor {
+public final class LoadResultConvertor extends PrimitiveConvertor {
 
    /** Logger. */
-   private static final Logger logger = LoggerFactory.getLogger(
-           LoadingResultConvertor.class);
+   private static final Logger logger = LoggerFactory.getLogger(LoadResultConvertor.class);
 
-   private LoadingResultConvertor() {
+   private LoadResultConvertor() {
    }
 
    /** Singleton. */
-   private static final LoadingResultConvertor instance = new LoadingResultConvertor();
+   private static final LoadResultConvertor instance = new LoadResultConvertor();
 
 
    /**
-    * @return {@code LoadingResultConvertor} instance
+    * @return {@code LoadResultConvertor} instance
     */
    @ConvertorFactoryMethod
-   static public LoadingResultConvertor getInstance() {
+   static public LoadResultConvertor getInstance() {
       return instance;
    }
 
@@ -71,16 +70,16 @@ public final class LoadingResultConvertor extends PrimitiveConvertor {
    @Override
    public Object toObject(short[] protoValue) throws ValueConversionException {
       logger.debug("toObject - start: protoValue={}", protoValue);
-      LoadingResult result;
+      LoadResult result;
       if (protoValue.length >= TYPE_SIZE) {
          if (protoValue[0] == 1) {
-            result = new LoadingResult(true);
+            result = new LoadResult(true);
          } else {
-            result = new LoadingResult(false);
+            result = new LoadResult(false);
          }
       } else {
          logger.warn("Length of protoValue is 0 instead of 1.");
-         result = new LoadingResult(false);
+         result = new LoadResult(false);
       }
       logger.debug("toObject - end: {}", result);
       return result;

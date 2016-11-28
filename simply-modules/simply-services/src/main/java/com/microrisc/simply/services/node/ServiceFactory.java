@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.services.network;
+package com.microrisc.simply.services.node;
 
-import com.microrisc.simply.Network;
+import com.microrisc.simply.Node;
 import com.microrisc.simply.services.Service;
 
 /**
- * Factory for creation of services in the context of networks.
+ * Factory for creation of services in the context of nodes.
  * 
  * @author Michal Konopa
  */
 public interface ServiceFactory {
     
     /**
-     * Creates new object of network-context service.
+     * Creates new object of node-context service.
      * 
-     * @param network context network
+     * @param node context node
      * @param args arguments for factory
      * @return service object
      * @throws java.lang.Exception if some error occured during creation of 
      *         a service object
      */
-    Service create(Network network, Object[] args) throws Exception;
+    Service create(Node node, Object[] args) throws Exception;
 }

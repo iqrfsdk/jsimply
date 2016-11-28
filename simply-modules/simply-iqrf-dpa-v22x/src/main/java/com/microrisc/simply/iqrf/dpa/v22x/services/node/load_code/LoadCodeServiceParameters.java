@@ -15,15 +15,20 @@
  */
 package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code;
 
+import com.microrisc.simply.Node;
 import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingCodeProperties;
 import java.io.File;
+import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  * Parameters of Load Code Service.
  * 
  * @author Michal Konopa
+ * @author Martin Strouhal
  */
 public final class LoadCodeServiceParameters {
+    
     // source file full name
     private String fileName;
     
@@ -35,7 +40,10 @@ public final class LoadCodeServiceParameters {
     
     // loading content
     private LoadingCodeProperties.LoadingContent loadingContent;
-            
+    
+    // target nodes
+    private Collection<Node> targetNodes;
+    
     
     private String checkFileName(String fileName) {
         if ( fileName == null ) {
@@ -78,7 +86,8 @@ public final class LoadCodeServiceParameters {
         }
         return loadingContent;
     }
-        
+    
+    
     /**
      * Creates object of parameters for Load Code Service.
      * 
@@ -102,7 +111,35 @@ public final class LoadCodeServiceParameters {
         this.startAddress = checkStartAddress(startAddress);
         this.loadingAction = checkLoadingAction(loadingAction);
         this.loadingContent = checkLoadingContent(loadingContent);
-        //this.codeProps = checkCodeProps(codeProps);
+        this.targetNodes = new LinkedList<>();
+    }
+    
+    /**
+     * Creates object of parameters for Load Code Service.
+     * 
+     * @param fileName full source file name including path  
+     * @param startAddress start address on which will be saved data into memory
+     * @param loadingAction type of action to do
+     * @param loadingContent type of content to load
+     * @param targetNodes target nodes
+     * @throws IllegalArgumentException if: <br>
+     *          - {@code fileName} is not valid file name or file does not exist <br>
+     *          - {@code codeSize} is negative <br>
+     *          - {@code startAddress} is negative or greater than ...<br>
+     *          - {@code loadingAction} is {@code null} <br>
+     *          - {@code loadingContent} is {@code null}
+     */
+    public LoadCodeServiceParameters( 
+            String fileName, int startAddress,
+            LoadingCodeProperties.LoadingAction loadingAction,
+            LoadingCodeProperties.LoadingContent loadingContent,
+            Collection<Node> targetNodes
+    ) {
+        this.fileName = checkFileName(fileName);
+        this.startAddress = checkStartAddress(startAddress);
+        this.loadingAction = checkLoadingAction(loadingAction);
+        this.loadingContent = checkLoadingContent(loadingContent);
+        this.targetNodes = new LinkedList<>(targetNodes);
     }
 
     /**
@@ -159,5 +196,35 @@ public final class LoadCodeServiceParameters {
      */
     public void setLoadingContent(LoadingCodeProperties.LoadingContent loadingContent) {
         this.loadingContent = checkLoadingContent(loadingContent);
+    }
+    
+    /**
+     * @return target nodes
+     */
+    public Collection<Node> getTargetNodes() {
+        return targetNodes;
+    }
+
+    /**
+     * @param targetNodes target nodes
+     */
+    public void setTargetNodes(Collection<Node> targetNodes) {
+        this.targetNodes = targetNodes;
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder strBuilder = new StringBuilder();
+        String NEW_LINE = System.getProperty("line.separator");
+        
+        strBuilder.append(this.getClass().getSimpleName() + " { " + NEW_LINE);
+        strBuilder.append("   file name: " + fileName + NEW_LINE);
+        strBuilder.append("   start address: " + startAddress + NEW_LINE);
+        strBuilder.append("   loading action: " + loadingAction + NEW_LINE);
+        strBuilder.append("   loading content: " + loadingContent + NEW_LINE);
+        strBuilder.append("   target nodes: " + targetNodes + NEW_LINE);
+        strBuilder.append("}");
+        
+        return strBuilder.toString();
     }
 }

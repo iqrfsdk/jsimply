@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.errors;
+package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors;
 
 /**
  * Missing periheral error.
  * 
  * @author Michal Konopa
  */
-public final class MissingPeripheralError extends AbstractWriteConfigurationError {
+public final class MissingPeripheralError extends AbstractLoadCodeError {
     
-    private final WriteConfigurationErrorType errorType 
-            = WriteConfigurationErrorType.MISSING_OS;
+    private final LoadCodeErrorType errorType = LoadCodeErrorType.MISSING_PERIPHERAL;
     
     // missing peripheral
     private final Class missingPeripheral;
@@ -34,7 +33,7 @@ public final class MissingPeripheralError extends AbstractWriteConfigurationErro
     }
     
     @Override
-    public WriteConfigurationErrorType getErrorType() {
+    public LoadCodeErrorType getErrorType() {
         return errorType;
     }
     

@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.services.network;
+package com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration;
 
-import com.microrisc.simply.Network;
+import com.microrisc.simply.Node;
 import com.microrisc.simply.services.Service;
+import com.microrisc.simply.services.node.ServiceFactory;
 
 /**
- * Factory for creation of services in the context of networks.
+ * Service factory for Write Configuration Service.
  * 
  * @author Michal Konopa
  */
-public interface ServiceFactory {
+public final class WriteConfigurationServiceFactory implements ServiceFactory {
     
-    /**
-     * Creates new object of network-context service.
-     * 
-     * @param network context network
-     * @param args arguments for factory
-     * @return service object
-     * @throws java.lang.Exception if some error occured during creation of 
-     *         a service object
-     */
-    Service create(Network network, Object[] args) throws Exception;
+    @Override
+    public Service create(Node node, Object[] args) throws Exception {
+        return new WriteConfigurationServiceImpl(node);
+    }
+    
 }

@@ -235,7 +235,8 @@ public class WriteConfigurationServiceImplTest {
         
         Map<Class, DeviceObject> deviceObjects = new HashMap<>();
         deviceObjects.put(OS.class, (DeviceObject)os);
-        WriteConfigurationServiceImpl writeConfigService = new WriteConfigurationServiceImpl(deviceObjects);
+        WriteConfigurationServiceImpl writeConfigService 
+                = new WriteConfigurationServiceImpl( new BaseNode("1", "1", deviceObjects));
         
         String defFileName = "write_config_service" + File.separator + "TR_config_2_00.xml";
         String userSettingsFileName = "write_config_service" + File.separator + "config.xml";
@@ -268,7 +269,8 @@ public class WriteConfigurationServiceImplTest {
         
         Map<Class, DeviceObject> deviceObjects = new HashMap<>();
         deviceObjects.put(OS.class, (DeviceObject)os);
-        WriteConfigurationServiceImpl writeConfigService = new WriteConfigurationServiceImpl(deviceObjects);
+        WriteConfigurationServiceImpl writeConfigService 
+                = new WriteConfigurationServiceImpl(new BaseNode("1", "1", deviceObjects));
         
         String defFileName = "write_config_service" + File.separator + "TR_config_2_00.xml";
         String userSettingsFileName = "write_config_service" + File.separator + "config.xml";
@@ -308,7 +310,8 @@ public class WriteConfigurationServiceImplTest {
         
         Map<Class, DeviceObject> deviceObjects = new HashMap<>();
         deviceObjects.put(FRC.class, (DeviceObject)frc);
-        WriteConfigurationServiceImpl writeConfigService = new WriteConfigurationServiceImpl(deviceObjects);
+        WriteConfigurationServiceImpl writeConfigService 
+                = new WriteConfigurationServiceImpl(new BaseNode("1", "1", deviceObjects));
         
         String defFileName = "write_config_service" + File.separator + "TR_config_2_00.xml";
         String userSettingsFileName = "write_config_service" + File.separator + "config.xml";
@@ -345,7 +348,8 @@ public class WriteConfigurationServiceImplTest {
         
         Map<Class, DeviceObject> deviceObjects = new HashMap<>();
         deviceObjects.put(FRC.class, (DeviceObject)frc);
-        WriteConfigurationServiceImpl writeConfigService = new WriteConfigurationServiceImpl(deviceObjects);
+        WriteConfigurationServiceImpl writeConfigService 
+                = new WriteConfigurationServiceImpl(new BaseNode("1", "1", deviceObjects));
         
         String defFileName = "write_config_service" + File.separator + "TR_config_2_00.xml";
         String userSettingsFileName = "write_config_service" + File.separator + "config.xml";
@@ -388,7 +392,8 @@ public class WriteConfigurationServiceImplTest {
         
         Map<Class, DeviceObject> deviceObjects = new HashMap<>();
         deviceObjects.put(FRC.class, (DeviceObject)frc);
-        WriteConfigurationServiceImpl writeConfigService = new WriteConfigurationServiceImpl(deviceObjects);
+        WriteConfigurationServiceImpl writeConfigService 
+                = new WriteConfigurationServiceImpl(new BaseNode("1", "1", deviceObjects));
         
         String defFileName = "write_config_service" + File.separator + "TR_config_2_00.xml";
         String userSettingsFileName = "write_config_service" + File.separator + "config.xml";

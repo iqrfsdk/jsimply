@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MICRORISC s.r.o.
+ * Copyright 2016 MICRORISC s.r.o..
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code;
-
-import com.microrisc.simply.services.Service;
-import com.microrisc.simply.services.ServiceResult;
+package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors;
 
 /**
- * Load Code Service.
+ * Types of errors, which encounter during run of Write Configuration Service.
  * 
  * @author Michal Konopa
  */
-public interface LoadCodeService extends Service {
+public enum LoadCodeErrorType {
     
-    /**
-     * Loads code according to specified parameters.
-     * @param params parameters of code loading
-     * @return result
-     */
-    ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> loadCode(LoadCodeServiceParameters params);
+    /** Errors related to (processing of) a loading content. */
+    LOADING_CONTENT,
+    
+    /** Missing peripheral. */
+    MISSING_PERIPHERAL,
+    
+    /** Processing of request failed. */
+    REQUEST_PROCESSING
 }

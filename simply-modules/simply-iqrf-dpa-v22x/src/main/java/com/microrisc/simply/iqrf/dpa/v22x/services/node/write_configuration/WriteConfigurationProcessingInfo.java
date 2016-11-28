@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MICRORISC s.r.o..
+ * Copyright 2016 MICRORISC s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,23 @@ import com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.erro
  * @author Michal Konopa
  */
 public final class WriteConfigurationProcessingInfo {
+    
     // error
     private final WriteConfigurationError error;
     
     
+    /**
+     * Creates new object of Write Configuration Processing Info with no error.
+     */
     public WriteConfigurationProcessingInfo() {
         this.error = null;
     }
     
+    /**
+     * Creates new object of Write Configuration Processing Info with specified error.
+     * 
+     * @param error error object to store in newly created object
+     */
     public WriteConfigurationProcessingInfo(WriteConfigurationError error) {
         this.error = error;
     }
