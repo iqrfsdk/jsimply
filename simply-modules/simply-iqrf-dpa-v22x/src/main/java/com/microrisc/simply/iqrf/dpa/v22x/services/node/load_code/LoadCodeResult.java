@@ -25,7 +25,7 @@ import java.util.Map;
  */
 public final class LoadCodeResult {
     
-    // map of results of writing configuration bytes into each node
+    // map of results of loading code into each node
     // map is indexed by node IDs
     private final Map<String, Boolean> nodeResultsMap;
     
@@ -33,7 +33,7 @@ public final class LoadCodeResult {
     /**
      * Creates and returns new object of load code result.
      * 
-     * @param nodeResultsMap map of results of writing configuration bytes into 
+     * @param nodeResultsMap map of results of loading code into 
      *                       each node. Indexed by node IDs 
      */
     public LoadCodeResult(Map<String, Boolean> nodeResultsMap) {
