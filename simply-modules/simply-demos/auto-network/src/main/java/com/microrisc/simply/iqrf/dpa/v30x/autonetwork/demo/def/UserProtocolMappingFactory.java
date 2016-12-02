@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.microrisc.simply.iqrf.dpa.v22x.autonetwork.demo.def;
+package com.microrisc.simply.iqrf.dpa.v30x.autonetwork.demo.def;
 
-import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.P2PPrebonder;
-import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.DPA_AdditionalInfoConvertor;
+import com.microrisc.simply.iqrf.dpa.v30x.autonetwork.P2PPrebonder;
+import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.DPA_AdditionalInfoConvertor;
 import com.microrisc.simply.iqrf.typeconvertors.ArrayUns8Convertor;
 import com.microrisc.simply.iqrf.typeconvertors.Uns16Convertor;
 import com.microrisc.simply.iqrf.typeconvertors.VoidTypeConvertor;

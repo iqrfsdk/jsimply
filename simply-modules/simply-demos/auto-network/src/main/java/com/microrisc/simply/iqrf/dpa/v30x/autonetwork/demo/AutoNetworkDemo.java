@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.microrisc.simply.iqrf.dpa.v22x.autonetwork.demo;
+package com.microrisc.simply.iqrf.dpa.v30x.autonetwork.demo;
 
 import com.microrisc.simply.CallRequestProcessingState;
 import com.microrisc.simply.Network;
@@ -25,14 +25,14 @@ import com.microrisc.simply.errors.CallRequestProcessingError;
 import com.microrisc.simply.iqrf.dpa.DPA_Simply;
 import com.microrisc.simply.iqrf.dpa.broadcasting.BroadcastResult;
 import com.microrisc.simply.iqrf.dpa.broadcasting.services.BroadcastServices;
-import com.microrisc.simply.iqrf.dpa.v22x.DPA_SimplyFactory;
-import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.AutoNetworkAlgorithm;
-import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.AutoNetworkAlgorithmImpl;
-import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.AutoNetworkAlgorithmImpl.State;
-import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.P2PPrebonderStandardTransformer;
-import com.microrisc.simply.iqrf.dpa.v22x.devices.Coordinator;
-import com.microrisc.simply.iqrf.dpa.v22x.devices.OS;
-import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_Request;
+import com.microrisc.simply.iqrf.dpa.v30x.DPA_SimplyFactory;
+import com.microrisc.simply.iqrf.dpa.v30x.autonetwork.AutoNetworkAlgorithm;
+import com.microrisc.simply.iqrf.dpa.v30x.autonetwork.AutoNetworkAlgorithmImpl;
+import com.microrisc.simply.iqrf.dpa.v30x.autonetwork.AutoNetworkAlgorithmImpl.State;
+import com.microrisc.simply.iqrf.dpa.v30x.autonetwork.P2PPrebonderStandardTransformer;
+import com.microrisc.simply.iqrf.dpa.v30x.devices.Coordinator;
+import com.microrisc.simply.iqrf.dpa.v30x.devices.OS;
+import com.microrisc.simply.iqrf.dpa.v30x.types.DPA_Request;
 import com.microrisc.simply.iqrf.types.VoidType;
 import java.io.File;
 import java.io.PrintWriter;
@@ -501,8 +501,8 @@ public final class AutoNetworkDemo {
                     new Object[]{
                         new DPA_Request[]{
                             new DPA_Request(
-                                    com.microrisc.simply.iqrf.dpa.v22x.devices.Node.class,
-                                    com.microrisc.simply.iqrf.dpa.v22x.devices.Node.MethodID.REMOVE_BOND,
+                                    com.microrisc.simply.iqrf.dpa.v30x.devices.Node.class,
+                                    com.microrisc.simply.iqrf.dpa.v30x.devices.Node.MethodID.REMOVE_BOND,
                                     new Object[]{},
                                     0xFFFF
                             ),

@@ -1,6 +1,6 @@
 
 
-package com.microrisc.simply.iqrf.dpa.v22x.autonetwork.demo;
+package com.microrisc.simply.iqrf.dpa.v30x.autonetwork.demo;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
