@@ -109,5 +109,6 @@
         <module>simply-devices</module>
         <module>simply-demos</module>
         <module>simply-iqrf-dpa-v22x-examples</module>
+        <module>simply-iqrf-dpa-v30x-examples</module>
     </modules>
 </project>
