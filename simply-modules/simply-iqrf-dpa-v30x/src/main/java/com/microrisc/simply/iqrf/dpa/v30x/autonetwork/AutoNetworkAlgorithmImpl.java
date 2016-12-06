@@ -49,7 +49,6 @@ import com.microrisc.simply.iqrf.dpa.v30x.types.RemotelyBondedModuleId;
 import com.microrisc.simply.iqrf.dpa.v30x.types.RoutingHops;
 import com.microrisc.simply.iqrf.types.VoidType;
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -1114,16 +1113,22 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
         );
         List<RemotelyBondedModuleId> prebondedMIDs = new LinkedList<>();
         
-        RemotelyBondedModuleId remoBondedModuleId = coordinator.readRemotelyBondedModuleId();
-        if ( remoBondedModuleId != null ) {
-            logger.info(
-                "Coordinator prebonded MID={}, UserData={}", 
-                toHexaFromLastByteString(remoBondedModuleId.getModuleId()), 
-                toHexaFromLastByteString(remoBondedModuleId.getUserData())
-            );
-            prebondedMIDs.add(remoBondedModuleId);
+        RemotelyBondedModuleId[] remoBondedModuleIds = coordinator.readRemotelyBondedModuleId();
+        if ( remoBondedModuleIds != null ) {
+            if ( remoBondedModuleIds.length == 0 ) {
+                logger.info("No coordinator's prebonded nodes.");
+            } else {
+                for ( RemotelyBondedModuleId remoBondedModuleId : remoBondedModuleIds ) {
+                    logger.info(
+                        "Coordinator prebonded MID={}, UserData={}", 
+                        toHexaFromLastByteString(remoBondedModuleId.getModuleId()), 
+                        toHexaFromLastByteString(remoBondedModuleId.getUserData())
+                    );
+                    prebondedMIDs.add(remoBondedModuleId);
+                }
+            }
         } else {
-            logger.error("Unable to read prebonded MID from coordinator");
+            logger.error("Unable to read prebonded MIDs from coordinator");
         }
         
         if ( bondedNodes.getNodesNumber() == 0 ) {

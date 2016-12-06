@@ -15,6 +15,7 @@
  */
 package com.microrisc.simply.iqrf.dpa.v30x.typeconvertors;
 
+import com.microrisc.simply.iqrf.dpa.v30x.types.RemotelyBondedModuleId;
 import com.microrisc.simply.protocol.mapping.ConvertorFactoryMethod;
 import com.microrisc.simply.typeconvertors.ArrayConvertor;
 import com.microrisc.simply.typeconvertors.ValueConversionException;
@@ -65,6 +66,10 @@ public final class ArrayRemotelyBondedModuleIdConvertor extends ArrayConvertor {
     public Object toObject(short[] protoValue) throws ValueConversionException {
         logger.debug("toObject - start: iqValue={}", protoValue);
         
+        if ( protoValue.length == 0 ) {
+            return new RemotelyBondedModuleId[] {};
+        }
+        
         int elemSize = elemConvertor.getGenericTypeSize();
         if ( (protoValue.length % elemSize) != 0 ) {
             throw new ValueConversionException(
@@ -72,15 +77,14 @@ public final class ArrayRemotelyBondedModuleIdConvertor extends ArrayConvertor {
             );
         }
         
-        List<RemotelyBondedModuleIdConvertor> retValues = new LinkedList<>();
+        List<RemotelyBondedModuleId> retValues = new LinkedList<>();
         for (int byteId = 0; byteId < protoValue.length; byteId+= elemSize) {
             short[] elem = new short[elemSize];
             System.arraycopy(protoValue, byteId, elem, 0, elemSize);
-            retValues.add((RemotelyBondedModuleIdConvertor)elemConvertor.toObject(elem));
+            retValues.add((RemotelyBondedModuleId)elemConvertor.toObject(elem));
         }
         
-        RemotelyBondedModuleIdConvertor[] retValuesArr 
-                = retValues.toArray( new RemotelyBondedModuleIdConvertor[0]); 
+        RemotelyBondedModuleId[] retValuesArr = retValues.toArray( new RemotelyBondedModuleId[0] ); 
         
         logger.debug("toObject - end: {}", retValuesArr);
         return retValuesArr;

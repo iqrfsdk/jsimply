@@ -596,14 +596,14 @@ extends DPA_DeviceObject implements Coordinator {
     }
     
     @Override
-    public RemotelyBondedModuleId readRemotelyBondedModuleId() {
+    public RemotelyBondedModuleId[] readRemotelyBondedModuleId() {
         UUID uid = dispatchCall(
                 "17", new Object[] { getRequestHwProfile() }, getDefaultWaitingTimeout() 
         );
         if ( uid == null ) {
             return null;
         }
-        return getCallResult(uid, RemotelyBondedModuleId.class, getDefaultWaitingTimeout());
+        return getCallResult(uid, RemotelyBondedModuleId[].class, getDefaultWaitingTimeout());
     }
     
     @Override

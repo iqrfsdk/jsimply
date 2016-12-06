@@ -58,7 +58,6 @@ import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.OsInfoConvertor;
 import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.PWM_ParametersConvertor;
 import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.PeripheralEnumerationConvertor;
 import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.PeripheralInfoConvertor;
-import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.RemotelyBondedModuleIdConvertor;
 import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.RoutingHopsConvertor;
 import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.SleepInfoConvertor;
 import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.ThermometerValueConvertor;
@@ -1269,7 +1268,7 @@ public final class DPA_StandardPerProtocolMappingFactory implements ProtocolMapp
         packetValues.add(new PacketPositionValues(3, (short) 0x8F));
 
         PacketToValueMapping resultMapping = new PacketToValueMapping(
-                8, RemotelyBondedModuleIdConvertor.getInstance()
+                8, ArrayRemotelyBondedModuleIdConvertor.getInstance()
         );
         return new PacketToMethodMapping("17", packetValues, resultMapping);
     }

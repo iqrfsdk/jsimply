@@ -63,6 +63,16 @@ public final class RemotelyBondedModuleIdConvertor extends PrimitiveConvertor {
     static private final int USER_DATA_POS = 4;
     static private final int USER_DATA_LENGTH = 4;
     
+    // 
+    private short[] checkData(short[] data) throws ValueConversionException {
+        if ( (data == null) || (data.length != TYPE_SIZE) ){
+            throw new ValueConversionException(
+                    "Illegal data. Data cannot be null and their length must be: " + TYPE_SIZE
+            );
+        } 
+        
+        return data;
+    }
     
     
     /**
@@ -93,13 +103,4 @@ public final class RemotelyBondedModuleIdConvertor extends PrimitiveConvertor {
         return remoteBondedModuleId;
     }
     
-    private short[] checkData(short[] data) throws ValueConversionException{
-        if ( (data == null) || (data.length != TYPE_SIZE) ){
-            throw new ValueConversionException(
-                    "Illegal data. Data cannot be null and their length must be: " + TYPE_SIZE
-            );
-        } 
-        
-        return data;
-    }
 }

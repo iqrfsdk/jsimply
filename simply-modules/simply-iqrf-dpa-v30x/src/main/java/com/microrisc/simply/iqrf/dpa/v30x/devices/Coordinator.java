@@ -370,7 +370,7 @@ extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
      * async_readRemotelyBondedModuleId} method.
      * @return module ID of the remotely bonded node.
      */
-    RemotelyBondedModuleId readRemotelyBondedModuleId();
+    RemotelyBondedModuleId[] readRemotelyBondedModuleId();
     
     /**
      * Synchronous wrapper for {@link #async_clearRemotelyBondedModuleId() 
