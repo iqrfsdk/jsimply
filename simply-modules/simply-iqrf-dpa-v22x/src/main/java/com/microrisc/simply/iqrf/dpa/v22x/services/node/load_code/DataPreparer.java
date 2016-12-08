@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
  * Prepares hex data in parts with effective size given to IQRF.
  *
  * @author Martin Strouhal
+ * @author Michal Konopa
  */
 public final class DataPreparer {
 
@@ -62,7 +63,7 @@ public final class DataPreparer {
       
       for (long address = handlerBlock.getAddressStart() / SMALLEST_PART_SIZE;
               address < handlerBlock.getAddressEnd() / SMALLEST_PART_SIZE;
-              address += SMALLEST_PART_SIZE / 2) {;
+              address += SMALLEST_PART_SIZE / 2) {
          list.add(getDataPart(address, 0, 3, SMALLEST_PART_SIZE));
          list.add(getDataPart(address, 3, 4, SMALLEST_PART_SIZE));
          list.add(getDataPart(address, 4, 5, SMALLEST_PART_SIZE));
@@ -78,18 +79,70 @@ public final class DataPreparer {
          }
       }
       
-      if(log.isDebugEnabled()){
-         String debugResult = "{\n";
-         for (int i = 0; i < resultData.length; i++) {
-            debugResult += "(length: " + resultData[i].length + ") > " + Arrays.toString(resultData[i]) + "\n";
-         }
-         debugResult += "\n}";
-         log.debug("prepare - end: {}", debugResult);
-      }
+        if ( log.isDebugEnabled() ) {
+            StringBuilder sb = new StringBuilder();
+            
+            sb.append("{\n");
+            for (short[] resultData1 : resultData) {
+                sb.append("(length: ");
+                sb.append(resultData1.length);
+                sb.append(") > ");
+                sb.append(Arrays.toString(resultData1));
+                sb.append("\n");
+            }
+            sb.append("\n}");
+            
+            log.debug("prepare - end: {}", sb.toString());
+        }
       
       return resultData;
-   }
+    }
+   
+   /**
+    * Returns array of 16-length blocks prepared to effective writing into memory.
+    *
+    * @return array of 16-length blocks
+    */
+    public short[][] prepareAs16BytesBlocks() {
+        log.debug("prepare - start");
+      
+        List<Short[]> blockList = new LinkedList<>();
+      
+        for (
+            long address = handlerBlock.getAddressStart() / SMALLEST_PART_SIZE;
+            address < handlerBlock.getAddressEnd() / SMALLEST_PART_SIZE;
+            address++
+        ) {
+            blockList.add(getDataPart(address, 0, 1, SMALLEST_PART_SIZE));
+        }
+      
+        short[][] resultData = new short[blockList.size()][];
+        for (int i = 0; i < resultData.length; i++) {
+            Short[] block = blockList.get(i);
+            resultData[i] = new short[block.length];
+            System.arraycopy(block, 0, resultData[i], 0, block.length);
+        }
 
+        if ( log.isDebugEnabled() ) {
+            StringBuilder sb = new StringBuilder();
+            
+            sb.append("{\n");
+            for (short[] resultData1 : resultData) {
+                sb.append("(length: ");
+                sb.append(resultData1.length);
+                sb.append(") > ");
+                sb.append(Arrays.toString(resultData1));
+                sb.append("\n");
+            }
+            sb.append("\n}");
+            
+            log.debug("prepare - end: {}", sb.toString());
+        }
+      
+        return resultData;
+    }
+     
+   
    /**
     * Returns data part.
     *

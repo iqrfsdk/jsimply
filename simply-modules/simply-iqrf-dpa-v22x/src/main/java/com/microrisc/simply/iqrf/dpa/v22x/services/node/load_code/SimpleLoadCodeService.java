@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -225,10 +226,53 @@ extends BaseService implements LoadCodeService {
         );
     }    
     
+    private short[] createWriteDataToMemoryRequestData(FRC frc, int address, short[] data) {
+        int hwpId = frc.getRequestHwProfile();
+        
+        short[] writeDataParams = new  short[2 + data.length];
+        writeDataParams[0] = (short)(address & 0xFF);
+        writeDataParams[1] = (short)((address >> 8) & 0xFF);
+        System.arraycopy(data, 0, writeDataParams, 2, data.length);
+        
+        short[] foursome = new short[FOURSOME_LEN];
+        foursome[0] = (short)(FOURSOME_LEN + writeDataParams.length);
+        foursome[1] = DPA_ProtocolProperties.PNUM_Properties.EEEPROM; 
+        foursome[2] = 0x03;
+        foursome[3] = (short)(hwpId & 0xFF);
+        foursome[4] = (short)((hwpId >> 8) & 0xFF);
+
+        short[] dpaRequestData = new short[foursome.length + writeDataParams.length];
+        System.arraycopy(foursome, 0, dpaRequestData, 0, foursome.length);
+        System.arraycopy(writeDataParams, 0, dpaRequestData, foursome.length, writeDataParams.length);
+        
+        return dpaRequestData;
+    }
+    
+    // excludes nodes with false values according to specified map
+    private void excludeFailedNodes(Collection<Node> nodes, Map<String, Boolean> resultsMap) {
+        if ( resultsMap.isEmpty() ) {
+            return;
+        }
+        
+        Iterator<Node> nodesIter = nodes.iterator();
+        
+        while ( nodesIter.hasNext() ) {
+            Node node = nodesIter.next();
+            Boolean writeResult = resultsMap.get(node.getId());
+            if ( writeResult == null ) {
+                continue;
+            }
+            
+            // exclude node
+            if ( writeResult == false ) {
+                nodesIter.remove();
+            }
+        }
+    }
+    
     private ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> writeDataToMemoryUsingBroadcast(
             int startAddress, short[][] data, Collection<Node> targetNodes
     ) {
-        /*
         FRC frc = this.contextNode.getDeviceObject(FRC.class);
         if ( frc == null ) {
             return new BaseServiceResult<>(
@@ -237,12 +281,83 @@ extends BaseService implements LoadCodeService {
                     new LoadCodeProcessingInfo( new MissingPeripheralError(FRC.class))
             );
         }
-        */
-        //frc.setRequestHwProfile(hwpId);
+        
+        // indicator, if all writes were OK
+        boolean allWritesOk = true;
+        
+        // final map of results
+        Map<String, Boolean> finalResultsMap = new HashMap<>();
+        
+        Collection<Node> nodesToWriteInto = new LinkedList<>(targetNodes);
+        
+        int actualAddress = startAddress;
+        int index = 0;
+        while ( index < data.length ) {
+            short[] dpaRequestData = createWriteDataToMemoryRequestData(frc, actualAddress, data[index]);
+            index++;
+            
+            // excludes nodes with failed write - it is useless to write next byte chunks into them
+            excludeFailedNodes(nodesToWriteInto, finalResultsMap);  
+            
+            FRC_Data result = frc.sendSelective( new FRC_AcknowledgedBroadcastBits(
+                    dpaRequestData, nodesToWriteInto.toArray( new Node[] {}))
+            );
+
+            if ( result == null ) {
+                return createRequestProcessingError(frc, "Returning FRC result failed. ");
+            } 
+
+            short[] extraResult = frc.extraResult();
+            if ( extraResult == null ) {
+                return createRequestProcessingError(frc, "Returning FRC extra result failed. ");
+            }
+        
+            // putting both parts of result together
+            short[] completeResult = getCompleteFrcResult(result.getData(), extraResult);
+
+            // parsing result
+            Map<String, FRC_AcknowledgedBroadcastBits.Result> parsedResultMap = null;
+            try {
+                parsedResultMap = FRC_AcknowledgedBroadcastBits.parse(completeResult);
+            } catch ( Exception ex ) {
+                return new BaseServiceResult<>(
+                    ServiceResult.Status.ERROR, 
+                    null, 
+                    new LoadCodeProcessingInfo( 
+                            new RequestProcessingError("Parsing of result failed")
+                    )
+                );
+            }
+        
+            Map<String, Boolean> resultsMap = new HashMap<>();
+
+            // creating final results of 1 data chunk
+            for ( Node node : nodesToWriteInto ) {
+                Result parsedNodeResult = parsedResultMap.get(node.getId());
+
+                DeviceProcResult devProcResult = parsedNodeResult.getDeviceProcResult();
+                if ( (devProcResult == DeviceProcResult.NOT_RESPOND) 
+                    || (devProcResult == DeviceProcResult.HWPID_NOT_MATCH)
+                ) {
+                    resultsMap.put(node.getId(), false);
+                    allWritesOk = false;
+                } else {
+                    resultsMap.put(node.getId(), true);
+                }
+            }
+            
+            // copy results map of 1 data chunk into final results map
+            finalResultsMap.putAll(resultsMap);
+        }
+        
+        ServiceResult.Status serviceStatus = ( allWritesOk == true )?
+                                              ServiceResult.Status.SUCCESSFULLY_COMPLETED
+                                              : ServiceResult.Status.ERROR;
+        
         return new BaseServiceResult<>(
-                ServiceResult.Status.ERROR,
-                null,
-                new LoadCodeProcessingInfo(  new RequestProcessingError("Currenlty not implemented."))
+                serviceStatus,
+                new LoadCodeResult(finalResultsMap),
+                new LoadCodeProcessingInfo()
         );
     }
     
@@ -270,12 +385,12 @@ extends BaseService implements LoadCodeService {
             );
         }
         
-        logger.debug("writeDataToMemory - end");
-        
         if ( (targetNodes == null) || (targetNodes.isEmpty()) ) {
+            logger.debug("writeDataToMemory - end");
             return writeDataToMemoryOfThisNode(startAddress, data);
         }
         
+        logger.debug("writeDataToMemory - end");
         return writeDataToMemoryUsingBroadcast(startAddress, data, targetNodes);
     }
    
@@ -304,10 +419,9 @@ extends BaseService implements LoadCodeService {
                     params.getStartAddress(), length, dataChecksum
                 )
         );
-
-        logger.debug("loadCode - end");
         
         if ( result == null ) {
+            logger.debug("loadCode - end");
             return createRequestProcessingError(os, "Load code result not found.");
         }
         
@@ -317,6 +431,7 @@ extends BaseService implements LoadCodeService {
         ServiceResult.Status status = (result.getResult() == true)? 
                 ServiceResult.Status.SUCCESSFULLY_COMPLETED : ServiceResult.Status.ERROR;  
         
+        logger.debug("loadCode - end");
         return new BaseServiceResult<>(
                 status,
                 new LoadCodeResult(resultMap),
@@ -486,8 +601,6 @@ extends BaseService implements LoadCodeService {
         loadCode(LoadCodeServiceParameters params)
     {
         logger.debug("loadCode - start: params={}", params);
-        short[][] dataToWrite = null;
-        final int length, dataChecksum;
         
         LoadingCodeProperties.LoadingContent loadingContent = params.getLoadingContent();
         if ( loadingContent == null ) {
@@ -497,6 +610,16 @@ extends BaseService implements LoadCodeService {
                     new LoadCodeProcessingInfo( new LoadingContentError("Unspecified loading content."))
             );
         }
+        
+        // indicates, whether data for write into EEEPROM will be prepared for broadcast 
+        boolean prepareDataForBroadcast = true;
+        Collection<Node> targetNodes = params.getTargetNodes();
+        if ( targetNodes == null || targetNodes.isEmpty() ) {
+            prepareDataForBroadcast = false;
+        }
+        
+        short[][] dataToWrite = null;
+        final int length, dataChecksum;
         
         switch ( loadingContent ) {
             case Hex:
@@ -530,7 +653,7 @@ extends BaseService implements LoadCodeService {
                 
                 logger.debug(
                         " Handler block starts at " + handlerBlock.getAddressStart()
-                                + " and ends at " + handlerBlock.getAddressEnd()
+                        + " and ends at " + handlerBlock.getAddressEnd()
                 ); 
                 
                 // calcualting rounded length of handler in memory
@@ -540,20 +663,30 @@ extends BaseService implements LoadCodeService {
                 dataChecksum = calculateChecksum(file, handlerBlock, length);
                 logger.debug(" Checksum of data is: " + Integer.toHexString(dataChecksum));
                 
-                // prepare data to 48 and 16 long blocks for writing
-                dataToWrite = new DataPreparer(handlerBlock, file).prepare();
+                // prepare data to blocks for writing into EEEPROM
+                if ( prepareDataForBroadcast ) {
+                    dataToWrite = new DataPreparer(handlerBlock, file).prepareAs16BytesBlocks();
+                } else {
+                    dataToWrite = new DataPreparer(handlerBlock, file).prepare();
+                }
                 break;
             case IQRF_Plugin:
                 // parse iqrf file
                 IQRFParser parser = new IQRFParser(params.getFileName());
                 short[] parsedData = parser.parse();
+                
                 length = parsedData.length;
                 logger.debug(" Length of data is: " + Integer.toHexString(length));
+                
                 dataChecksum = calculateChecksum(parsedData, length);
                 logger.debug(" Checksum of data is: " + Integer.toHexString(dataChecksum));
                 
-                // prepare data to 48 and 16 long blocks for writing
-                dataToWrite = new DataPreparer(parsedData).prepare();
+                // prepare data to blocks for writing into EEEPROM
+                if ( prepareDataForBroadcast ) {
+                    dataToWrite = new DataPreparer(parsedData).prepareAs16BytesBlocks();
+                } else {
+                    dataToWrite = new DataPreparer(parsedData).prepare();
+                }
                 break;
             default:
                 logger.debug("loadCode - end");
@@ -570,12 +703,12 @@ extends BaseService implements LoadCodeService {
                     params.getStartAddress(), dataToWrite, params.getTargetNodes()
         );
         
-        // if there was some fundamental error during data writing it is useless to load code
+        // if there was some fundamental error during data writing, it is useless to load code
         if ( writeDataResult.getProcessingInfo().getError() != null ) {
             return writeDataResult;
         }
         
-        // write results
+        // results of data write
         Map<String, Boolean> writeDataResultsMap = writeDataResult.getResult().getAllNodeResultsMap();
         
         // final results map
@@ -607,7 +740,7 @@ extends BaseService implements LoadCodeService {
         
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> loadResult = null;
         
-        // if a node to load code into is the context node, use unicast
+        // if a node to load code into is the context node, use unicast else use broadcast
         if ( nodesToLoad.size() == 1 ) {
             Node nodeToLoadInto = nodesToLoad.get(0);
             if ( this.contextNode.getId().equals(nodeToLoadInto.getId()) ) {
