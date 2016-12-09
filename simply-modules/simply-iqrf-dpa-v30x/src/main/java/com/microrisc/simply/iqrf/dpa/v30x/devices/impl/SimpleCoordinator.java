@@ -49,7 +49,7 @@ extends DPA_DeviceObject implements Coordinator {
     public static final int MODULE_ID_LENGTH = 4;
     
     /** User data length. */
-    public static final int USER_DATA_LENGTH = 2;
+    public static final int USER_DATA_LENGTH = 4;
     
     
     private static int checkNodeAddress(int nodeAddress) {
@@ -97,7 +97,7 @@ extends DPA_DeviceObject implements Coordinator {
         }
         if ( moduleId.length != MODULE_ID_LENGTH ) {
             throw new IllegalArgumentException(
-                    "Invalid module ID. Expected: " + MODULE_ID_LENGTH
+                    "Invalid module ID length. Expected: " + MODULE_ID_LENGTH
             );
         }
     }

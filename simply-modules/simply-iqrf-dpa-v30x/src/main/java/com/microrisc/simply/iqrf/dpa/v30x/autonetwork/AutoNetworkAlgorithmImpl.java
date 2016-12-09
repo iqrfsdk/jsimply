@@ -775,7 +775,9 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
                                     1,
                                     new short[] { 
                                         (short)(wTimeout >> 0), 
-                                        (short)(wTimeout >> 8)
+                                        (short)(wTimeout >> 8),
+                                        0,
+                                        0
                                     }
                                 }, 
                                 0xFFFF 
@@ -822,7 +824,9 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
                                     1,
                                     new short[] { 
                                         (short)(wTimeout >> 0), 
-                                        (short)(wTimeout >> 8)
+                                        (short)(wTimeout >> 8), 
+                                        0,
+                                        0
                                     }
                                 }, 
                                 0xFFFF 
@@ -866,7 +870,7 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
                 }
                 BroadcastResult nodesDisablingResult = broadcastServices.broadcast(
                     networkId, Node.class, Node.MethodID.ENABLE_REMOTE_BONDING,
-                        new Object[] { 0, 0, new short[] { 0, 0 } }
+                        new Object[] { 0, 0, new short[] { 0, 0, 0, 0 } }
                 );
                 if ( nodesDisablingResult == null ) {
                     throw new Exception("Error while disabling remote bonding on nodes");
@@ -1187,16 +1191,12 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
                 break;
             }
             
-            // getting lowest 2 bytes of module ID
-            short[] lowest2bytes = new short[2];
-            System.arraycopy(moduleId.getModuleId(), 0, lowest2bytes, 0, 2);
-            
             for ( int authorizeRetry = authorizeRetries; authorizeRetry != 0; authorizeRetry-- ) {
                 if ( authorizeRetry == authorizeRetries ) {
                     nextAddr = nextFreeAddr(bondedNodes, nextAddr);
                 }
                 
-                BondedNode bondedNode = coordinator.authorizeBond(nextAddr, lowest2bytes);
+                BondedNode bondedNode = coordinator.authorizeBond(nextAddr, moduleId.getModuleId());
                 if ( bondedNode == null ) {
                     
                     logger.error(
