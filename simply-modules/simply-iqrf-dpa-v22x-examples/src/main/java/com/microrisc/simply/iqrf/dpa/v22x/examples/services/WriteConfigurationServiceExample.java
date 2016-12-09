@@ -20,6 +20,7 @@ import com.microrisc.simply.iqrf.dpa.DPA_Network;
 import com.microrisc.simply.iqrf.dpa.DPA_Node;
 import com.microrisc.simply.iqrf.dpa.DPA_Simply;
 import com.microrisc.simply.iqrf.dpa.v22x.DPA_SimplyFactory;
+import com.microrisc.simply.iqrf.dpa.v22x.protocol.DPA_ProtocolProperties;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.WriteConfigurationProcessingInfo;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.WriteConfigurationService;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.WriteConfigurationServiceParameters;
@@ -60,10 +61,10 @@ public final class WriteConfigurationServiceExample {
             printMessageAndExit("Network 1 doesn't exist");
         }
 
-        // getting node 1
-        DPA_Node node1 = network1.getNode("1");
+        // getting node 0
+        DPA_Node node1 = network1.getNode("0");
         if ( node1 == null ) {
-            printMessageAndExit("Node 1 doesn't exist.");
+            printMessageAndExit("Node 0 doesn't exist.");
         }
         
         // getting Write Configuration Service on node 1
@@ -72,14 +73,18 @@ public final class WriteConfigurationServiceExample {
             printMessageAndExit("Node 1 doesn't support Write Configuration Service.");
         }
         
+        
+        // setting service parameters
+        WriteConfigurationServiceParameters serviceParams 
+                = new WriteConfigurationServiceParameters(
+                                "config" + File.separator + "TR_config_2_00.xml",
+                                "config" + File.separator + "coord_config.xml"
+                );
+        serviceParams.setHwpId(DPA_ProtocolProperties.HWPID_Properties.DO_NOT_CHECK);
+        
         // writing configuration - only for node, which this service resides on
         ServiceResult<WriteResult, WriteConfigurationProcessingInfo> serviceResult 
-                = writeConfigService.writeConfiguration(
-                        new WriteConfigurationServiceParameters(
-                                "config" + File.separator + "TR_config_2_00.xml",
-                                "config" + File.separator + "config.xml"
-                        )
-                );
+                = writeConfigService.writeConfiguration(serviceParams);
         
         // getting results
         if ( serviceResult.getStatus() == ServiceResult.Status.SUCCESSFULLY_COMPLETED ) {
@@ -97,7 +102,7 @@ public final class WriteConfigurationServiceExample {
                 // if there is no principal error, find out, which config bytes failed to write
                 WriteResult writeResult = serviceResult.getResult();
                 if ( writeResult != null ) {
-                    WriteResult.NodeWriteResult nodeWriteResult =  writeResult.getNodeResult(node1.getId());
+                    WriteResult.NodeWriteResult nodeWriteResult = writeResult.getNodeResult(node1.getId());
                     for ( HWP_ConfigurationByte configByte : nodeWriteResult.getWritingFailedBytes().values() ) {
                         System.out.println(configByte);
                     }
