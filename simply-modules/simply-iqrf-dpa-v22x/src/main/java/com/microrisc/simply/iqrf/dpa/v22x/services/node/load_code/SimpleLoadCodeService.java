@@ -728,7 +728,17 @@ extends BaseService implements LoadCodeService {
             nodesToLoad.add(node);
         }
         
-        // there must be at least one error in writing data into contextNode, which this
+        // possibly add context node into the target nodes
+        if ( (params.getTargetNodes() == null) || (params.getTargetNodes().isEmpty()) ) {
+            Boolean contextNodeResult = writeDataResultsMap.get(this.contextNode.getId());
+            if ( (contextNodeResult != null) && (contextNodeResult == true) ) {
+                nodesToLoad.add(contextNode);
+            } else {
+                finalResultsMap.put(this.contextNode.getId(), false);
+            }
+        }
+        
+        // there must be at least error in writing data into context node, which this
         // service resides on
         if ( nodesToLoad.isEmpty() ) {
             return new BaseServiceResult<>(

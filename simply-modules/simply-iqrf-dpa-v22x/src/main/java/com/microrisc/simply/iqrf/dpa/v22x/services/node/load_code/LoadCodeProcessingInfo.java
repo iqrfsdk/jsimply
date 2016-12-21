@@ -43,7 +43,7 @@ public final class LoadCodeProcessingInfo {
      * @param error error object to store in newly created object
      */
     public LoadCodeProcessingInfo(LoadCodeError error) {
-        this.error = null;
+        this.error = error;
     }
     
     /**

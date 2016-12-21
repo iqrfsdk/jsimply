@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MICRORISC s.r.o..
+ * Copyright 2016 MICRORISC s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code;
 
 import com.microrisc.simply.BaseNode;
 import com.microrisc.simply.DeviceObject;
+import com.microrisc.simply.iqrf.dpa.v22x.devices.EEEPROM;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.OS;
+import com.microrisc.simply.iqrf.dpa.v22x.types.LoadResult;
 import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingCodeProperties;
 import com.microrisc.simply.iqrf.types.VoidType;
 import com.microrisc.simply.services.ServiceResult;
@@ -32,8 +34,9 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- *
- * @author Fs
+ * Tests for Simple Load Code Service.
+ * 
+ * @author Michal Konopa
  */
 public class SimpleLoadCodeServiceTest {
     
@@ -59,18 +62,25 @@ public class SimpleLoadCodeServiceTest {
     /**
      * Unicast ok.
      */
-    /*
     @Test
     public void unicastOk() {
         TestingOs os = new TestingOs("1", "1");
-        os.setBatchReturnValue(new VoidType());
+        os.setBatchReturnValue( new VoidType() );
+        os.setLoadCodeReturnValue( new LoadResult(true));
+        
+        TestingEEEPROM eeeprom = new TestingEEEPROM("1", "1");
+        eeeprom.setExtendedWriteReturnValue(new VoidType());
         
         Map<Class, DeviceObject> deviceObjects = new HashMap<>();
         deviceObjects.put(OS.class, (DeviceObject)os);
+        deviceObjects.put(EEEPROM.class, (DeviceObject)eeeprom);
+        
         LoadCodeService loadCodeService 
                 = new SimpleLoadCodeService( new BaseNode("1", "1", deviceObjects));
         
-        String sourceFile = "load_code_service" + File.separator + "CustomDpaHandler-LED-Green-On-7xD-V300-161122.hex";
+        String sourceFile = "test" + File.separator + "resources" + File.separator 
+                +  "load_code_service" + File.separator 
+                + "CustomDpaHandler-LED-Green-On-7xD-V300-161122.hex";
         LoadCodeServiceParameters params
                 = new LoadCodeServiceParameters(sourceFile, 
                         0x0000,
@@ -81,7 +91,7 @@ public class SimpleLoadCodeServiceTest {
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
                 = loadCodeService.loadCode(params);
         
-        assertEquals(serviceResult.getStatus(), ServiceResult.Status.SUCCESSFULLY_COMPLETED);
+        assertEquals(ServiceResult.Status.SUCCESSFULLY_COMPLETED, serviceResult.getStatus());
         assertNull(serviceResult.getProcessingInfo().getError());
         
         LoadCodeResult loadResult = serviceResult.getResult();
@@ -93,5 +103,5 @@ public class SimpleLoadCodeServiceTest {
         assertNotNull(nodeResult);
         assertEquals(true, nodeResult);
     }
-    */
+
 }

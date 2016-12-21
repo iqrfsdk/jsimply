@@ -239,9 +239,7 @@ public final class TestingOs implements DeviceObject, OS {
     }
 
     @Override
-    public void setDefaultWaitingTimeout(long timeout) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+    public void setDefaultWaitingTimeout(long timeout) {}
 
     @Override
     public UUID getIdOfLastExexutedCallRequest() {
