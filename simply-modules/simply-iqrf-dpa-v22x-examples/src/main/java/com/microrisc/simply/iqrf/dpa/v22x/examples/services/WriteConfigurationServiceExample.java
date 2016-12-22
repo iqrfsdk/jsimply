@@ -50,7 +50,7 @@ public final class WriteConfigurationServiceExample {
     public static void main(String[] args) {
         // creating Simply instance
         try {
-            simply = DPA_SimplyFactory.getSimply("config" + File.separator + "Simply.properties");
+            simply = DPA_SimplyFactory.getSimply("config" + File.separator + "simply" + File.separator +  "Simply.properties");
         } catch ( SimplyException ex ) {
             printMessageAndExit("Error while creating Simply: " + ex.getMessage());
         }
@@ -73,12 +73,11 @@ public final class WriteConfigurationServiceExample {
             printMessageAndExit("Node 1 doesn't support Write Configuration Service.");
         }
         
-        
         // setting service parameters
         WriteConfigurationServiceParameters serviceParams 
                 = new WriteConfigurationServiceParameters(
-                                "config" + File.separator + "TR_config_2_00.xml",
-                                "config" + File.separator + "node1.xml"
+                                "config" + File.separator + "dctr-configs" + File.separator + "dpa-2xx" + File.separator + "TR_config_2_00.xml",
+                                "config" + File.separator + "dctr-configs" + File.separator + "node.xml"
                 );
         serviceParams.setHwpId(DPA_ProtocolProperties.HWPID_Properties.DO_NOT_CHECK);
         

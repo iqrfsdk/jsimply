@@ -49,7 +49,7 @@ public class LoadCodeServiceExample {
     public static void main(String[] args) {
         // creating Simply instance
         try {
-            simply = DPA_SimplyFactory.getSimply("config" + File.separator + "Simply.properties");
+            simply = DPA_SimplyFactory.getSimply("config" + File.separator + "simply" + File.separator +  "Simply.properties");
         } catch ( SimplyException ex ) {
             printMessageAndExit("Error while creating Simply: " + ex.getMessage());
         }
@@ -60,42 +60,40 @@ public class LoadCodeServiceExample {
             printMessageAndExit("Network 1 doesn't exist");
         }
 
-        // getting node 1
-        DPA_Node node1 = network1.getNode("1");
-        if ( node1 == null ) {
-            printMessageAndExit("Node 1 doesn't exist.");
+        // getting coordinator
+        DPA_Node coordinator = network1.getNode("0");
+        if ( coordinator == null ) {
+            printMessageAndExit("Coordinator doesn't exist.");
         }
         
         // getting Load Code Service on node 1
-        LoadCodeService loadCodeService = node1.getService(LoadCodeService.class);
+        LoadCodeService loadCodeService = coordinator.getService(LoadCodeService.class);
         if ( loadCodeService == null ) {
-            printMessageAndExit("Node 1 doesn't support Load Code Service.");
+            printMessageAndExit("Coordinator doesn't support Load Code Service.");
         }
         
         // loading code
-        
-        /*
-        ServiceResult<LoadingResult, LoadCodeProcessingInfo> serviceResult 
-            = loadCodeService.loadCode( 
-                    new LoadCodeServiceParameters(
-                        "CustomDpaHandler-FRC-Minimalistic-7xD-V224-151201.hex", 
-                        0x0000,
-                        LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithoutCodeLoading,
-                        LoadingCodeProperties.LoadingContent.Hex 
-                    )
-            );
-        */
-        
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
             = loadCodeService.loadCode( 
                     new LoadCodeServiceParameters(
-                        "CustomDpaHandler-ChangeIQRFOS-7xD-V226-160303.iqrf", 
-                        0x0000,
-                        LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithoutCodeLoading,
-                        LoadingCodeProperties.LoadingContent.IQRF_Plugin
+                        "config" + File.separator + "custom-dpa-handlers" + File.separator + "CustomDpaHandler-LED-Green-On-7xD-V228-160912.hex",
+                        0x0800,
+                        LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithCodeLoading,
+                        LoadingCodeProperties.LoadingContent.Hex 
                     )
             );
-        
+
+/*        
+        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
+            = loadCodeService.loadCode( 
+                    new LoadCodeServiceParameters(
+                        "config" + File.separator + "custom-dpa-handlers" + File.separator + "CustomDpaHandler-LED-Red-On-7xD-V228-160912.hex"
+                        0x0800,
+                        LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithCodeLoading,
+                        LoadingCodeProperties.LoadingContent.Hex
+                    )
+            );
+*/        
         
         // getting results
         if ( serviceResult.getStatus() == ServiceResult.Status.SUCCESSFULLY_COMPLETED ) {

@@ -49,7 +49,7 @@ implements AsynchronousMessagesListener<DPA_AsynchronousMessage>
     public static void main(String[] args) throws InterruptedException {
         // creating Simply instance
         try {
-            simply = DPA_SimplyFactory.getSimply("config" + File.separator + "Simply.properties");
+            simply = DPA_SimplyFactory.getSimply("config" + File.separator + "simply" + File.separator +  "Simply.properties");
         } catch ( SimplyException ex ) {
             printMessageAndExit("Error while creating Simply: " + ex.getMessage());
         }

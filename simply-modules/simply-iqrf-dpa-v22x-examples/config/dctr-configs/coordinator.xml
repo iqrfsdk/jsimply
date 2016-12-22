@@ -2,9 +2,9 @@
 <ConfigGroup Name="TR" Version="2.00">
 	<ConfigBit ID="4" Name="EEPROM" Value="True"/>
 	<ConfigBit ID="5" Name="EEEPROM" Value="True"/>
-	<ConfigBit ID="6" Name="RAM" Value="True"/>
-	<ConfigBit ID="7" Name="LEDR" Value="True"/>
-	<ConfigBit ID="8" Name="LEDG" Value="True"/>
+	<ConfigBit ID="6" Name="RAM" Value="False"/>
+	<ConfigBit ID="7" Name="LEDR" Value="False"/>
+	<ConfigBit ID="8" Name="LEDG" Value="False"/>
 	<ConfigBit ID="9" Name="SPI" Value="False"/>
 	<ConfigBit ID="10" Name="IO" Value="True"/>
 	<ConfigBit ID="11" Name="THERMOMETER" Value="True"/>
