@@ -36,6 +36,20 @@ import java.util.UUID;
 @DeviceInterface
 public interface EEEPROM 
 extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
+    
+    /** Bottom bound of valid address range for coordinator for extended read and write. */
+    int COORD_ADDRESS_MIN = 0x0700;
+    
+    /** Upper bound of valid adress range for coordinator for extended read and write. */
+    int COORD_ADDRESS_MAX = 0X3FFF;
+    
+    /** Bottom bound of valid adress range for node for extended read and write. */
+    int NODE_ADDRESS_MIN = 0x0000;
+    
+    /** Upper bound of valid adress range for node for extended read and write. */
+    int NODE_ADDRESS_MAX = 0X3FFF;
+    
+    
     /**
      * Identifiers of this device interface's methods.
      */

@@ -72,6 +72,17 @@ extends BaseService implements LoadCodeService {
    
     
     
+    // checks, if the start address is valid in relation to node ID
+    private static boolean isStartAddressValid(String nodeId, int startAddress) {
+        int nodeAddr = Integer.parseInt(nodeId);
+        if ( nodeAddr == DPA_ProtocolProperties.NADR_Properties.IQMESH_COORDINATOR_ADDRESS ) {
+            return (startAddress >= EEEPROM.COORD_ADDRESS_MIN && startAddress <= EEEPROM.COORD_ADDRESS_MAX);
+        }
+        
+        return (startAddress >= EEEPROM.NODE_ADDRESS_MIN && startAddress <= EEEPROM.NODE_ADDRESS_MAX);
+    }
+    
+    
     private CodeBlock findHandlerBlock(IntelHex file) {
         Collections.sort(file.getCodeBlocks());
 
@@ -226,6 +237,19 @@ extends BaseService implements LoadCodeService {
         );
     }    
     
+    // returns map of start address valid nodes
+    private Map<String, Node> getStartAddressValidNodesMap(int startAddress, Collection<Node> nodes) {
+        Map<String, Node> validNodesMap = new HashMap<>();
+        
+        for ( Node node : nodes ) {
+            if ( isStartAddressValid(node.getId(), startAddress) ) {
+                validNodesMap.put(node.getId(), node);
+            }
+        }
+        
+        return validNodesMap;
+    }
+    
     private short[] createWriteDataToMemoryRequestData(FRC frc, int address, short[] data) {
         int hwpId = frc.getRequestHwProfile();
         
@@ -282,13 +306,32 @@ extends BaseService implements LoadCodeService {
             );
         }
         
-        // indicator, if all writes were OK
-        boolean allWritesOk = true;
+        // returns map of valid nodes in respect to start address
+        Map<String, Node> validNodesMap = getStartAddressValidNodesMap(startAddress, targetNodes);
+        if ( validNodesMap.isEmpty() ) {
+            return new BaseServiceResult<>(
+                    ServiceResult.Status.ERROR, 
+                    null, 
+                    new LoadCodeProcessingInfo( 
+                            new LoadingContentError("No start address valid nodes to load code in.")
+                    )
+            );
+        }
+        
+        Collection<Node> nodesToWriteInto = new LinkedList<>(validNodesMap.values());
         
         // final map of results
         Map<String, Boolean> finalResultsMap = new HashMap<>();
         
-        Collection<Node> nodesToWriteInto = new LinkedList<>(targetNodes);
+        // add all start address invalid nodes into final result map
+        for ( Node node : targetNodes ) {
+            if ( !validNodesMap.containsKey(node.getId()) ) {
+                finalResultsMap.put(node.getId(), false);
+            }
+        }
+        
+        // indicator, if all writes were OK
+        boolean allWritesOk = true;
         
         int actualAddress = startAddress;
         int index = 0;
@@ -611,10 +654,20 @@ extends BaseService implements LoadCodeService {
             );
         }
         
-        // indicates, whether data for write into EEEPROM will be prepared for broadcast 
+        // indicates, whether data for writing into EEEPROM will be prepared for broadcast 
         boolean prepareDataForBroadcast = true;
         Collection<Node> targetNodes = params.getTargetNodes();
+        
         if ( targetNodes == null || targetNodes.isEmpty() ) {
+            if ( !isStartAddressValid(this.contextNode.getId(), params.getStartAddress()) ) {
+                return new BaseServiceResult<>(
+                    ServiceResult.Status.ERROR,
+                    null,
+                    new LoadCodeProcessingInfo( 
+                            new LoadingContentError("Invalid start address.")
+                    )
+                );
+            }
             prepareDataForBroadcast = false;
         }
         
