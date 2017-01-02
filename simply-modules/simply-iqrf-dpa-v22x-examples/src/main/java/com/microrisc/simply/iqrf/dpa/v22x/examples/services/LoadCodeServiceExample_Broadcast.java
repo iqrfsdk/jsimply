@@ -21,24 +21,24 @@ import com.microrisc.simply.iqrf.dpa.DPA_Network;
 import com.microrisc.simply.iqrf.dpa.DPA_Node;
 import com.microrisc.simply.iqrf.dpa.DPA_Simply;
 import com.microrisc.simply.iqrf.dpa.v22x.DPA_SimplyFactory;
-import com.microrisc.simply.iqrf.dpa.v22x.protocol.DPA_ProtocolProperties;
-import com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.WriteConfigurationProcessingInfo;
-import com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.WriteConfigurationService;
-import com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.WriteConfigurationServiceParameters;
-import com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.WriteResult;
-import com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.errors.WriteConfigurationError;
-import com.microrisc.simply.iqrf.dpa.v22x.types.HWP_ConfigurationByte;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeProcessingInfo;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeResult;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeService;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeServiceParameters;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.LoadCodeError;
+import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingCodeProperties;
 import com.microrisc.simply.services.ServiceResult;
 import java.io.File;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
- * Using broadcast in Write Configuration Service.
+ * Using broadcast in Load Code Service.
  * 
  * @author Michal Konopa
  */
-public final class WriteConfigurationServiceExample_Broadcast {
+public final class LoadCodeServiceExample_Broadcast {
     private static DPA_Simply simply = null;
     
     // prints out specified message, destroys the Simply and exits
@@ -71,47 +71,47 @@ public final class WriteConfigurationServiceExample_Broadcast {
             printMessageAndExit("Node 0 doesn't exist.");
         }
         
-        // target nodes to write configuration into
+        // target nodes to load code into
         String[] nodeIds = new String[] { "1", "2", "3" };
         Collection<Node> targetNodes = getNodes(network1, nodeIds);
         
-        // getting Write Configuration Service on node 0
-        WriteConfigurationService writeConfigService = node0.getService(WriteConfigurationService.class);
-        if ( writeConfigService == null ) {
-            printMessageAndExit("Node 0 doesn't support Write Configuration Service.");
+        // getting Load Code Service on node 0
+        LoadCodeService loadCodeService = node0.getService(LoadCodeService.class);
+        if ( loadCodeService == null ) {
+            printMessageAndExit("Node 0 doesn't support Load Code Service.");
         }
         
-        // setting service parameters
-        WriteConfigurationServiceParameters serviceParams 
-                = new WriteConfigurationServiceParameters(
-                                "config" + File.separator + "dctr-configs" + File.separator + "dpa-2xx" + File.separator + "TR_config_2_00.xml",
-                                "config" + File.separator + "dctr-configs" + File.separator + "node.xml",
-                                targetNodes
-                );
-        serviceParams.setHwpId(DPA_ProtocolProperties.HWPID_Properties.DO_NOT_CHECK);
-        
-        // writing configuration - only for node, which this service resides on
-        ServiceResult<WriteResult, WriteConfigurationProcessingInfo> serviceResult 
-                = writeConfigService.writeConfiguration(serviceParams);
+        // loading code
+        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
+            = loadCodeService.loadCode( 
+                    new LoadCodeServiceParameters(
+                        "config" + File.separator + "custom-dpa-handlers" + File.separator + "CustomDpaHandler-LED-Green-On-7xD-V228-160912.hex",
+                        0x0800,
+                        LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithCodeLoading,
+                        LoadingCodeProperties.LoadingContent.Hex,
+                        targetNodes
+                    )
+            );
         
         // getting results
         if ( serviceResult.getStatus() == ServiceResult.Status.SUCCESSFULLY_COMPLETED ) {
-            System.out.println("Configuration successfully written.");
+            System.out.println("Code successfully loaded.");
         } else {
-            System.out.println("Configuration write was NOT successful.");
+            System.out.println("Code load was NOT successful.");
             
             // find out details about errors
             // is there a principal error?
-            WriteConfigurationProcessingInfo procInfo = serviceResult.getProcessingInfo();
-            WriteConfigurationError error = procInfo.getError();
+            LoadCodeProcessingInfo procInfo = serviceResult.getProcessingInfo();
+            LoadCodeError error = procInfo.getError();
             if ( error != null ) {
                 System.out.println("Error: " + error);
             } else {
-                // if there is no principal error, find out, which config bytes 
-                // at which nodes failed to write
-                WriteResult writeResult = serviceResult.getResult();
-                if ( writeResult != null ) {
-                    printWritingFailedBytes(writeResult, targetNodes);
+                // if there is no principal error, find out, which nodes failed
+                // to load code into
+                LoadCodeResult loadCodeResult = serviceResult.getResult();
+                if ( loadCodeResult != null ) {
+                    System.out.println("Loading code failed at nodes: ");
+                    printFailedNodes(loadCodeResult);
                 }
             }
         }
@@ -124,7 +124,6 @@ public final class WriteConfigurationServiceExample_Broadcast {
     private static Collection<Node> getNodes(DPA_Network network, String[] nodeIds) {
         Collection<Node> nodes = new LinkedList<>();
         for ( String nodeId : nodeIds ) {
-            // getting node
             DPA_Node node = network.getNode(nodeId);
             if ( node == null ) {
                 printMessageAndExit("Node " + nodeId + " doesn't exist.");
@@ -135,17 +134,12 @@ public final class WriteConfigurationServiceExample_Broadcast {
         return nodes;
     }
     
-    // prints bytes, which failed to write
-    private static void printWritingFailedBytes(
-            WriteResult writeResult, Collection<Node> targetNodes
-    ) {
-        for ( Node node : targetNodes ) {
-            WriteResult.NodeWriteResult nodeWriteResult = writeResult.getNodeResult(node.getId());
-            System.out.println("Node: " + node.getId());
-            for ( HWP_ConfigurationByte configByte : nodeWriteResult.getWritingFailedBytes().values() ) {
-                System.out.println(configByte);
+    // prints nodes, which failed to load code into
+    private static void printFailedNodes(LoadCodeResult loadCodeResult) {
+        for ( Map.Entry<String, Boolean> entry : loadCodeResult.getAllNodeResultsMap().entrySet() ) {
+            if ( entry.getValue() == false ) {
+                System.out.println(entry.getKey());
             }
-            System.out.println();
         }
     }
 }
