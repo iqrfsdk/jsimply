@@ -36,8 +36,10 @@ import com.microrisc.simply.errors.CallRequestProcessingErrorType;
 import com.microrisc.simply.iqrf.dpa.DPA_ResponseCode;
 import com.microrisc.simply.iqrf.dpa.DPA_Simply;
 import com.microrisc.simply.iqrf.dpa.v22x.DPA_SimplyFactory;
+import com.microrisc.simply.iqrf.dpa.v22x.devices.Coordinator;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.OS;
 import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_AdditionalInfo;
+import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_Parameter;
 import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
 import java.io.File;
 import java.io.FileReader;
@@ -62,7 +64,22 @@ import org.json.simple.parser.ParseException;
  * @author Michal Konopa
  */
 public final class App {
-
+    
+    // data to publish
+    private static class DataToPublish {
+        Object sensorData;
+        Integer rssi;
+        
+        public DataToPublish(Object sensorData, Integer rssi) {
+            this.sensorData = sensorData;
+            this.rssi = rssi;
+        }
+    }
+    
+    // RSSI is not avalaible
+    private static final int RSSI_NOT_AVAILABLE = 0;
+    
+    
     // references for DPA
     private static DPA_Simply dpaSimply = null;
     
@@ -72,55 +89,61 @@ public final class App {
     // application related references
     private static ApplicationConfiguration appConfiguration = null;
     
+    // MQTT topics
+    private static MqttTopics mqttTopics = null;
+    
+    // OS's info map
+    private static Map<String, OsInfo> osInfoMap = null;
+    
+    // sensor's map
+    private static Map<String, CompoundDeviceObject> sensorsMap = null;
+    
     // not used so far
     private static int pid = 0;
     
+    
+    
     // MAIN PROCESSING
-    public static void main(String[] args) throws InterruptedException, MqttException 
-    {
+    public static void main(String[] args) throws InterruptedException, MqttException {
+        // initialization
+        init();
+        
+        // main application loop
+        while ( true ) {
+            getAndPublishSensorData();
+            Thread.sleep(appConfiguration.getPollingPeriod() * 1000);
+        }
+    }
+    
+    // initializes application
+    private static void init() {
         // application exit hook
         Runtime.getRuntime().addShutdownHook( new Thread(new Runnable() {
 
             @Override
             public void run() {
                 System.out.println("End via shutdown hook.");
-                releaseUsedResources();
+                releaseResources();
             }
         }));
         
         // loading application configuration
         try {
             appConfiguration = loadApplicationConfiguration("App.json");
-        } catch (Exception ex) {
+        } catch ( Exception ex ) {
             printMessageAndExit("Error in loading application configuration: " + ex);
         }
         
         // Simply initialization
-        if(appConfiguration.getCommunicationInterface().equalsIgnoreCase("cdc")) {
+        if ( appConfiguration.getCommunicationInterface().equalsIgnoreCase("cdc")) {
             dpaSimply = getDPA_Simply("Simply-CDC.properties");
-        }
-        else if(appConfiguration.getCommunicationInterface().equalsIgnoreCase("spi")) {
+        } else if( appConfiguration.getCommunicationInterface().equalsIgnoreCase("spi")) {
             dpaSimply = getDPA_Simply("Simply-SPI.properties");
-        }
-        else {
+        } else {
             printMessageAndExit("No supported communication interface: " + appConfiguration.getCommunicationInterface());
         }
         
-        // loading MQTT configuration
-        MqttConfiguration mqttConfiguration = null;
-        try {
-            mqttConfiguration = loadMqttConfiguration("Mqtt.json");
-        } catch ( Exception ex ) {
-            printMessageAndExit("Error in loading MQTT configuration: " + ex);
-        } 
-        
-        // topics initialization
-        MqttTopics mqttTopics =  new MqttTopics.Builder().gwId(mqttConfiguration.getGwId())
-                .stdSensorsProtronix("/std/sensors/protronix/")
-                .stdSensorsProtronixErrors("/std/sensors/protronix/errors/")
-                .build();
-
-        mqttCommunicator = new MqttCommunicator(mqttConfiguration);
+        initMqtt();
         
         // getting reference to IQRF DPA network to use
         Network dpaNetwork = dpaSimply.getNetwork("1", Network.class);
@@ -132,27 +155,71 @@ public final class App {
         Map<String, Node> nodesMap = dpaNetwork.getNodesMap();
         
         // reference to OS Info
-        Map<String, OsInfo> osInfoMap = getOsInfoFromNodes(nodesMap);
+        osInfoMap = getOsInfoFromNodes(nodesMap);
         
         // printing MIDs of nodes in the network
         printMIDs(osInfoMap);
         
         // reference to sensors
-        Map<String, CompoundDeviceObject> sensorsMap = getSensorsMap(nodesMap);
+        sensorsMap = getSensorsMap(nodesMap);
         
-        // main application loop
-        while ( true ) {
-            getAndPublishSensorData(sensorsMap, mqttTopics, osInfoMap);
-            Thread.sleep(appConfiguration.getPollingPeriod() * 1000);
+        // setting, that last RSSI value will be returned in every DPA response or confirmation
+        setGettingLastRssi(dpaNetwork);
+    }
+    
+    // inits MQTT related functionality
+    private static void initMqtt() {
+        // loading MQTT configuration
+        MqttConfiguration mqttConfiguration = null;
+        try {
+            mqttConfiguration = loadMqttConfiguration("Mqtt.json");
+        } catch ( Exception ex ) {
+            printMessageAndExit("Error in loading MQTT configuration: " + ex);
+        } 
+        
+        // topics initialization
+        mqttTopics = new MqttTopics.Builder().gwId(mqttConfiguration.getGwId())
+                .stdSensorsProtronix("/std/sensors/protronix/")
+                .stdSensorsProtronixErrors("/std/sensors/protronix/errors/")
+                .build();
+
+        try {
+            mqttCommunicator = new MqttCommunicator(mqttConfiguration);
+        } catch ( MqttException ex ) {
+            printMessageAndExit("Error while creation of MQTT communicator: " + ex);
         }
-        
     }
     
     // prints out specified message, destroys the Simply and exits
     private static void printMessageAndExit(String message) {
         System.out.println(message);
-        releaseUsedResources();
+        releaseResources();
         System.exit(1);
+    }
+    
+    // sets getting last RSSI in DPA responses or notifications
+    private static void setGettingLastRssi(Network dpaNetwork) {
+        Node node0 = dpaNetwork.getNode("0");
+        if ( node0 == null ) {
+            printMessageAndExit("Node 0 doesn't exist");
+        }
+        
+        Coordinator coord = node0.getDeviceObject(Coordinator.class);
+        if ( coord == null ) {
+            printMessageAndExit("Coordinator doesn't exist on Node 0");
+        }
+        
+        DPA_Parameter dpaParam = coord.setDPA_Param( 
+                new DPA_Parameter(DPA_Parameter.DPA_ValueType.LAST_RSSI, false, false)
+        );
+        
+        if ( dpaParam == null ) {
+            CallRequestProcessingError error = coord.getCallRequestProcessingErrorOfLastCall();
+            if ( error != null ) {
+                System.out.println("Error while setting DPA parameter: " + error);
+            }
+            printMessageAndExit("Setting DPA parameter NOT successfull.");
+        }
     }
     
     // gets data from sensors and publishes them
@@ -162,17 +229,14 @@ public final class App {
          2. Creation of MQTT form of obtained sensor's data. 
          3. Sending MQTT form of sensor's data through MQTT to destination point.
     */
-    private static void getAndPublishSensorData(
-            Map<String, CompoundDeviceObject> sensorsMap, MqttTopics mqttTopics,
-            Map<String, OsInfo> osInfoMap
-    ) {
-        Map<String, Object> dataFromSensorsMap = getDataFromSensors(sensorsMap, mqttTopics, osInfoMap);
+    private static void getAndPublishSensorData() {
+        Map<String, DataToPublish> dataFromSensorsMap = getDataFromSensors();
 
         // getting MQTT form of data from sensors
-        Map<String, List<String>> dataFromsSensorsMqtt = toMqttForm(dataFromSensorsMap, osInfoMap);
+        Map<String, List<String>> dataFromSensorsMqtt = toMqttForm(dataFromSensorsMap);
 
         // sending data
-        mqttSendAndPublish(dataFromsSensorsMqtt, mqttTopics);
+        mqttSendAndPublish(dataFromSensorsMqtt);
     }
     
     // init dpa simply
@@ -295,12 +359,9 @@ public final class App {
     }
     
     // returns data from sensors as specicied by map
-    private static Map<String, Object> getDataFromSensors(
-            Map<String, CompoundDeviceObject> sensorsMap, MqttTopics mqttTopics,
-            Map<String, OsInfo> osInfoMap
-    ) {
+    private static Map<String, DataToPublish> getDataFromSensors() {
         // data from sensors
-        Map<String, Object> dataFromSensors = new HashMap<>();
+        Map<String, DataToPublish> dataFromSensors = new HashMap<>();
         
         for ( Map.Entry<String, CompoundDeviceObject> entry : sensorsMap.entrySet() ) {
             
@@ -332,7 +393,14 @@ public final class App {
                     CO2Sensor co2Sensor = (CO2Sensor)compDevObject;
                     CO2SensorData co2SensorData = co2Sensor.get();
                     if ( co2SensorData != null ) {
-                        dataFromSensors.put(entry.getKey(), co2SensorData);
+                        Integer rssi = null;
+                        DPA_AdditionalInfo addInfo = co2Sensor.getDPA_AdditionalInfoOfLastCall();
+                        if ( addInfo == null ) {
+                            System.err.println("No additional info for CO2 sensor");
+                        } else {
+                            rssi = addInfo.getDPA_Value();
+                        }
+                        dataFromSensors.put(entry.getKey(), new DataToPublish(co2SensorData, rssi) );
                     } else {
                         CallRequestProcessingState requestState = co2Sensor.getCallRequestProcessingStateOfLastCall();
                         if ( requestState == ERROR ) {                      
@@ -376,7 +444,14 @@ public final class App {
                     VOCSensor vocSensor = (VOCSensor)compDevObject;
                     VOCSensorData vocSensorData = vocSensor.get();
                     if ( vocSensorData != null ) {
-                        dataFromSensors.put(entry.getKey(), vocSensorData);
+                        Integer rssi = null;
+                        DPA_AdditionalInfo addInfo = vocSensor.getDPA_AdditionalInfoOfLastCall();
+                        if ( addInfo == null ) {
+                            System.err.println("No additional info for VOC sensor");
+                        } else {
+                            rssi = addInfo.getDPA_Value();
+                        }
+                        dataFromSensors.put(entry.getKey(), new DataToPublish(vocSensorData, rssi) );
                     } else {
                         CallRequestProcessingState requestState = vocSensor.getCallRequestProcessingStateOfLastCall();
                         if ( requestState == ERROR ) {
@@ -422,12 +497,12 @@ public final class App {
     
     // for specified sensor's data returns their equivalent MQTT form
     private static Map<String, List<String>> toMqttForm(
-            Map<String, Object> dataFromSensorsMap, Map<String, OsInfo> osInfoMap
+            Map<String, DataToPublish> dataFromSensorsMap
     ) {
         Map<String, List<String>> mqttAllSensorsData = new LinkedHashMap<>();
         
         // for each sensor's data
-        for ( Map.Entry<String, Object> entry : dataFromSensorsMap.entrySet() ) {
+        for ( Map.Entry<String, DataToPublish> entry : dataFromSensorsMap.entrySet() ) {
             int nodeId = Integer.parseInt(entry.getKey());
             
             if ( !isNodeIdInValidInterval(nodeId) ) {
@@ -441,10 +516,16 @@ public final class App {
             System.out.println("Preparing MQTT message for node: " + entry.getKey());
             
             DecimalFormat sensorDataFormat = new DecimalFormat("##.#");
+            DataToPublish dataToPublish = entry.getValue();
+            
+            Integer rssi = dataToPublish.rssi;
+            if ( rssi == null ) {
+                rssi = RSSI_NOT_AVAILABLE;
+            }
             
             switch ( sensorInfo.getType().toLowerCase() ) {
                 case "co2-t-h":
-                    CO2SensorData co2SensorData = (CO2SensorData)entry.getValue();
+                    CO2SensorData co2SensorData = (CO2SensorData)dataToPublish.sensorData;
                     if ( co2SensorData == null ) {
                         System.out.println(
                             "No data received from device, check log for details "
@@ -475,16 +556,23 @@ public final class App {
                                     sensorDataFormat.format(co2SensorData.getHumidity()), 
                                     moduleId
                                 );
-
+                    
+                    String mqttDataRssi = MqttFormatter
+                                .formatRssi(
+                                    sensorDataFormat.format(rssi), 
+                                    moduleId
+                                );
+                    
                     mqttSensorData.add(mqttDataCO2);
                     mqttSensorData.add(mqttDataTemperature);
                     mqttSensorData.add(mqttDataHumidity);
-
+                    mqttSensorData.add(mqttDataRssi);
+                    
                     mqttAllSensorsData.put(entry.getKey(), mqttSensorData);
                 break;
 
                 case "voc-t-h":
-                    VOCSensorData vocSensorData = (VOCSensorData)entry.getValue();
+                    VOCSensorData vocSensorData = (VOCSensorData)dataToPublish.sensorData;
                     if ( vocSensorData == null ) {
                         System.out.println(
                             "No data received from device, check log for details "
@@ -515,10 +603,17 @@ public final class App {
                                     sensorDataFormat.format(vocSensorData.getHumidity()), 
                                     moduleId
                                 );
-
+                    
+                    mqttDataRssi = MqttFormatter
+                                .formatRssi(
+                                    sensorDataFormat.format(rssi), 
+                                    moduleId
+                                );
+                    
                     mqttSensorData.add(mqttDataVOC);
                     mqttSensorData.add(mqttDataTemperature);
                     mqttSensorData.add(mqttDataHumidity);
+                    mqttSensorData.add(mqttDataRssi);
 
                     mqttAllSensorsData.put(entry.getKey(), mqttSensorData);
                 break;
@@ -534,9 +629,7 @@ public final class App {
     
     // sends and publishes prepared json messages with data from sensors to 
     // specified MQTT topics
-    private static void mqttSendAndPublish(
-        Map<String, List<String>> dataFromsSensorsMqtt, MqttTopics mqttTopics
-    ) { 
+    private static void mqttSendAndPublish(Map<String, List<String>> dataFromsSensorsMqtt) { 
         for ( Map.Entry<String, List<String>> entry : dataFromsSensorsMqtt.entrySet() ) {        
             int nodeId = Integer.parseInt(entry.getKey());
             
@@ -548,7 +641,11 @@ public final class App {
                 System.out.println("Sending parsed data for node: " + entry.getKey());
                 for ( String mqttData : entry.getValue() ) {
                     try {
-                        mqttCommunicator.publish(mqttTopics.getStdSensorsProtronix() + entry.getKey(), 2, mqttData.getBytes());
+                        mqttCommunicator.publish(
+                                mqttTopics.getStdSensorsProtronix() + entry.getKey(), 
+                                2, 
+                                mqttData.getBytes()
+                        );
                     } catch ( MqttException ex ) {
                         System.err.println("Error while publishing sync dpa message: " + ex);
                     }
@@ -559,10 +656,14 @@ public final class App {
         }
     }
     
-    // publish error messages to specified MQTT topics
+    // publishes error messages to specified MQTT topics
     private static void mqttPublishErrors(int nodeId, MqttTopics mqttTopics, String errorMessage) {
         try {
-            mqttCommunicator.publish(mqttTopics.getStdSensorsProtronixErrors() + nodeId, 2, errorMessage.getBytes());
+            mqttCommunicator.publish(
+                    mqttTopics.getStdSensorsProtronixErrors() + nodeId, 
+                    2, 
+                    errorMessage.getBytes()
+            );
         } catch ( MqttException ex ) {
             System.err.println("Error while publishing error message: " + ex);
         }
@@ -629,7 +730,7 @@ public final class App {
     }
     
     // releases used resources
-    private static void releaseUsedResources() {
+    private static void releaseResources() {
         if ( dpaSimply != null ) {
             dpaSimply.destroy();
         }

@@ -83,7 +83,23 @@ public final class MqttFormatter {
                 + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
                 + "}";
     }
-       
+    
+    /**
+     * Returns formated value of RSSI.
+     *
+     * @param rssi RSSI
+     * @param moduleId ID of source module
+     * @return formated value of RSSI
+     */
+    public static String formatRssi(String rssi, String moduleId) {
+        return "{\"e\":["
+                + "{\"n\":\"rssi\"," + "\"u\":\"dBm\"," + "\"v\":" + rssi + "}"
+                + "],"
+                + "\"bn\":" + "\"urn:dev:mid:" + moduleId + "\""
+                + "}";
+    }
+    
+    
     /**
      * Returns formated value of specified error string.
      *
