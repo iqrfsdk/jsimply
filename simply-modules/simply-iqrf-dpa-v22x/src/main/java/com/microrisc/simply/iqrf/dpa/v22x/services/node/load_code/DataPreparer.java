@@ -15,7 +15,7 @@
  */
 package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code;
 
-import java.nio.ShortBuffer;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,34 +30,34 @@ import org.slf4j.LoggerFactory;
  */
 public final class DataPreparer {
 
-   // size of the smallest part of data which we are dividing - we are 
-   // dividing data on 48's part and 16's part
-   static final int SMALLEST_PART_SIZE = 16;
+    // size of the smallest part of data which we are dividing - we are 
+    // dividing data on 48's part and 16's part
+    static final int SMALLEST_PART_SIZE = 16;
    
-   private final CodeBlock handlerBlock;
-   private ShortBuffer data;
-   private static final Logger log = LoggerFactory.getLogger(DataPreparer.class);
+    private final CodeBlock handlerBlock;
+    private ByteBuffer data;
+    private static final Logger logger = LoggerFactory.getLogger(DataPreparer.class);
 
-   public DataPreparer(CodeBlock handlerBlock, IntelHex file) {
-      log.debug("DataPreparer - new instance: handlerBlock={}, file={}", handlerBlock, file);
-      this.handlerBlock = handlerBlock;
-      this.data = file.getData().asShortBuffer();
-   }
+    public DataPreparer(CodeBlock handlerBlock, IntelHex file) {
+        logger.debug("DataPreparer - new instance: handlerBlock={}, file={}", handlerBlock, file);
+        this.handlerBlock = handlerBlock;
+        this.data = file.getData();
+    }
    
-   public DataPreparer(short[] data){
-      log.debug("DataPreparer - new instance: data={}", Arrays.toString(data));
-      this.handlerBlock = new CodeBlock(0, data.length);
-      this.data = ShortBuffer.wrap(data);
-   }
+    public DataPreparer(byte[] data){
+        logger.debug("DataPreparer - new instance: data={}", Arrays.toString(data));
+        this.handlerBlock = new CodeBlock(0, data.length);
+        this.data = ByteBuffer.wrap(data);
+    }
 
 
-   /**
-    * Returns array of short[] prepared to effective writing into memory
-    *
-    * @return array of short[]
-    */
+    /**
+     * Returns array of short[] prepared to effective writing into memory
+     *
+     * @return array of short[]
+     */
    public short[][] prepare() {
-      log.debug("prepare - start");
+      logger.debug("prepare - start");
       
       List<Short[]> list = new LinkedList<>();
       
@@ -79,7 +79,7 @@ public final class DataPreparer {
          }
       }
       
-        if ( log.isDebugEnabled() ) {
+        if ( logger.isDebugEnabled() ) {
             StringBuilder sb = new StringBuilder();
             
             sb.append("{\n");
@@ -92,7 +92,7 @@ public final class DataPreparer {
             }
             sb.append("\n}");
             
-            log.debug("prepare - end: {}", sb.toString());
+            logger.debug("prepare - end: {}", sb.toString());
         }
       
       return resultData;
@@ -104,7 +104,7 @@ public final class DataPreparer {
     * @return array of 16-length blocks
     */
     public short[][] prepareAs16BytesBlocks() {
-        log.debug("prepare - start");
+        logger.debug("prepare - start");
       
         List<Short[]> blockList = new LinkedList<>();
       
@@ -117,13 +117,15 @@ public final class DataPreparer {
         }
       
         short[][] resultData = new short[blockList.size()][];
-        for (int i = 0; i < resultData.length; i++) {
+        for ( int i = 0; i < resultData.length; i++ ) {
             Short[] block = blockList.get(i);
             resultData[i] = new short[block.length];
-            System.arraycopy(block, 0, resultData[i], 0, block.length);
+            for ( int j = 0; j < block.length; j++ ) {
+                resultData[i][j] = block[j];
+            }
         }
 
-        if ( log.isDebugEnabled() ) {
+        if ( logger.isDebugEnabled() ) {
             StringBuilder sb = new StringBuilder();
             
             sb.append("{\n");
@@ -136,7 +138,7 @@ public final class DataPreparer {
             }
             sb.append("\n}");
             
-            log.debug("prepare - end: {}", sb.toString());
+            logger.debug("prepare - end: {}", sb.toString());
         }
       
         return resultData;

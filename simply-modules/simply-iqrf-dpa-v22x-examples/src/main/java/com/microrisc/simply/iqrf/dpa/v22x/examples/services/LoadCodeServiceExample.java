@@ -15,6 +15,7 @@
  */
 package com.microrisc.simply.iqrf.dpa.v22x.examples.services;
 
+import com.microrisc.simply.Node;
 import com.microrisc.simply.SimplyException;
 import com.microrisc.simply.iqrf.dpa.DPA_Network;
 import com.microrisc.simply.iqrf.dpa.DPA_Node;
@@ -27,6 +28,8 @@ import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeServic
 import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingCodeProperties;
 import com.microrisc.simply.services.ServiceResult;
 import java.io.File;
+import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  * Usage of Load Code Service.
@@ -66,11 +69,16 @@ public class LoadCodeServiceExample {
             printMessageAndExit("Coordinator doesn't exist.");
         }
         
-        // getting Load Code Service on node 1
+        // getting Load Code Service on node 0
         LoadCodeService loadCodeService = coordinator.getService(LoadCodeService.class);
         if ( loadCodeService == null ) {
             printMessageAndExit("Coordinator doesn't support Load Code Service.");
         }
+        
+        
+        Collection<Node> targetNodes = new LinkedList<>();
+        targetNodes.add( network1.getNode("1") );
+        
         
         // loading code
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
@@ -79,7 +87,8 @@ public class LoadCodeServiceExample {
                         "config" + File.separator + "custom-dpa-handlers" + File.separator + "CustomDpaHandler-LED-Green-On-7xD-V228-160912.hex",
                         0x0800,
                         LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithCodeLoading,
-                        LoadingCodeProperties.LoadingContent.Hex 
+                        LoadingCodeProperties.LoadingContent.Hex, 
+                        targetNodes
                     )
             );
 

@@ -29,6 +29,7 @@ import java.util.UUID;
  * Simple EEEPROM implementation.
  * 
  * @author Michal Konopa
+ * @author Martin Strouhal
  */
 public final class SimpleEEEPROM
 extends DPA_DeviceObject implements EEEPROM {   
@@ -57,23 +58,27 @@ extends DPA_DeviceObject implements EEEPROM {
     }
     
     private static int checkAddress(int address){
-        if (address < 0 || address > 0x3FFF) {
+        if ( address < 0 || address > 0x3FFF ) {
             throw new IllegalArgumentException("Address out of bounds.");
         }
         return address;
     }
     
     private static void checkExtendedDataToWrite(int address, short[] dataToWrite){
-        if(dataToWrite.length < 1 || dataToWrite.length > 54){
+        if ( dataToWrite.length < 1 || dataToWrite.length > 54 ) {
             throw new IllegalArgumentException("Length of data to write out of bounds (1 - 54 bytes)");
         }
-        if((address % 64) + dataToWrite.length > 64){
-            throw new IllegalArgumentException("Writing to multiple adjacent 64 byte pages of the EEPROM chip or behind maximum address range by one extended write command is unsupported and undefined.");
+        if ((address % 64) + dataToWrite.length > 64){
+            throw new IllegalArgumentException(
+                    "Writing to multiple adjacent 64 byte pages of the EEPROM chip "
+                    + "or behind maximum address range by one extended write command "
+                    + "is unsupported and undefined."
+            );
         }
     }
     
     private static int checkExtendedDataLenToRead(int dataLen){
-        if(dataLen < 0 || dataLen > 54){
+        if( dataLen < 0 || dataLen > 54 ){
             throw new IllegalArgumentException("Data length out of allowed range (0 - 54 bytes)");
         }
         return dataLen;

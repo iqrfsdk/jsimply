@@ -38,7 +38,7 @@ import com.microrisc.simply.services.ServiceParameters;
 import com.microrisc.simply.services.ServiceResult;
 import com.microrisc.simply.services.node.BaseService;
 import java.io.IOException;
-import java.nio.ShortBuffer;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -98,50 +98,53 @@ extends BaseService implements LoadCodeService {
         return null;
     }
 
-   private int calculateChecksum(IntelHex file, CodeBlock handlerBlock, int length) {
-      return calculateChecksum(file.getData().asShortBuffer(), handlerBlock, 
-              CRC_INIT_VALUE_HEX, length);
-   }
+    private int calculateChecksum(IntelHex file, CodeBlock handlerBlock, int length) {
+        return calculateChecksum(file.getData(), handlerBlock, CRC_INIT_VALUE_HEX, length);
+    }
 
-   private int calculateChecksum(short[] data, int length){
-      CodeBlock block = new CodeBlock(0, data.length);
-      ShortBuffer buffer = ShortBuffer.wrap(data);
-      return calculateChecksum(buffer, block, CRC_INIT_VALUE_IQRF, length);
-   }
+    private int calculateChecksum(byte[] data, int length){
+        CodeBlock block = new CodeBlock(0, data.length);
+        ByteBuffer buffer = ByteBuffer.wrap(data);
+        return calculateChecksum(buffer, block, CRC_INIT_VALUE_IQRF, length);
+    }
    
-   private int calculateChecksum(ShortBuffer buffer, CodeBlock handlerBlock,
-           int checkSumInitialValue, int length) {
-      logger.debug("calculateChecksum - start: buffer={}, handlerBlock={}, checkSumInitialValue={}, length={}",
-              buffer, handlerBlock, checkSumInitialValue, length);
-      int dataChecksum = checkSumInitialValue;
-      // checksum for data
-      for (long address = handlerBlock.getAddressStart();
-              address < handlerBlock.getAddressStart() + length;
-              address++) {
-         int oneByte = buffer.get((int) address) & 0xFF;
-         if (handlerBlock.getAddressEnd() - address < 0) {
-            oneByte = 0x34FF;
-         }
-         
-         // One’s Complement Fletcher Checksum
-         int tempL = dataChecksum & 0xff;
-         tempL += oneByte;
-         if ((tempL & 0x100) != 0) {
-            tempL++;
-         }
+    private int calculateChecksum(
+            ByteBuffer buffer, CodeBlock handlerBlock, int checkSumInitialValue, int length
+    ) {
+        logger.debug("calculateChecksum - start: buffer={}, handlerBlock={}, checkSumInitialValue={}, length={}",
+                buffer, handlerBlock, checkSumInitialValue, length
+        );
+        int dataChecksum = checkSumInitialValue;
+        // checksum for data
+        for (
+            long address = handlerBlock.getAddressStart();
+            address < handlerBlock.getAddressStart() + length;
+            address++
+        ) {
+            int oneByte = buffer.get((int) address) & 0xFF;
+            if (handlerBlock.getAddressEnd() - address < 0) {
+               oneByte = 0x34FF;
+            }
 
-         int tempH = dataChecksum >> 8;
-         tempH += tempL & 0xff;
-         if ((tempH & 0x100) != 0) {
-            tempH++;
-         }
+            // One’s Complement Fletcher Checksum
+            int tempL = dataChecksum & 0xff;
+            tempL += oneByte;
+            if ((tempL & 0x100) != 0) {
+               tempL++;
+            }
 
-         dataChecksum = (tempL & 0xff) | (tempH & 0xff) << 8;
-      }
+            int tempH = dataChecksum >> 8;
+            tempH += tempL & 0xff;
+            if ((tempH & 0x100) != 0) {
+               tempH++;
+            }
+
+            dataChecksum = (tempL & 0xff) | (tempH & 0xff) << 8;
+        }
       
-      logger.debug("calculateChecksum - end: {}", dataChecksum);
-      return dataChecksum;
-   }    
+        logger.debug("calculateChecksum - end: {}", dataChecksum);
+        return dataChecksum;
+    }    
     
     private ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> 
             createRequestProcessingError(DPA_StandardServices dpaPer, String errMessage) 
@@ -192,31 +195,40 @@ extends BaseService implements LoadCodeService {
         int actualAddress = startAddress;
         int index = 0;
         while ( index < data.length ) {
-            if  ( (data[index].length == 16) && (data[index+1].length == 16) ) {
-                DPA_Request firstReq = new DPA_Request(
-                        EEEPROM.class,
-                        EEEPROM.MethodID.EXTENDED_WRITE,
-                        new Object[]{actualAddress, data[index]},
-                        DPA_ProtocolProperties.HWPID_Properties.DO_NOT_CHECK
-                );
-                
-                actualAddress += data[index].length;
+            if ( (index + 1) < data.length ) {
+                if  ( (data[index].length == 16) && (data[index+1].length == 16) ) {
+                    DPA_Request firstReq = new DPA_Request(
+                            EEEPROM.class,
+                            EEEPROM.MethodID.EXTENDED_WRITE,
+                            new Object[]{actualAddress, data[index]},
+                            DPA_ProtocolProperties.HWPID_Properties.DO_NOT_CHECK
+                    );
 
-                DPA_Request secondReq = new DPA_Request(
-                        EEEPROM.class,
-                        EEEPROM.MethodID.EXTENDED_WRITE,
-                        new Object[]{actualAddress, data[index+1]},
-                        DPA_ProtocolProperties.HWPID_Properties.DO_NOT_CHECK
-                );
-                
-                actualAddress += data[index+1].length;
+                    actualAddress += data[index].length;
 
-                VoidType result = os.batch( new DPA_Request[] { firstReq, secondReq } );
-                if ( result == null ) {
-                    return createRequestProcessingError(os, "Result of write data to EEEPROM not found.");
+                    DPA_Request secondReq = new DPA_Request(
+                            EEEPROM.class,
+                            EEEPROM.MethodID.EXTENDED_WRITE,
+                            new Object[]{actualAddress, data[index+1]},
+                            DPA_ProtocolProperties.HWPID_Properties.DO_NOT_CHECK
+                    );
+
+                    actualAddress += data[index+1].length;
+
+                    VoidType result = os.batch( new DPA_Request[] { firstReq, secondReq } );
+                    if ( result == null ) {
+                        return createRequestProcessingError(os, "Result of write data to EEEPROM not found.");
+                    }
+
+                    index += 2;
+                } else {
+                    VoidType result = eeeprom.extendedWrite(actualAddress, data[index]);
+                    if ( result == null ) {
+                        return createRequestProcessingError(os, "Result of write data to EEEPROM not found.");
+                    }
+                    actualAddress += data[index].length;
+                    index++;
                 }
-
-                index += 2;
             } else {
                 VoidType result = eeeprom.extendedWrite(actualAddress, data[index]);
                 if ( result == null ) {
@@ -717,8 +729,11 @@ extends BaseService implements LoadCodeService {
                 logger.debug(" Checksum of data is: " + Integer.toHexString(dataChecksum));
                 
                 // prepare data to blocks for writing into EEEPROM
+                file.getData().position(0);
                 if ( prepareDataForBroadcast ) {
-                    dataToWrite = new DataPreparer(handlerBlock, file).prepareAs16BytesBlocks();
+                    DataPreparer dataPreparer = new DataPreparer(handlerBlock, file);
+                    dataToWrite = dataPreparer.prepareAs16BytesBlocks();
+                    //dataToWrite = new DataPreparer(handlerBlock, file).prepareAs16BytesBlocks();
                 } else {
                     dataToWrite = new DataPreparer(handlerBlock, file).prepare();
                 }
@@ -726,7 +741,7 @@ extends BaseService implements LoadCodeService {
             case IQRF_Plugin:
                 // parse iqrf file
                 IQRFParser parser = new IQRFParser(params.getFileName());
-                short[] parsedData = parser.parse();
+                byte[] parsedData = parser.parse();
                 
                 length = parsedData.length;
                 logger.debug(" Length of data is: " + Integer.toHexString(length));
