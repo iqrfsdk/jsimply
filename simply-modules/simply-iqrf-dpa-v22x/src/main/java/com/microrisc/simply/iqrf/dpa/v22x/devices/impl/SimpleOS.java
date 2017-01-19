@@ -26,7 +26,7 @@ import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_Request;
 import com.microrisc.simply.iqrf.dpa.v22x.types.HWP_Configuration;
 import com.microrisc.simply.iqrf.dpa.v22x.types.HWP_ConfigurationByte;
 import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingCodeProperties;
-import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingResult;
+import com.microrisc.simply.iqrf.dpa.v22x.types.LoadResult;
 import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
 import com.microrisc.simply.iqrf.dpa.v22x.types.SleepInfo;
 import com.microrisc.simply.iqrf.types.VoidType;
@@ -406,7 +406,7 @@ extends DPA_DeviceObject implements OS {
     }
 
    @Override
-   public LoadingResult loadCode(LoadingCodeProperties properties) {
+   public LoadResult loadCode(LoadingCodeProperties properties) {
       checkLoadingCodeProperties(properties);
       UUID uid = dispatchCall("12", new Object[]{getRequestHwProfile(),
          properties}, getDefaultWaitingTimeout()
@@ -414,6 +414,6 @@ extends DPA_DeviceObject implements OS {
       if (uid == null) {
          return null;
       }
-      return getCallResult(uid, LoadingResult.class, getDefaultWaitingTimeout());
+      return getCallResult(uid, LoadResult.class, getDefaultWaitingTimeout());
    }
 }

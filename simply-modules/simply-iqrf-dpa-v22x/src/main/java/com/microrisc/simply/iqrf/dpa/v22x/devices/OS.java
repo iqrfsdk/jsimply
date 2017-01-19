@@ -24,7 +24,7 @@ import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_Request;
 import com.microrisc.simply.iqrf.dpa.v22x.types.HWP_Configuration;
 import com.microrisc.simply.iqrf.dpa.v22x.types.HWP_ConfigurationByte;
 import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingCodeProperties;
-import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingResult;
+import com.microrisc.simply.iqrf.dpa.v22x.types.LoadResult;
 import com.microrisc.simply.iqrf.dpa.v22x.types.OsInfo;
 import com.microrisc.simply.iqrf.dpa.v22x.types.SleepInfo;
 import com.microrisc.simply.iqrf.types.VoidType;
@@ -38,6 +38,7 @@ import java.util.UUID;
  * of this method.
  *
  * @author Michal Konopa
+ * @author Martin Strouhal
  */
 @DeviceInterface
 public interface OS
@@ -283,7 +284,7 @@ public interface OS
     *
     * @param properties describing loading operation, see
     * {@link LoadingCodeProperties}
-    * @return {@link LoadingResult}
+    * @return {@link LoadResult}
     */
-   LoadingResult loadCode(LoadingCodeProperties properties);
+   LoadResult loadCode(LoadingCodeProperties properties);
 }

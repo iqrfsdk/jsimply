@@ -51,7 +51,7 @@ import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.HWP_ConfigurationByteCo
 import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.HWP_ConfigurationConvertor;
 import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.LED_StateConvertor;
 import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.LoadingCodePropertiesConvertor;
-import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.LoadingResultConvertor;
+import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.LoadResultConvertor;
 import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.NodeStatusInfoConvertor;
 import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.OsInfoConvertor;
 import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.PWM_ParametersConvertor;
@@ -1565,7 +1565,7 @@ public final class DPA_StandardPerProtocolMappingFactory implements ProtocolMapp
         packetValues.add(new PacketPositionValues(3, (short) 0x8A));
 
         PacketToValueMapping resultMapping = new PacketToValueMapping(
-                8, 1, LoadingResultConvertor.getInstance()
+                8, 1, LoadResultConvertor.getInstance()
         );
         return new PacketToMethodMapping("12", packetValues, resultMapping);
     }

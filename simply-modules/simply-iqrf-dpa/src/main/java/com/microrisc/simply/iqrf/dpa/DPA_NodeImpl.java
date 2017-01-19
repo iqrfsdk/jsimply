@@ -18,8 +18,12 @@ package com.microrisc.simply.iqrf.dpa;
 import com.microrisc.simply.BaseNode;
 import com.microrisc.simply.DeviceObject;
 import com.microrisc.simply.services.Service;
+import com.microrisc.simply.services.node.ServiceCreationInfo;
+import com.microrisc.simply.services.node.ServiceFactory;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Simple implementation of DPA node.
@@ -27,10 +31,30 @@ import java.util.Map;
  * @author Michal Konopa
  */
 public final class DPA_NodeImpl 
-extends BaseNode implements DPA_Node
-{
+extends BaseNode implements DPA_Node {
+    
+    /** Logger. */
+    private static final Logger logger = LoggerFactory.getLogger(DPA_NodeImpl.class);
+    
     /** Map of services. */
     private final Map<Class, Service> servicesMap;
+    
+    
+    // creates services according to specification
+    private void createServices(Map<Class, ServiceCreationInfo> servCreationInfoMap) {
+        for ( Map.Entry<Class, ServiceCreationInfo> entry : servCreationInfoMap.entrySet() 
+        ) {
+            ServiceFactory factory = entry.getValue().getServiceFactory();
+            Service service = null;
+            try {
+                service = factory.create(this, entry.getValue().getServiceArgs());
+            } catch ( Exception ex ) {
+                logger.error("Service {} could not be created", entry.getKey().toString());
+                continue;
+            }
+            servicesMap.put(entry.getKey(),service);
+        }
+    }
     
     
     /**
@@ -47,19 +71,21 @@ extends BaseNode implements DPA_Node
     }
     
     /**
-     * Creates new DPA Node with specified services.
+     * Creates new DPA Node with specified services and info map needed to create
+     * services on this node.
      *
      * @param networkId Identifier of network, which this node belongs to
      * @param id identifier of this node
      * @param devicesMap map of device objects
-     * @param servicesMap services map to provide for user code
+     * @param servCreationInfoMap info about services's creation
      */
     public DPA_NodeImpl(
             String networkId, String id, Map<Class, DeviceObject> devicesMap, 
-            Map<Class, Service> servicesMap) 
-    {
+            Map<Class, ServiceCreationInfo> servCreationInfoMap
+    ) {
         super(networkId, id, devicesMap);
-        this.servicesMap = new HashMap<>(servicesMap);
+        this.servicesMap = new HashMap<>();
+        createServices(servCreationInfoMap);
     }
 
     @Override

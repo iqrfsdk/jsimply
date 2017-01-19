@@ -144,11 +144,16 @@ final class ProtocolStateMachine implements ManageableObject {
                     stateChangeSignal.wait(STATE_CHANGE_TIMEOUT);
                     //logger.info("waitForStateChangeSignal - after waiting.");
                     long endTime = System.currentTimeMillis();
+                    
+                    if ( stateChanged ) {
+                        return;
+                    }
+                    
                     if ( (endTime - startTime) >= STATE_CHANGE_TIMEOUT ) {
-                        throw new IllegalStateException ("Waiting for state timeouted.");
+                        throw new IllegalStateException ("Waiting for state change timeouted.");
                     }
                 } catch ( InterruptedException ex ) {
-                    logger.warn("Waiting for next exptected state interrupted.");
+                    logger.warn("Waiting for next expected state interrupted.");
                 }
             }
         }
@@ -1092,6 +1097,7 @@ final class ProtocolStateMachine implements ManageableObject {
      * Informs the machine, that response has been received.
      * @param recvTime time of response reception
      * @param responseData data of the received response
+     * 
      * @throws IllegalArgumentException if the machine is not in {@code WAITING_FOR_RESPONSE} state
      * @throws StateTimeoutedException if {@code WAITING_FOR_RESPONSE} state was
      *         timeouted during processing of the specified response data
@@ -1137,6 +1143,7 @@ final class ProtocolStateMachine implements ManageableObject {
     /**
      * Informs the machine, that response has been received. Time of calling of
      * this method will be used as the time of the response reception.
+     * 
      * @param responseData data of the received response
      * @throws StateTimeoutedException if {@code WAITING_FOR_RESPONSE} state was
      *         timeouted during processing of the specified response data

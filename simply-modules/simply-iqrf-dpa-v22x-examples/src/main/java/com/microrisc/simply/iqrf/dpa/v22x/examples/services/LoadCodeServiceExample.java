@@ -15,23 +15,27 @@
  */
 package com.microrisc.simply.iqrf.dpa.v22x.examples.services;
 
+import com.microrisc.simply.Node;
 import com.microrisc.simply.SimplyException;
 import com.microrisc.simply.iqrf.dpa.DPA_Network;
 import com.microrisc.simply.iqrf.dpa.DPA_Node;
 import com.microrisc.simply.iqrf.dpa.DPA_Simply;
 import com.microrisc.simply.iqrf.dpa.v22x.DPA_SimplyFactory;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeProcessingInfo;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeResult;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeService;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeServiceParameters;
 import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingCodeProperties;
-import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingResult;
 import com.microrisc.simply.services.ServiceResult;
 import java.io.File;
+import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  * Usage of Load Code Service.
  * 
  * @author Michal Konopa
+ * @author Martin Strouhal
  */
 public class LoadCodeServiceExample {
     private static DPA_Simply simply = null;
@@ -48,7 +52,7 @@ public class LoadCodeServiceExample {
     public static void main(String[] args) {
         // creating Simply instance
         try {
-            simply = DPA_SimplyFactory.getSimply("config" + File.separator + "Simply.properties");
+            simply = DPA_SimplyFactory.getSimply("config" + File.separator + "simply" + File.separator +  "Simply.properties");
         } catch ( SimplyException ex ) {
             printMessageAndExit("Error while creating Simply: " + ex.getMessage());
         }
@@ -59,42 +63,46 @@ public class LoadCodeServiceExample {
             printMessageAndExit("Network 1 doesn't exist");
         }
 
-        // getting node 1
-        DPA_Node node1 = network1.getNode("1");
-        if ( node1 == null ) {
-            printMessageAndExit("Node 1 doesn't exist.");
+        // getting coordinator
+        DPA_Node coordinator = network1.getNode("0");
+        if ( coordinator == null ) {
+            printMessageAndExit("Coordinator doesn't exist.");
         }
         
-        // getting Load Code Service on node 1
-        LoadCodeService loadCodeService = node1.getService(LoadCodeService.class);
+        // getting Load Code Service on node 0
+        LoadCodeService loadCodeService = coordinator.getService(LoadCodeService.class);
         if ( loadCodeService == null ) {
-            printMessageAndExit("Node 1 doesn't support Load Code Service.");
+            printMessageAndExit("Coordinator doesn't support Load Code Service.");
         }
+        
+        
+        Collection<Node> targetNodes = new LinkedList<>();
+        targetNodes.add( network1.getNode("1") );
+        
         
         // loading code
-        
-        /*
-        ServiceResult<LoadingResult, LoadCodeProcessingInfo> serviceResult 
+        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
             = loadCodeService.loadCode( 
                     new LoadCodeServiceParameters(
-                        "D:\\Plocha\\IQRF_OS307_7xD\\Examples\\DPA\\CustomDpaHandlerExamples\\hex\\CustomDpaHandler-FRC-Minimalistic-7xD-V224-151201.hex", 
-                        0x0000,
-                        LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithoutCodeLoading,
-                        LoadingCodeProperties.LoadingContent.Hex 
+                        "config" + File.separator + "custom-dpa-handlers" + File.separator + "CustomDpaHandler-LED-Green-On-7xD-V228-160912.hex",
+                        0x0800,
+                        LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithCodeLoading,
+                        LoadingCodeProperties.LoadingContent.Hex, 
+                        targetNodes
                     )
             );
-        */
-        
-        ServiceResult<LoadingResult, LoadCodeProcessingInfo> serviceResult 
+
+/*        
+        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
             = loadCodeService.loadCode( 
                     new LoadCodeServiceParameters(
-                        "D:\\Plocha\\IQRF_OS308_7xD\\Examples\\DPA\\StartUp\\DemoPlug-ins\\CustomDpaHandler-ChangeIQRFOS-7xD-V226-160303.iqrf", 
-                        0x0000,
-                        LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithoutCodeLoading,
-                        LoadingCodeProperties.LoadingContent.IQRF_Plugin
+                        "config" + File.separator + "custom-dpa-handlers" + File.separator + "CustomDpaHandler-LED-Red-On-7xD-V228-160912.hex"
+                        0x0800,
+                        LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithCodeLoading,
+                        LoadingCodeProperties.LoadingContent.Hex
                     )
             );
-        
+*/        
         
         // getting results
         if ( serviceResult.getStatus() == ServiceResult.Status.SUCCESSFULLY_COMPLETED ) {

@@ -23,75 +23,76 @@ package com.microrisc.simply.iqrf.dpa.v22x.types;
  */
 public class LoadingCodeProperties {
 
-   /** Identify action while is code loading. */
-   public enum LoadingAction {
-      /** Computes and matches the checksum only without loading code image. */
-      ComputeAndMatchChecksumWithoutCodeLoading,
-      /** Same
-       * as above plus loads the code into Flash if the checksum matches. */
-      ComputeAndMatchChecksumWithCodeLoading;
-   }
+    /** Identify action while is code loading. */
+    public enum LoadingAction {
+       /** Computes and matches the checksum only without loading code image. */
+       ComputeAndMatchChecksumWithoutCodeLoading,
+       
+       /** Same as above plus loads the code into Flash if the checksum matches. */
+       ComputeAndMatchChecksumWithCodeLoading;
+    }
 
-   /** Identify code image which is loading. */
-   public enum LoadingContent {
-      Hex,
-      IQRF_Plugin;
-   }
+    /** Identify code image which is loading. */
+    public enum LoadingContent {
+       Hex,
+       IQRF_Plugin;
+    }
 
-   private LoadingAction action;
-   private LoadingContent content;
-   private int address, length, checksum;
+    private LoadingAction action;
+    private LoadingContent content;
+    private int address, length, checksum;
 
-   /** Create a new instance of {@link LoadingCodeProperties}.
-    *
-    * @param action which is executed while code image is loading
-    * @param content of code image
-    * @param address of memory to load the code image from
-    * @param length of the code image
-    * @param checksum of the code image
-    */
-   public LoadingCodeProperties(LoadingAction action, LoadingContent content,
-           int address, int length, int checksum) {
-      this.action = action;
-      this.content = content;
-      this.address = address;
-      this.length = length;
-      this.checksum = checksum;
-   }
+    /** 
+     * Create a new instance of {@link LoadingCodeProperties}.
+     *
+     * @param action which is executed while code image is loading
+     * @param content of code image
+     * @param address of memory to load the code image from
+     * @param length of the code image
+     * @param checksum of the code image
+     */
+    public LoadingCodeProperties(LoadingAction action, LoadingContent content,
+            int address, int length, int checksum) {
+       this.action = action;
+       this.content = content;
+       this.address = address;
+       this.length = length;
+       this.checksum = checksum;
+    }
 
-   /**
-    * @return {@link LoadingAction} which is executed while code image is
-    * loading
-    */
-   public LoadingAction getAction() {
-      return action;
-   }
+    /**
+     * @return {@link LoadingAction} which is executed while code image is
+     * loading
+     */
+    public LoadingAction getAction() {
+       return action;
+    }
 
-   /**
-    * @return {@link LoadingContent} of code image
-    */
-   public LoadingContent getContent() {
-      return content;
-   }
+    /**
+     * @return {@link LoadingContent} of code image
+     */
+    public LoadingContent getContent() {
+       return content;
+    }
 
-   /**
-    * @return address of memory to load the code image from
-    */
-   public int getAddress() {
-      return address;
-   }
+    /**
+     * @return address of memory to load the code image from
+     */
+    public int getAddress() {
+       return address;
+    }
 
-   /**
-    * @return length of the code image
-    */
-   public int getLength() {
-      return length;
-   }
+    /**
+     * @return length of the code image
+     */
+    public int getLength() {
+       return length;
+    }
 
-   /**
-    * @return checksum of the code image
-    */
-   public int getChecksum() {
-      return checksum;
-   }
+    /**
+     * @return checksum of the code image
+     */
+    public int getChecksum() {
+       return checksum;
+    }
 }

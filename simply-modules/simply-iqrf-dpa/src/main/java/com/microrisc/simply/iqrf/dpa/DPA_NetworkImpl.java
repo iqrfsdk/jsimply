@@ -17,8 +17,8 @@ package com.microrisc.simply.iqrf.dpa;
 
 import com.microrisc.simply.Node;
 import com.microrisc.simply.services.Service;
+import com.microrisc.simply.services.network.ServiceCreationInfo;
 import com.microrisc.simply.services.network.ServiceFactory;
-import com.microrisc.simply.services.network.ServicesCreationSpec;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
  * @author Michal Konopa
  */
 public final class DPA_NetworkImpl implements DPA_Network {
+    
     /** Logger. */
     private static final Logger logger = LoggerFactory.getLogger(DPA_NetworkImpl.class);
 
@@ -44,9 +45,8 @@ public final class DPA_NetworkImpl implements DPA_Network {
     
     
     // creates services according to specification
-    private void createServices(ServicesCreationSpec servCreation) {
-        for ( Map.Entry<Class, ServicesCreationSpec.ServiceCreationSpec> entry 
-                : servCreation.getServicesSpec().entrySet() 
+    private void createServices(Map<Class, ServiceCreationInfo> servCreationInfoMap) {
+        for ( Map.Entry<Class, ServiceCreationInfo> entry : servCreationInfoMap.entrySet() 
         ) {
             ServiceFactory factory = entry.getValue().getServiceFactory();
             Service service = null;
@@ -74,36 +74,21 @@ public final class DPA_NetworkImpl implements DPA_Network {
     }
     
     /**
-     * Creates new DPA network with specified nodes and services.
+     * Creates new DPA network with specified nodes and info map needed to create
+     * services on this network.
      *
      * @param id ID of the network
      * @param nodesMap mapping of identifiers of nodes to that nodes objects
-     * @param servicesMap services map to provide for user code
-     */
-    public DPA_NetworkImpl(
-            String id, Map<String, DPA_Node> nodesMap, Map<Class, Service> servicesMap
-    ) {
-        this.id = id;
-        this.nodesMap = nodesMap;
-        this.servicesMap = new HashMap<>(servicesMap);
-    }
-    
-    /**
-     * Creates new DPA network with specified nodes and specification of services
-     * to create on this network.
-     *
-     * @param id ID of the network
-     * @param nodesMap mapping of identifiers of nodes to that nodes objects
-     * @param servCreation specification of services's creation
+     * @param servCreationInfoMap info about services's creation
      */
     public DPA_NetworkImpl(
             String id, Map<String, DPA_Node> nodesMap,
-            ServicesCreationSpec servCreation
+            Map<Class, ServiceCreationInfo> servCreationInfoMap
     ) {
         this.id = id;
         this.nodesMap = nodesMap;
         this.servicesMap = new HashMap<>();
-        createServices(servCreation);
+        createServices(servCreationInfoMap);
     }
     
     @Override
