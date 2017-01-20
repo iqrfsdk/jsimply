@@ -48,6 +48,8 @@ import org.slf4j.LoggerFactory;
  */
 public class MqttCommunicator implements MqttCallback {
     
+    private static final Logger logger = LoggerFactory.getLogger(MqttCommunicator.class);
+    
     private MqttClient client;
     private String brokerUrl;
     private boolean quietMode;
@@ -58,7 +60,7 @@ public class MqttCommunicator implements MqttCallback {
     private String certFile;
     
     // time  between consecutive attempts to reconnection [in ms]
-    private static final int DEFAULT_RECONNECTION_SLEEP_TIME = 3000;
+    private static final int DEFAULT_RECONNECTION_SLEEP_TIME = 20000;
     
     private Runnable reconnectionRunnable = new Runnable() {
         @Override
@@ -66,12 +68,12 @@ public class MqttCommunicator implements MqttCallback {
             
             while ( (client != null) && !(client.isConnected()) ) {
                 // Connect to the MQTT server
-                log("Reconnecting to " + brokerUrl + " with client ID " + client.getClientId());
+                print("Reconnecting to " + brokerUrl + " with client ID " + client.getClientId());
                 
                 try {
                     client.connect(conOpt);
                 } catch ( MqttException ex ) {
-                    log(
+                    print(
                         "Reconnecting to " + brokerUrl + " with client "
                         + "ID " + client.getClientId() + " failed: " + ex.getMessage()
                     );
@@ -81,17 +83,17 @@ public class MqttCommunicator implements MqttCallback {
                    try {
                     Thread.sleep(DEFAULT_RECONNECTION_SLEEP_TIME);
                     } catch ( InterruptedException ex ) {
-                        log.warn(ex.toString());                    
+                        logger.warn("Interrupted while sleeping: {}", ex);                    
                     }
                 }
             }
-            log("Connected");
+            print("Connected");
         }
     };
     
     private Thread reconnectionThread;
     
-    private static final Logger log = LoggerFactory.getLogger(MqttCommunicator.class);
+    
     
     // sets connection options
     private void setConnectionOptions(
@@ -164,33 +166,33 @@ public class MqttCommunicator implements MqttCallback {
             client.setCallback(this);
             
             // Connect to the MQTT server
-            log("Connecting to " + brokerUrl + " with client ID " + client.getClientId());
+            print("Connecting to " + brokerUrl + " with client ID " + client.getClientId());
             
             client.connect(conOpt);
-            log("Connected");
+            print("Connected");
         } catch (MqttException e) {
             e.printStackTrace();
-            log("Unable to set up client: " + e.toString());
+            print("Unable to set up client: " + e.toString());
             System.exit(1);
         } catch (CertificateException e) {
             e.printStackTrace();
-            log("Unable to set up client - certificate exception: " + e.toString());
+            print("Unable to set up client - certificate exception: " + e.toString());
             System.exit(1);
         } catch (IOException e) {
             e.printStackTrace();
-            log("Unable to set up client - certificate exception in input stream: " + e.toString());
+            print("Unable to set up client - certificate exception in input stream: " + e.toString());
             System.exit(1);
         } catch (KeyStoreException e) {
             e.printStackTrace();
-            log("Unable to set up client - certificate exception in key store: " + e.toString());
+            print("Unable to set up client - certificate exception in key store: " + e.toString());
             System.exit(1);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
-            log("Unable to set up client - certificate exception in loading key store: " + e.toString());
+            print("Unable to set up client - certificate exception in loading key store: " + e.toString());
             System.exit(1);
         } catch (KeyManagementException e) {
             e.printStackTrace();
-            log("Unable to set up client - certificate exception in ssl context: " + e.toString());
+            print("Unable to set up client - certificate exception in ssl context: " + e.toString());
             System.exit(1);
         }
     }
@@ -211,7 +213,7 @@ public class MqttCommunicator implements MqttCallback {
         //log("Connected");
 
         String time = new Timestamp(System.currentTimeMillis()).toString();
-        log("Publishing at: " + time + " to topic \"" + topicName + "\" qos " + qos);
+        print("Publishing at: " + time + " to topic \"" + topicName + "\" qos " + qos);
 
         // Create and configure a message
         MqttMessage message = new MqttMessage(payload);
@@ -248,7 +250,7 @@ public class MqttCommunicator implements MqttCallback {
         // For instance if QoS 1 is specified, any messages originally published at QoS 2 will
         // be downgraded to 1 when delivering to the client but messages published at 1 and 0
         // will be received at the same level they were published at.
-        log("Subscribing to topic \"" + topicName + "\" qos " + qos);
+        print("Subscribing to topic \"" + topicName + "\" qos " + qos);
         client.subscribe(topicName, qos);
 
         // Disconnect the client from the server
@@ -258,12 +260,12 @@ public class MqttCommunicator implements MqttCallback {
 
     /**
      * Utility method to handle logging. If 'quietMode' is set, this method does
-     * nothing
+     * nothing. Prints specified message to standard output.
      *
      * @param message the message to log
      */
-    private void log(String message) {
-        if (!quietMode) {
+    private void print(String message) {
+        if ( !quietMode ) {
             System.out.println(message);
         }
     }
@@ -272,17 +274,17 @@ public class MqttCommunicator implements MqttCallback {
      * @see MqttCallback#connectionLost(Throwable)
      */
     public void connectionLost(Throwable cause) {
-        log.debug("connectionLost - start: cause=" + cause.getMessage());
+        logger.debug("connectionLost - start: cause= {}" + cause.getMessage());
         
         // Called when the connection to the server has been lost.
         // An application may choose to implement reconnection
         // logic at this point. This sample simply exits.
-        log("Connection to " + brokerUrl + " lost! " + cause);
+        print("Connection to " + brokerUrl + " lost! " + cause);
         
         reconnectionThread = new Thread(reconnectionRunnable);
         reconnectionThread.start();
         
-        log.debug("connectionLost - end");
+        logger.debug("connectionLost - end");
     }
 
     /**

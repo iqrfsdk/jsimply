@@ -374,10 +374,8 @@
     </logger>
 
     
-    
-    
-    <!-- com.microrisc.opengateway.web package --> 
-    <logger name="com.microrisc.opengateway.web.WebRequestParser" level="DEBUG">
+    <!-- MQTT related classes -->
+    <logger name="com.microrisc.simply.demos.mqtt.MqttCommunicator" level="DEBUG">
             <appender-ref ref="FILE" />
     </logger>
     

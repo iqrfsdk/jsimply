@@ -102,16 +102,26 @@ public final class App {
     private static int pid = 0;
     
     
+    // number of attempts to get data from sensors (VOC and CO2)
+    private static final int GET_SENSOR_DATA_ATTEMPTS_NUM = 3;
+    
     
     // MAIN PROCESSING
-    public static void main(String[] args) throws InterruptedException, MqttException {
+    public static void main(String[] args) {
         // initialization
         init();
         
         // main application loop
         while ( true ) {
             getAndPublishSensorData();
-            Thread.sleep(appConfiguration.getPollingPeriod() * 1000);
+            try {
+                Thread.sleep(appConfiguration.getPollingPeriod() * 1000);
+            } catch ( InterruptedException ex ) {
+                printMessageAndExit(
+                        "Application interrupted while present in polling period: " 
+                        + ex.getMessage()
+                );
+            }
         }
     }
     
@@ -391,7 +401,7 @@ public final class App {
                     }
                     
                     CO2Sensor co2Sensor = (CO2Sensor)compDevObject;
-                    CO2SensorData co2SensorData = co2Sensor.get();
+                    CO2SensorData co2SensorData = getCo2SensorData(co2Sensor);
                     if ( co2SensorData != null ) {
                         Integer rssi = null;
                         DPA_AdditionalInfo addInfo = co2Sensor.getDPA_AdditionalInfoOfLastCall();
@@ -442,7 +452,7 @@ public final class App {
                     }
                     
                     VOCSensor vocSensor = (VOCSensor)compDevObject;
-                    VOCSensorData vocSensorData = vocSensor.get();
+                    VOCSensorData vocSensorData = getVocSensorData(vocSensor);
                     if ( vocSensorData != null ) {
                         Integer rssi = null;
                         DPA_AdditionalInfo addInfo = vocSensor.getDPA_AdditionalInfoOfLastCall();
@@ -485,6 +495,30 @@ public final class App {
         }
         
         return dataFromSensors;
+    }
+    
+    // tryes to get data of speciffied CO2 sensor
+    private static CO2SensorData getCo2SensorData(CO2Sensor co2Sensor) {
+        for ( int attempt = 0; attempt < GET_SENSOR_DATA_ATTEMPTS_NUM; attempt++ ) {
+            CO2SensorData co2SensorData = co2Sensor.get();
+            if ( co2SensorData != null ) {
+                return co2SensorData;
+            }
+        }
+        
+        return null;
+    }
+    
+    // tryes to get data of speciffied VOC sensor
+    private static VOCSensorData getVocSensorData(VOCSensor vocSensor) {
+        for ( int attempt = 0; attempt < GET_SENSOR_DATA_ATTEMPTS_NUM; attempt++ ) {
+            VOCSensorData vocSensorData = vocSensor.get();
+            if ( vocSensorData != null ) {
+                return vocSensorData;
+            }
+        }
+        
+        return null;
     }
     
     // returns ID of module for specified sensor ID
