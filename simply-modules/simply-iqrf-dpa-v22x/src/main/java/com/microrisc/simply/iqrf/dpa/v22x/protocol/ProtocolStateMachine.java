@@ -691,11 +691,20 @@ final class ProtocolStateMachine implements ManageableObject {
                         else if (
                                 actualState == ProtocolStateMachine.State.WAITING_FOR_CONFIRMATION
                                 || actualState == ProtocolStateMachine.State.WAITING_FOR_RESPONSE
-                          ) {
-                            try {
+                        ) {
+                            // BECAUSE of Object.wait method semantics for 0 argument
+                            // 0 means thread to wait until notified
+                            if ( waitingTime > 0 ) {
                                 //logger.info("run - waiting for confirmation - before waiting");
                                 long startTime = System.currentTimeMillis();
-                                synchroNewEvent.wait(waitingTime);
+
+                                try {
+                                    synchroNewEvent.wait(waitingTime);
+                                } catch ( InterruptedException ex ) {
+                                    logger.warn("Waiting time counter interrupted while waiting on new event");
+                                    return;
+                                }
+
                                 long endTime = System.currentTimeMillis();
                                 //logger.info("run - waiting for confirmation - after waiting");
                                 if ( (endTime - startTime) >= waitingTime ) {
@@ -703,9 +712,10 @@ final class ProtocolStateMachine implements ManageableObject {
                                     // IMPORTANT !!! Go out of a while-cycle.
                                     break;
                                 }
-                            } catch ( InterruptedException ex ) {
-                                logger.warn("Waiting time counter interrupted while waiting on new event");
-                                return;
+                            } else {
+                                timeouted = true;
+                                // IMPORTANT !!! Go out of a while-cycle.
+                                break;
                             }
                         }
                         
