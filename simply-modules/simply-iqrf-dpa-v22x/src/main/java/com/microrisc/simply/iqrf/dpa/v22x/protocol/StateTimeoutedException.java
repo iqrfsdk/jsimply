@@ -24,7 +24,7 @@ package com.microrisc.simply.iqrf.dpa.v22x.protocol;
  * <b>Time limited states</b> are states, which the PSM can reside in only for 
  * a limited amount of time. If no event, which cause a transition of the PSM 
  * into new state comes in, the PSM passes in corresponding error state.<br>
- * Time limited stated of the Protocol State Machine: <br>
+ * Time limited states of the Protocol State Machine: <br>
  * - {@code WAITING_FOR_CONFIRMATION} <br>
  * - {@code WAITING_FOR_RESPONSE} <br>
  * 

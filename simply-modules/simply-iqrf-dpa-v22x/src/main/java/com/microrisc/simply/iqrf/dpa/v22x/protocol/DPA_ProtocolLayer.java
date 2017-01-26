@@ -69,8 +69,6 @@ implements ProtocolStateMachineListener
     private static final Logger logger = LoggerFactory.getLogger(DPA_ProtocolLayer.class);
     
     
-    
-    
     /**
      * Binds sent requests with theirs time of sending.
      */
@@ -180,7 +178,7 @@ implements ProtocolStateMachineListener
         return unlimRequestInfo.methodIds.contains(request.getMethodId());        
     }
 
-    // indicates, wheather a timeout is defined by user
+    // indicates, whether a timeout is defined by user
     private static boolean isTimeoutDefinedByUserRequest(long procTime) {
         return procTime != WaitingTimeoutService.UNLIMITED_WAITING_TIMEOUT;
     }
@@ -231,7 +229,8 @@ implements ProtocolStateMachineListener
     // type of errors encontered during communication with network layer
     private static enum COMMUNICATION_ERROR_TYPE {
         CONFIRMATION_TIMEOUTED,
-        RESPONSE_TIMEOUTED
+        RESPONSE_TIMEOUTED,
+        MACHINE_INTERNAL_ERROR
     }
     
     // waits before sending next request 
@@ -240,7 +239,9 @@ implements ProtocolStateMachineListener
         
         synchronized ( protoMachineStateChangeSignal ) {
             machineState = protoMachine.getState();
-            while ( (machineState != ProtocolStateMachine.State.FREE_FOR_SEND)  
+            while ( 
+                    !protoMachine.isError()
+                    && (machineState != ProtocolStateMachine.State.FREE_FOR_SEND)  
                     && (machineState != ProtocolStateMachine.State.WAITING_FOR_CONFIRMATION_ERROR)
                     && (machineState != ProtocolStateMachine.State.WAITING_FOR_RESPONSE_ERROR)
                   ) {
@@ -249,12 +250,17 @@ implements ProtocolStateMachineListener
             }
         }
         
+        if ( protoMachine.isError() ) {
+            protoMachine.reset();
+            return;
+        }
+        
         // checking if it is possible to send new request
         switch ( machineState ) {
             case WAITING_FOR_CONFIRMATION_ERROR:
             case WAITING_FOR_RESPONSE_ERROR:
                 // reseting machine after error
-                protoMachine.resetAfterError();
+                protoMachine.reset();
                 break;
             case FREE_FOR_SEND:
                 break;
@@ -338,6 +344,7 @@ implements ProtocolStateMachineListener
     
     /**
      * Processes specified message.
+     * 
      * @param message message to process
      * @param msgPacket message source protocol packet
      */
@@ -378,8 +385,9 @@ implements ProtocolStateMachineListener
             case RESPONSE_TIMEOUTED:
                 errorMsg = "Response timeouted";
                 break;
-            default:
-                throw new IllegalStateException("Error " + errorType + " not expected.");
+            case MACHINE_INTERNAL_ERROR:
+                errorMsg = "Internal error";
+                break;
         }
         
         BaseCallResponse errorResponse = new BaseCallResponse(
@@ -481,7 +489,10 @@ implements ProtocolStateMachineListener
     
     @Override
     public void onConfirmationTimeouted() {
-        sendErrorMessage(COMMUNICATION_ERROR_TYPE.CONFIRMATION_TIMEOUTED, lastRequest);
+        if ( listener != null ) {
+            sendErrorMessage(COMMUNICATION_ERROR_TYPE.CONFIRMATION_TIMEOUTED, lastRequest);
+        }
+        
         synchronized ( protoMachineStateChangeSignal ) {
             protoMachineStateChangeSignal.notifyAll();
         }
@@ -489,7 +500,21 @@ implements ProtocolStateMachineListener
     
     @Override
     public void onResponseTimeouted() {
-        sendErrorMessage(COMMUNICATION_ERROR_TYPE.RESPONSE_TIMEOUTED, lastRequest);
+        if ( listener != null ) {
+            sendErrorMessage(COMMUNICATION_ERROR_TYPE.RESPONSE_TIMEOUTED, lastRequest);
+        }
+        
+        synchronized ( protoMachineStateChangeSignal ) {
+            protoMachineStateChangeSignal.notifyAll();
+        }
+    }
+    
+    @Override
+    public void onError() {
+        if ( listener != null ) {
+            sendErrorMessage(COMMUNICATION_ERROR_TYPE.MACHINE_INTERNAL_ERROR, lastRequest);
+        }
+        
         synchronized ( protoMachineStateChangeSignal ) {
             protoMachineStateChangeSignal.notifyAll();
         }
@@ -508,6 +533,10 @@ implements ProtocolStateMachineListener
     public void sendRequest(CallRequest request, long procTime) throws SimplyException {
         logger.debug("sendRequest - start: request={}, procTime={}", request, procTime);
         
+        if ( listener == null ) {
+            throw new SimplyException("No listener registered.");
+        }
+        
         // conversion to format used by application protocol
         short[] protoMsg = msgConvertor.convertToProtoFormat(request);
         
@@ -515,17 +544,20 @@ implements ProtocolStateMachineListener
         try {
             doWaitBeforeSendRequest();
         } catch ( InterruptedException ex ) {
-            logger.error(
+            logger.warn(
                 "Thread interrupted while waiting for sending next request."
                 + "Request will not be sent", ex
             );
             return;
+        } catch ( Exception ex ) {
+            protoMachine.reset();
+            throw new SimplyException(ex);
         }
         
         lastRequest = new TimeRequest(request, System.currentTimeMillis());
         
         // must be performed altogether to eliminating the case, when 
-        // response comes to early
+        // response comes to early from underlaying network layer
         synchronized ( synchroSendOrReceive ) {
             // maintenance of already sent requests
             maintainSentRequest(request);
@@ -535,8 +567,12 @@ implements ProtocolStateMachineListener
             if ( request instanceof BroadcastRequest ) {
                 isTimeUnlimitedRequestInProcess = false;
                 isTimeoutDefinedByUserRequestInProcess = false;
-                
-                protoMachine.newRequest(request, timingParamsStorage.getTimingParams(request));
+               
+                try {
+                    protoMachine.newRequest(request, timingParamsStorage.getTimingParams(request));
+                } catch ( Exception ex ) {
+                    throw new SimplyException(ex);
+                } 
             } else {
                 synchronized ( synchroSentRequest ) {
                     sentRequests.add( lastRequest );
@@ -551,7 +587,12 @@ implements ProtocolStateMachineListener
                         } else {
                             isTimeUnlimitedRequestInProcess = false;
                             isTimeoutDefinedByUserRequestInProcess = false;
-                            protoMachine.newRequest(request, timingParamsStorage.getTimingParams(request));
+                            
+                            try {
+                                protoMachine.newRequest(request, timingParamsStorage.getTimingParams(request));
+                            } catch ( Exception ex ) {
+                                throw new SimplyException(ex);
+                            }
                         }
                     }
                     
@@ -610,6 +651,7 @@ implements ProtocolStateMachineListener
             return;
         }
         
+        // identification of response code
         DPA_ResponseCode responseCode = null;
         try {
             responseCode = DPA_ProtocolProperties.getResponseCode(networkData.getData());
@@ -638,27 +680,21 @@ implements ProtocolStateMachineListener
                 return;
             }
             
-            // if not time unlimited
-            if (!isTimeUnlimitedRequestInProcess) {
-                // if not timeout defined by user
-                if (!isTimeoutDefinedByUserRequestInProcess) {
-                    
-                    synchronized (synchroSendOrReceive) {
+            // if time unlimited request is NOT in process 
+            if ( !isTimeUnlimitedRequestInProcess ) {
+                
+                // if timeout was not defined by user, use standard DPA timing
+                if ( !isTimeoutDefinedByUserRequestInProcess ) {
+                    synchronized ( synchroSendOrReceive ) {
                         try {
                             protoMachine.confirmationReceived(confirmation);
-                        } catch (IllegalArgumentException ex) {
-                            logger.error(
-                                    "Protocol State Machine not in the WAITING_FOR_CONFIRMATION state: " + ex
-                            );
-                            logger.debug("onGetData - end");
-                            return;
-                        } catch (StateTimeoutedException ex) {
-                            logger.error("Confirmation reception too late. Waiting timeouted.");
+                        } catch ( Exception ex ) {
+                            logger.error("Internal error while confirmation reception: {}", ex);
                             logger.debug("onGetData - end");
                             return;
                         }
 
-                        if (lastRequest.request instanceof BroadcastRequest) {
+                        if ( lastRequest.request instanceof BroadcastRequest ) {
                             processBroadcastConfirmation(confirmation);
                         }
                     }
@@ -720,20 +756,15 @@ implements ProtocolStateMachineListener
                 }
             }
             
-            // if not time unlimited
+            // if time unlimited request is NOT in process 
             if ( !isTimeUnlimitedRequestInProcess ) {
+                
                 // if not timeout defined by user
                 if ( !isTimeoutDefinedByUserRequestInProcess ) {
                     try {
                         protoMachine.responseReceived(networkData.getData());
-                    } catch ( IllegalArgumentException ex ) {
-                        logger.error(
-                            "Protocol State Machine not in the WAITING_FOR_RESPONSE state: " + ex
-                        );
-                        logger.debug("onGetData - end");
-                        return;
-                    } catch ( StateTimeoutedException ex ) {
-                        logger.error("Response reception too late. Waiting timeouted.");
+                    } catch ( Exception ex ) {
+                        logger.error("Internal error while response reception: {}", ex);
                         logger.debug("onGetData - end");
                         return;
                     }

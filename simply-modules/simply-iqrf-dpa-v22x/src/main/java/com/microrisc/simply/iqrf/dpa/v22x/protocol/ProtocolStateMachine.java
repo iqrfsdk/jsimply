@@ -133,12 +133,16 @@ final class ProtocolStateMachine implements ManageableObject {
     private final Object stateChangeSignal = new Object();
     
     // event triggered state change timeout [in ms]
-    private static final long STATE_CHANGE_TIMEOUT = 1000;
+    private static final long STATE_CHANGE_TIMEOUT = 1500;
+    
+    // indicates the presence of macine internal error
+    private volatile boolean error = false;
+    
     
     // waits for state change
     private void waitForStateChangeSignal() {
         synchronized ( stateChangeSignal ) {
-            while ( !stateChanged ) {
+            while ( stateChanged == false ) {
                 try {
                     long startTime = System.currentTimeMillis();
                     stateChangeSignal.wait(STATE_CHANGE_TIMEOUT);
@@ -601,8 +605,6 @@ final class ProtocolStateMachine implements ManageableObject {
                         }
                     }
                     break;
-                default:
-                    throw new IllegalStateException("Incorrect state to wait in: " + actualState);
             }
         }
         
@@ -742,18 +744,31 @@ final class ProtocolStateMachine implements ManageableObject {
                     }
                 }
                 
-                // if waiting for new event timeouted, do error transition
-                if ( timeouted ) {
-                    doErrorTransition();
-                    continue;
+                try {
+                    // if waiting for new event timeouted, do error transition
+                    if ( timeouted ) {
+                        doErrorTransition();
+                        continue;
+                    }
+
+                    // do transition to next state
+                    doTransition();
+
+                    // count waiting time - can be 0 if there is no need for mandatory waiting, 
+                    // for example for FREE_FOR_SEND state
+                    waitingTime = countWaitingTime();
+                } catch ( Exception ex ) {
+                    error = true;
+                    logger.error("Error in Protocol State Machine: {}", ex);
+                    
+                    // send message to listener
+                    synchronized ( synchroListener ) {
+                        if ( listener != null ) {
+                            listener.onError();
+                        }
+                    }
+                    return;
                 }
-                
-                // do transition to next state
-                doTransition();
-                
-                // count waiting time - can be 0 if there is no need for mandatory waiting, 
-                // for example for FREE_FOR_SEND state
-                waitingTime = countWaitingTime();
                 
                 //logger.info("run - before state change.");
                 // notify waiting clients about the state change
@@ -893,6 +908,7 @@ final class ProtocolStateMachine implements ManageableObject {
     
     /**
      * Sets time to wait for confirmation arrival.
+     * 
      * @param time new value of time [ in ms ] to wait for confirmation, cannot be less then 0
      * @throws IllegalArgumentException if specified time is less then 0
      */
@@ -970,6 +986,14 @@ final class ProtocolStateMachine implements ManageableObject {
     }
     
     /**
+     * Indicates, whether an error occured during machine run. If so, it is 
+     * neccessary to call {@code reset} method in order to use the machine.
+     */
+    synchronized public boolean isError() {
+        return error;
+    }
+    
+    /**
      * Returns the actual state of the machine.
      * @return the actual state of the machine
      */
@@ -987,11 +1011,17 @@ final class ProtocolStateMachine implements ManageableObject {
     
     /**
      * Indicates, wheather it is possible to send next request.
+     * 
      * @return {@code true} if it is possible to send next request
      *         {@code false} otherwise
      */
     synchronized public boolean isFreeForSend() {
         logger.debug("isFreeForSend - start: ");
+        
+        if ( error ) {
+            logger.debug("isFreeForSend - end: {}", false);
+            return false;
+        }
         
         boolean isFreeForSend = false;
         synchronized ( synchroActualState ) {
@@ -1004,12 +1034,20 @@ final class ProtocolStateMachine implements ManageableObject {
     
     /**
      * Informs the machine, that new request has been sent.
+     * 
      * @param request sent request
      * @param timingParams timing parameters
+     * 
+     * @throws IllegalArgumentException if actual state is not {@code State.FREE_FOR_SEND} state
+     * @throws Exception if some other error occured
      */
     synchronized public void newRequest(CallRequest request, TimingParams timingParams) 
     {
         logger.debug("newRequest - start: request={}, timingParams={}", request, timingParams);
+        
+        if ( error ) {
+            throw new IllegalStateException("Machine internal error.");
+        }
         
         // actual state must be FREE FOR SEND
         synchronized ( synchroActualState ) {
@@ -1043,11 +1081,14 @@ final class ProtocolStateMachine implements ManageableObject {
     
     /**
      * Informs the machine, that confirmation has been received.
+     * 
      * @param recvTime time of confirmation reception
      * @param confirmation received confirmation
+     * 
      * @throws IllegalArgumentException if the machine is not in {@code WAITING_FOR_CONFIRMATION} state
      * @throws StateTimeoutedException if {@code WAITING_FOR_CONFIRMATION} state was timeouted
      *         during processing of the specified confirmation
+     * @throws Exception if some other error occured
      */
     synchronized public void confirmationReceived(long recvTime, DPA_Confirmation confirmation)
         throws StateTimeoutedException 
@@ -1055,6 +1096,10 @@ final class ProtocolStateMachine implements ManageableObject {
         logger.debug("confirmationReceived - start: recvTime={}, confirmation={}",
                 recvTime, confirmation
         );
+        
+        if ( error ) {
+            throw new IllegalStateException("Machine internal error.");
+        }
         
         synchronized ( synchroActualState ) {
             if ( actualState != State.WAITING_FOR_CONFIRMATION ) {
@@ -1092,10 +1137,13 @@ final class ProtocolStateMachine implements ManageableObject {
     /**
      * Informs the machine, that confirmation has been received. Time of calling 
      * of this method will be used as the time of the confirmation reception.
+     * 
      * @param confirmation received confirmation
+     * 
      * @throws IllegalArgumentException if the machine is not in {@code WAITING_FOR_CONFIRMATION} state
      * @throws StateTimeoutedException if {@code WAITING_FOR_CONFIRMATION} state was timeouted
      *         during processing of the specified confirmation
+     * @throws Exception if some other error occured
      */
     synchronized public void confirmationReceived(DPA_Confirmation confirmation) 
             throws StateTimeoutedException 
@@ -1105,12 +1153,14 @@ final class ProtocolStateMachine implements ManageableObject {
     
     /**
      * Informs the machine, that response has been received.
+     * 
      * @param recvTime time of response reception
      * @param responseData data of the received response
      * 
      * @throws IllegalArgumentException if the machine is not in {@code WAITING_FOR_RESPONSE} state
      * @throws StateTimeoutedException if {@code WAITING_FOR_RESPONSE} state was
      *         timeouted during processing of the specified response data
+     * @throws Exception if some other error occured
      */
     synchronized public void responseReceived(long recvTime, short[] responseData) 
         throws StateTimeoutedException 
@@ -1118,6 +1168,10 @@ final class ProtocolStateMachine implements ManageableObject {
         logger.debug("responseReceived - start: recvTime={}, responseData={}",
                 recvTime, Arrays.toString(responseData)
         );
+        
+        if ( error ) {
+            throw new IllegalStateException("Machine internal error.");
+        }
         
         synchronized ( synchroActualState ) {
             if ( actualState != State.WAITING_FOR_RESPONSE ) {
@@ -1136,11 +1190,11 @@ final class ProtocolStateMachine implements ManageableObject {
         try {
             waitForStateChangeSignal();
         } catch ( IllegalStateException e ) {
-            State actualStateCopy = null;
+            State actualStateValue = null;
             synchronized ( synchroActualState ) {
-                actualStateCopy = actualState;
+                actualStateValue = actualState;
             }
-            if ( actualStateCopy == State.WAITING_FOR_RESPONSE_ERROR ) {
+            if ( actualStateValue == State.WAITING_FOR_RESPONSE_ERROR ) {
                 throw new StateTimeoutedException("Waiting on response timeouted.");
             } else {
                 throw e;
@@ -1155,11 +1209,14 @@ final class ProtocolStateMachine implements ManageableObject {
      * this method will be used as the time of the response reception.
      * 
      * @param responseData data of the received response
+     * 
+     * @throws IllegalArgumentException if the machine is not in {@code WAITING_FOR_RESPONSE} state
      * @throws StateTimeoutedException if {@code WAITING_FOR_RESPONSE} state was
      *         timeouted during processing of the specified response data
+     * @throws Exception if some other error occured
      */
     synchronized public void responseReceived(short[] responseData) 
-            throws StateTimeoutedException  
+            throws StateTimeoutedException 
     {
         responseReceived(System.currentTimeMillis(), responseData);
     }
@@ -1167,6 +1224,7 @@ final class ProtocolStateMachine implements ManageableObject {
     /**
      * Reseting the machine after some of error states has occured. 
      */
+    /*
     synchronized public void resetAfterError() {
         logger.debug("resetAfterError - start:");
         
@@ -1191,6 +1249,33 @@ final class ProtocolStateMachine implements ManageableObject {
         
         logger.info("Reseted.");
         logger.debug("resetAfterError - end");
+    }
+    */
+    
+    /**
+     * Resets the machine into initial state.
+     * Useful mainly in case of errors. 
+     */
+    synchronized void reset() {
+        logger.debug("reset - start:");
+        
+        terminateWaitingTimeCounter();
+        
+        actualState = ProtocolStateMachine.State.FREE_FOR_SEND;
+        newEvent = null;
+        stateChanged = false;
+        error = false;
+        waitingTimeCounter = new WaitingTimeCounter();
+        
+        // send notification to listener about state change
+        synchronized ( synchroListener ) {
+            if ( listener != null ) {
+                listener.onFreeForSend();
+            }
+        }
+        
+        logger.info("Reset complete.");
+        logger.debug("reset - end");
     }
     
     @Override
