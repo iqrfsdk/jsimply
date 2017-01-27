@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MICRORISC s.r.o..
+ * Copyright 2017 MICRORISC s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,18 @@
 package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors;
 
 /**
- * Types of errors, which encounter during run of Write Configuration Service.
+ * Errors related to input parameters of Load Code Service.
  * 
  * @author Michal Konopa
  */
-public enum LoadCodeErrorType {
+public final class ParamsError extends AbstractLoadCodeError {
+    private final LoadCodeErrorType errorType = LoadCodeErrorType.PARAMETERS;
     
-    /** Errors related to input parameters of the service. */
-    PARAMETERS,
     
-    /** Errors related to (processing of) a loading content. */
-    LOADING_CONTENT,
+    public ParamsError(String message) {}
     
-    /** Missing peripheral. */
-    MISSING_PERIPHERAL,
-    
-    /** Processing of request failed. */
-    REQUEST_PROCESSING
+    @Override
+    public LoadCodeErrorType getErrorType() {
+        return errorType;
+    }
 }

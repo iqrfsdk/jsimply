@@ -25,6 +25,7 @@ import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.Request
 import com.microrisc.simply.iqrf.dpa.v22x.di_services.DPA_StandardServices;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.LoadingContentError;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.MissingPeripheralError;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.ParamsError;
 import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_Request;
 import com.microrisc.simply.iqrf.dpa.v22x.types.FRC_AcknowledgedBroadcastBits;
 import com.microrisc.simply.iqrf.dpa.v22x.types.FRC_AcknowledgedBroadcastBits.Result;
@@ -483,14 +484,21 @@ extends BaseService implements LoadCodeService {
         Map<String, Boolean> resultMap = new HashMap<>();
         resultMap.put(this.contextNode.getId(), result.getResult());
         
-        ServiceResult.Status status = (result.getResult() == true)? 
-                ServiceResult.Status.SUCCESSFULLY_COMPLETED : ServiceResult.Status.ERROR;  
+        ServiceResult.Status status = ServiceResult.Status.SUCCESSFULLY_COMPLETED;
+        LoadCodeProcessingInfo loadCodeProcessingInfo = new LoadCodeProcessingInfo();
+        
+        if ( result.getResult() == false ) {
+            status = ServiceResult.Status.ERROR;
+            loadCodeProcessingInfo = new LoadCodeProcessingInfo( 
+                    new LoadingContentError("Checksum does not match.")
+            );
+        }
         
         logger.debug("loadCode - end");
         return new BaseServiceResult<>(
                 status,
                 new LoadCodeResult(resultMap),
-                new LoadCodeProcessingInfo()
+                loadCodeProcessingInfo
         );
     }
     
@@ -637,6 +645,17 @@ extends BaseService implements LoadCodeService {
         );
     }
     
+    // indicates, whether all nodes from specified collection are available
+    private static boolean areNodesAvalailable(Collection<Node> nodes) {
+        for ( Node node : nodes ) {
+            if ( node == null ) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    
             
     /**
      * Creates new Load Code Service object.
@@ -681,6 +700,17 @@ extends BaseService implements LoadCodeService {
                 );
             }
             prepareDataForBroadcast = false;
+        } else {
+            // checking availability of target nodes
+            if ( !areNodesAvalailable(targetNodes) ) {
+                return new BaseServiceResult<>(
+                    ServiceResult.Status.ERROR,
+                    null,
+                    new LoadCodeProcessingInfo( 
+                            new ParamsError("Some nodes not available.")
+                    )
+                );
+            }
         }
         
         short[][] dataToWrite = null;
