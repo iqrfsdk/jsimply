@@ -384,7 +384,10 @@ public final class App {
             
             DeviceInfo sensorInfo = appConfiguration.getDevicesInfoMap().get(nodeId);
             System.out.println("Getting data from sensor " + entry.getKey());
-
+            
+            String moduleId = getModuleId(entry.getKey(), osInfoMap);
+            String nadr = entry.getKey();
+            
             switch ( sensorInfo.getType() ) {
                 case "co2-t-h":
                     CompoundDeviceObject compDevObject = entry.getValue();
@@ -418,7 +421,12 @@ public final class App {
                             CallRequestProcessingError error = co2Sensor.getCallRequestProcessingErrorOfLastCall();
                             System.err.println("Error while getting data from CO2 sensor: " + error);
                             
-                            String mqttError = MqttFormatter.formatError( String.valueOf(error) );
+                            String mqttError = MqttFormatter
+                                    .formatError( 
+                                            String.valueOf(error),
+                                            moduleId,
+                                            nadr
+                                    );
                             mqttPublishErrors(nodeId, mqttTopics, mqttError);
                             
                             // specific call error
@@ -469,7 +477,12 @@ public final class App {
                             CallRequestProcessingError error = vocSensor.getCallRequestProcessingErrorOfLastCall();
                             System.err.println("Error while getting data from VOC sensor: " + error);
                             
-                            String mqttError = MqttFormatter.formatError( String.valueOf(error) );
+                            String mqttError = MqttFormatter
+                                    .formatError( 
+                                            String.valueOf(error),
+                                            moduleId,
+                                            nadr
+                                    );
                             mqttPublishErrors(nodeId, mqttTopics, mqttError);
                             
                             // specific call error
@@ -557,6 +570,9 @@ public final class App {
                 rssi = RSSI_NOT_AVAILABLE;
             }
             
+            String moduleId = getModuleId(entry.getKey(), osInfoMap);
+            String nadr = entry.getKey();
+            
             switch ( sensorInfo.getType().toLowerCase() ) {
                 case "co2-t-h":
                     CO2SensorData co2SensorData = (CO2SensorData)dataToPublish.sensorData;
@@ -572,29 +588,31 @@ public final class App {
                     // packet id
                     pid++;
                     
-                    String moduleId = getModuleId(entry.getKey(), osInfoMap);
-                    
                     String mqttDataCO2 = MqttFormatter
                                 .formatCO2(
                                     String.valueOf(co2SensorData.getCo2()), 
-                                    moduleId
+                                    moduleId,
+                                    nadr
                                 );
                     String mqttDataTemperature = MqttFormatter
                                 .formatTemperature(
                                     sensorDataFormat.format(co2SensorData.getTemperature()), 
-                                    moduleId
+                                    moduleId,
+                                    nadr    
                                 );
                     
                     String mqttDataHumidity = MqttFormatter
                                 .formatHumidity(
                                     sensorDataFormat.format(co2SensorData.getHumidity()), 
-                                    moduleId
+                                    moduleId,
+                                    nadr
                                 );
                     
                     String mqttDataRssi = MqttFormatter
                                 .formatRssi(
                                     sensorDataFormat.format(rssi), 
-                                    moduleId
+                                    moduleId,
+                                    nadr
                                 );
                     
                     mqttSensorData.add(mqttDataCO2);
@@ -619,29 +637,31 @@ public final class App {
                     // packet id
                     pid++;
 
-                    moduleId = getModuleId(entry.getKey(), osInfoMap);
-
                     String mqttDataVOC = MqttFormatter
                                 .formatVOC(
                                     String.valueOf(vocSensorData.getVoc()), 
-                                    moduleId
+                                    moduleId,
+                                    nadr
                                 );
                     mqttDataTemperature = MqttFormatter
                                 .formatTemperature(
                                     sensorDataFormat.format(vocSensorData.getTemperature()), 
-                                    moduleId
+                                    moduleId,
+                                    nadr
                                 );
                     
                     mqttDataHumidity = MqttFormatter
                                 .formatHumidity(
                                     sensorDataFormat.format(vocSensorData.getHumidity()), 
-                                    moduleId
+                                    moduleId,
+                                    nadr
                                 );
                     
                     mqttDataRssi = MqttFormatter
                                 .formatRssi(
                                     sensorDataFormat.format(rssi), 
-                                    moduleId
+                                    moduleId,
+                                    nadr
                                 );
                     
                     mqttSensorData.add(mqttDataVOC);
