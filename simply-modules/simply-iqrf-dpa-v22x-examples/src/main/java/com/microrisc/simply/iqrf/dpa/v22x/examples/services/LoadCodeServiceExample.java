@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 
 /**
- * Usage of Load Code Service.
+ * Loading code into one specified node.
  * 
  * @author Michal Konopa
  * @author Martin Strouhal
@@ -75,11 +75,6 @@ public class LoadCodeServiceExample {
             printMessageAndExit("Coordinator doesn't support Load Code Service.");
         }
         
-        
-        Collection<Node> targetNodes = new LinkedList<>();
-        targetNodes.add( network1.getNode("1") );
-        
-        
         // loading code
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
             = loadCodeService.loadCode( 
@@ -87,8 +82,7 @@ public class LoadCodeServiceExample {
                         "config" + File.separator + "custom-dpa-handlers" + File.separator + "CustomDpaHandler-LED-Green-On-7xD-V228-160912.hex",
                         0x0800,
                         LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithCodeLoading,
-                        LoadingCodeProperties.LoadingContent.Hex, 
-                        targetNodes
+                        LoadingCodeProperties.LoadingContent.Hex
                     )
             );
 
