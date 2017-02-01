@@ -146,7 +146,6 @@ final class ProtocolStateMachine implements ManageableObject {
                 try {
                     long startTime = System.currentTimeMillis();
                     stateChangeSignal.wait(STATE_CHANGE_TIMEOUT);
-                    //logger.info("waitForStateChangeSignal - after waiting.");
                     long endTime = System.currentTimeMillis();
                     
                     if ( stateChanged ) {
@@ -154,6 +153,7 @@ final class ProtocolStateMachine implements ManageableObject {
                     }
                     
                     if ( (endTime - startTime) >= STATE_CHANGE_TIMEOUT ) {
+                        error = true;
                         throw new IllegalStateException ("Waiting for state change timeouted.");
                     }
                 } catch ( InterruptedException ex ) {
@@ -608,7 +608,7 @@ final class ProtocolStateMachine implements ManageableObject {
             }
         }
         
-        // do error transition - required event doesn't come in timeout
+        // do error transition - required event hasn't come in timeout
         private void doErrorTransition() {
             switch ( actualState ) {
                 case WAITING_FOR_CONFIRMATION:
@@ -681,12 +681,16 @@ final class ProtocolStateMachine implements ManageableObject {
                             || actualState == ProtocolStateMachine.State.WAITING_FOR_CONFIRMATION_ERROR
                             || actualState == ProtocolStateMachine.State.WAITING_FOR_RESPONSE_ERROR    
                         ) {
+                            logger.debug("waiting for new request");
+                            
                             try {
                                 synchroNewEvent.wait();
                             } catch ( InterruptedException ex ) {
                                 logger.warn("Waiting time counter interrupted while waiting on new event");
                                 return;
                             }
+                            
+                            logger.debug("new request arrived");
                         }
                         
                         // states, where new event must come in in a limited amount of time
@@ -699,14 +703,18 @@ final class ProtocolStateMachine implements ManageableObject {
                             if ( waitingTime > 0 ) {
                                 //logger.info("run - waiting for confirmation - before waiting");
                                 long startTime = System.currentTimeMillis();
-
+                                
+                                logger.debug("waiting for confirmation or response");
+                                
                                 try {
                                     synchroNewEvent.wait(waitingTime);
                                 } catch ( InterruptedException ex ) {
                                     logger.warn("Waiting time counter interrupted while waiting on new event");
                                     return;
                                 }
-
+                                
+                                logger.debug("confirmation or response arrived");
+                                
                                 long endTime = System.currentTimeMillis();
                                 //logger.info("run - waiting for confirmation - after waiting");
                                 if ( (endTime - startTime) >= waitingTime ) {
@@ -724,13 +732,17 @@ final class ProtocolStateMachine implements ManageableObject {
                         // AFTER states: it is mandatory to wait for a minimal
                         // amount of time
                         else {
+                            logger.debug("waiting for routing");
+                            
                             try {
                                 Thread.sleep(waitingTime);
                             } catch ( InterruptedException ex ) {
                                 logger.warn("Waiting time counter interrupted while sleeping in 'AFTER' state");
                                 return;
                             }
-                           
+                            
+                            logger.debug("routing finished");
+                            
                             // IMPORTANT !!! Go out of a while-cycle.
                             break;
                         }
@@ -740,12 +752,12 @@ final class ProtocolStateMachine implements ManageableObject {
                         // consume new event icluding update of variables by
                         // information present in the event
                         consumeNewEvent();
-                        //logger.info("run - new event received.");
+                        logger.debug("new event consumed");
                     }
                 }
                 
                 try {
-                    // if waiting for new event timeouted, do error transition
+                    // if waiting for response or confirmation timeouted, do error transition
                     if ( timeouted ) {
                         doErrorTransition();
                         continue;
@@ -757,6 +769,7 @@ final class ProtocolStateMachine implements ManageableObject {
                     // count waiting time - can be 0 if there is no need for mandatory waiting, 
                     // for example for FREE_FOR_SEND state
                     waitingTime = countWaitingTime();
+                    logger.debug("waiting time for next round: {}", waitingTime);
                 } catch ( Exception ex ) {
                     error = true;
                     logger.error("Error in Protocol State Machine: {}", ex);
@@ -1034,6 +1047,7 @@ final class ProtocolStateMachine implements ManageableObject {
     
     /**
      * Informs the machine, that new request has been sent.
+     * If an internal error has occured, error indication is set. 
      * 
      * @param request sent request
      * @param timingParams timing parameters
@@ -1081,6 +1095,7 @@ final class ProtocolStateMachine implements ManageableObject {
     
     /**
      * Informs the machine, that confirmation has been received.
+     * If an internal error has occured, error indication is set.
      * 
      * @param recvTime time of confirmation reception
      * @param confirmation received confirmation
@@ -1116,7 +1131,6 @@ final class ProtocolStateMachine implements ManageableObject {
             synchroNewEvent.notifyAll();
         }
         
-        //logger.info("confirmationReceived - before waiting for signal");
         try {
             waitForStateChangeSignal();
         } catch ( IllegalStateException e ) {
@@ -1137,6 +1151,7 @@ final class ProtocolStateMachine implements ManageableObject {
     /**
      * Informs the machine, that confirmation has been received. Time of calling 
      * of this method will be used as the time of the confirmation reception.
+     * If an internal error has occured, error indication is set.
      * 
      * @param confirmation received confirmation
      * 
@@ -1153,6 +1168,7 @@ final class ProtocolStateMachine implements ManageableObject {
     
     /**
      * Informs the machine, that response has been received.
+     * If an internal error has occured, error indication is set.
      * 
      * @param recvTime time of response reception
      * @param responseData data of the received response
@@ -1207,6 +1223,7 @@ final class ProtocolStateMachine implements ManageableObject {
     /**
      * Informs the machine, that response has been received. Time of calling of
      * this method will be used as the time of the response reception.
+     * If an internal error has occured, error indication is set.
      * 
      * @param responseData data of the received response
      * 
