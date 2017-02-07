@@ -112,9 +112,12 @@ extends BaseService implements LoadCodeService {
     private int calculateChecksum(
             ByteBuffer buffer, CodeBlock handlerBlock, int checkSumInitialValue, int length
     ) {
-        logger.debug("calculateChecksum - start: buffer={}, handlerBlock={}, checkSumInitialValue={}, length={}",
+        logger.debug(
+                "calculateChecksum - start: buffer={}, handlerBlock={}, "
+                + "checkSumInitialValue={}, length={}",
                 buffer, handlerBlock, checkSumInitialValue, length
         );
+        
         int dataChecksum = checkSumInitialValue;
         // checksum for data
         for (
@@ -442,12 +445,18 @@ extends BaseService implements LoadCodeService {
         }
         
         if ( (targetNodes == null) || (targetNodes.isEmpty()) ) {
-            logger.debug("writeDataToMemory - end");
-            return writeDataToMemoryOfThisNode(startAddress, data);
+            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> writeResult 
+                = writeDataToMemoryOfThisNode(startAddress, data);
+            
+            logger.debug("writeDataToMemory - end: {}", writeResult);
+            return writeResult;
         }
         
-        logger.debug("writeDataToMemory - end");
-        return writeDataToMemoryUsingBroadcast(startAddress, data, targetNodes);
+        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> writeResult 
+            = writeDataToMemoryUsingBroadcast(startAddress, data, targetNodes);
+        
+        logger.debug("writeDataToMemory - end: {}", writeResult);
+        return writeResult;
     }
    
     
@@ -455,14 +464,23 @@ extends BaseService implements LoadCodeService {
     private ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> loadCodeUnicast(
         LoadCodeServiceParameters params, int length, int dataChecksum
     ) { 
+        logger.debug(
+                "loadCodeUnicast - begin: params={}, length={}, dataChecksum={}",
+                params, length, dataChecksum
+        );
+        
         // get access to OS peripheral
         OS os = this.contextNode.getDeviceObject(OS.class);
         if ( os == null ) {
-            return new BaseServiceResult<>(
+            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult 
+                = new BaseServiceResult<>(
                     ServiceResult.Status.ERROR, 
                     null, 
                     new LoadCodeProcessingInfo( new MissingPeripheralError(OS.class))
             );
+            
+            logger.debug("loadCodeUnicast - end: {}", servResult);
+            return servResult;
         }
 
         // set longer waiting timeout
@@ -477,8 +495,11 @@ extends BaseService implements LoadCodeService {
         );
         
         if ( result == null ) {
-            logger.debug("loadCode - end");
-            return createRequestProcessingError(os, "Load code result not found.");
+            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
+                = createRequestProcessingError(os, "Load code result not found.");
+            
+            logger.debug("loadCodeUnicast - end: {}", servResult);
+            return servResult;
         }
         
         Map<String, Boolean> resultMap = new HashMap<>();
@@ -494,12 +515,15 @@ extends BaseService implements LoadCodeService {
             );
         }
         
-        logger.debug("loadCode - end");
-        return new BaseServiceResult<>(
+        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
+            = new BaseServiceResult<>(
                 status,
                 new LoadCodeResult(resultMap),
                 loadCodeProcessingInfo
         );
+        
+        logger.debug("loadCodeUnicast - end: {}", servResult);
+        return servResult;
     }
     
     // creates and returns load code request params data 
@@ -575,13 +599,23 @@ extends BaseService implements LoadCodeService {
     private ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> loadCodeBroadcast(
         LoadCodeServiceParameters params, int length, int dataChecksum, Collection<Node> targetNodes
     ) { 
+        logger.debug(
+                "loadCodeBroadcast - begin: params={}, length={}, dataChecksum={}, "
+                + "targetNodes={}",
+                params, length, dataChecksum, Arrays.toString(targetNodes.toArray())
+        );
+        
         FRC frc = this.contextNode.getDeviceObject(FRC.class);
         if ( frc == null ) {
-            return new BaseServiceResult<>(
+            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult 
+                = new BaseServiceResult<>(
                     ServiceResult.Status.ERROR, 
                     null, 
                     new LoadCodeProcessingInfo( new MissingPeripheralError(FRC.class))
-            );
+                );
+            
+            logger.debug("loadCodeBroadcast - end: {}", servResult);
+            return servResult;
         }
         
         short[] dpaRequestData = createLoadCodeRequestData(frc, params, length, dataChecksum);
@@ -591,12 +625,20 @@ extends BaseService implements LoadCodeService {
         );
         
         if ( result == null ) {
-            return createRequestProcessingError(frc, "Returning FRC result failed. ");
+            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
+                = createRequestProcessingError(frc, "Returning FRC result failed. ");
+            
+            logger.debug("loadCodeBroadcast - end: {}", servResult);
+            return servResult;
         } 
         
         short[] extraResult = frc.extraResult();
         if ( extraResult == null ) {
-            return createRequestProcessingError(frc, "Returning FRC extra result failed. ");
+            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
+                    = createRequestProcessingError(frc, "Returning FRC extra result failed. ");
+            
+            logger.debug("loadCodeBroadcast - end: {}", servResult);
+            return servResult;
         }
         
         // putting both parts of result together
@@ -607,13 +649,17 @@ extends BaseService implements LoadCodeService {
         try {
             parsedResultMap = FRC_AcknowledgedBroadcastBits.parse(completeResult);
         } catch ( Exception ex ) {
-            return new BaseServiceResult<>(
-                ServiceResult.Status.ERROR, 
-                null, 
-                new LoadCodeProcessingInfo( 
-                        new RequestProcessingError("Parsing of result failed")
-                )
+            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
+                = new BaseServiceResult<>(
+                    ServiceResult.Status.ERROR, 
+                    null, 
+                    new LoadCodeProcessingInfo( 
+                            new RequestProcessingError("Parsing of result failed")
+                    )
             );
+            
+            logger.debug("loadCodeBroadcast - end: {}", servResult);
+            return servResult;
         }
         
         Map<String, Boolean> resultsMap = new HashMap<>();
@@ -638,11 +684,15 @@ extends BaseService implements LoadCodeService {
                                               ServiceResult.Status.SUCCESSFULLY_COMPLETED
                                               : ServiceResult.Status.ERROR;
         
-        return new BaseServiceResult<>(
+        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
+            = new BaseServiceResult<>(
                 serviceStatus, 
                 new LoadCodeResult(resultsMap),
                 new LoadCodeProcessingInfo()
         );
+        
+        logger.debug("loadCodeBroadcast - end: {}", servResult);
+        return servResult;
     }
     
     // indicates, whether all nodes from specified collection are available
@@ -678,11 +728,15 @@ extends BaseService implements LoadCodeService {
         
         LoadingCodeProperties.LoadingContent loadingContent = params.getLoadingContent();
         if ( loadingContent == null ) {
-            return new BaseServiceResult<>(
-                    ServiceResult.Status.ERROR,
-                    null,
-                    new LoadCodeProcessingInfo( new LoadingContentError("Unspecified loading content."))
-            );
+            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
+                = new BaseServiceResult<>(
+                        ServiceResult.Status.ERROR,
+                        null,
+                        new LoadCodeProcessingInfo( new LoadingContentError("Unspecified loading content."))
+                );
+            
+            logger.debug("loadCode - end: {}", servResult);
+            return servResult;
         }
         
         // indicates, whether data for writing into EEEPROM will be prepared for broadcast 
@@ -691,25 +745,33 @@ extends BaseService implements LoadCodeService {
         
         if ( targetNodes == null || targetNodes.isEmpty() ) {
             if ( !isStartAddressValid(this.contextNode.getId(), params.getStartAddress()) ) {
-                return new BaseServiceResult<>(
-                    ServiceResult.Status.ERROR,
-                    null,
-                    new LoadCodeProcessingInfo( 
-                            new LoadingContentError("Invalid start address.")
-                    )
+                ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
+                    =  new BaseServiceResult<>(
+                            ServiceResult.Status.ERROR,
+                            null,
+                            new LoadCodeProcessingInfo( 
+                                    new LoadingContentError("Invalid start address.")
+                            )
                 );
+                
+                logger.debug("loadCode - end: {}", servResult);
+                return servResult;
             }
             prepareDataForBroadcast = false;
         } else {
             // checking availability of target nodes
             if ( !areNodesAvalailable(targetNodes) ) {
-                return new BaseServiceResult<>(
-                    ServiceResult.Status.ERROR,
-                    null,
-                    new LoadCodeProcessingInfo( 
-                            new ParamsError("Some nodes not available.")
-                    )
+                ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
+                    = new BaseServiceResult<>(
+                        ServiceResult.Status.ERROR,
+                        null,
+                        new LoadCodeProcessingInfo( 
+                                new ParamsError("Some nodes not available.")
+                        )
                 );
+                
+                logger.debug("loadCode - end: {}", servResult);
+                return servResult;
             }
         }
         
@@ -723,27 +785,35 @@ extends BaseService implements LoadCodeService {
                 try {
                     file.parseIntelHex(params.getFileName());
                 } catch ( IOException ex ) {
-                    return new BaseServiceResult<>(
-                        ServiceResult.Status.ERROR,
-                        null,
-                        new LoadCodeProcessingInfo( new LoadingContentError(ex.getMessage()))
+                    ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
+                        = new BaseServiceResult<>(
+                            ServiceResult.Status.ERROR,
+                            null,
+                            new LoadCodeProcessingInfo( new LoadingContentError(ex.getMessage()))
                     );
+                    
+                    logger.debug("loadCode - end: {}", servResult);
+                    return servResult;
                 }  
                 
                 // separating code block with custom DPA handler block
                 CodeBlock handlerBlock = findHandlerBlock(file);
                 if (  handlerBlock == null ) {
-                    return new BaseServiceResult<>(
-                        ServiceResult.Status.ERROR,
-                        null,
-                        new LoadCodeProcessingInfo( 
-                            new LoadingContentError(
-                                "Selected .hex files does not include Custom DPA "
-                                + "handler section or the code does not start with"
-                                + "clrwdt() marker."
+                    ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
+                        = new BaseServiceResult<>(
+                            ServiceResult.Status.ERROR,
+                            null,
+                            new LoadCodeProcessingInfo( 
+                                new LoadingContentError(
+                                    "Selected .hex files does not include Custom DPA "
+                                    + "handler section or the code does not start with"
+                                    + "clrwdt() marker."
+                                )
                             )
-                        )
                     );
+                    
+                    logger.debug("loadCode - end: {}", servResult);
+                    return servResult;
                 }
                 
                 logger.debug(
@@ -751,8 +821,9 @@ extends BaseService implements LoadCodeService {
                         + " and ends at " + handlerBlock.getAddressEnd()
                 ); 
                 
-                // calcualting rounded length of handler in memory
+                // calculating rounded length of handler in memory
                 length = (int) ((handlerBlock.getLength() + (64 - 1)) & ~(64 - 1));
+                logger.debug(" Length of data is: " + Integer.toHexString(length));
                 
                 // calculating checksum with initial value 1 (defined for DPA handler)
                 dataChecksum = calculateChecksum(file, handlerBlock, length);
@@ -787,12 +858,15 @@ extends BaseService implements LoadCodeService {
                 }
                 break;
             default:
-                logger.debug("loadCode - end");
-                return new BaseServiceResult<>(
-                    ServiceResult.Status.ERROR,
-                    null,
-                    new LoadCodeProcessingInfo( new LoadingContentError("Unsupported loading content."))
+                ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
+                    = new BaseServiceResult<>(
+                        ServiceResult.Status.ERROR,
+                        null,
+                        new LoadCodeProcessingInfo( new LoadingContentError("Unsupported loading content."))
                 );
+                
+                logger.debug("loadCode - end: {}", servResult);
+                return servResult;
         }
         
         // writing data to memory
@@ -803,6 +877,7 @@ extends BaseService implements LoadCodeService {
         
         // if there was some fundamental error during data writing, it is useless to load code
         if ( writeDataResult.getProcessingInfo().getError() != null ) {
+            logger.debug("loadCode - end: {}", writeDataResult);
             return writeDataResult;
         }
         
@@ -815,15 +890,17 @@ extends BaseService implements LoadCodeService {
         // nodes, which has been written data successfully into
         List<Node> nodesToLoad = new LinkedList<>();
         
-        // find out successfull nodes and store the unsucessful ones into final results map 
-        for ( Node node : params.getTargetNodes() ) {
-            Boolean nodeResult = writeDataResultsMap.get(node.getId());
-            if ( nodeResult == null || nodeResult == false ) {
-                finalResultsMap.put(node.getId(), false);
-                continue;
+        // find out successfull nodes and store the unsucessful ones into final results map
+        if ( params.getTargetNodes() != null ) {
+            for ( Node node : params.getTargetNodes() ) {
+                Boolean nodeResult = writeDataResultsMap.get(node.getId());
+                if ( nodeResult == null || nodeResult == false ) {
+                    finalResultsMap.put(node.getId(), false);
+                    continue;
+                }
+
+                nodesToLoad.add(node);
             }
-            
-            nodesToLoad.add(node);
         }
         
         // possibly add context node into the target nodes
@@ -839,11 +916,15 @@ extends BaseService implements LoadCodeService {
         // there must be at least error in writing data into context node, which this
         // service resides on
         if ( nodesToLoad.isEmpty() ) {
-            return new BaseServiceResult<>(
-                ServiceResult.Status.ERROR,
-                new LoadCodeResult(finalResultsMap), 
-                new LoadCodeProcessingInfo()
+            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
+                = new BaseServiceResult<>(
+                    ServiceResult.Status.ERROR,
+                    new LoadCodeResult(finalResultsMap), 
+                    new LoadCodeProcessingInfo()
             );
+            
+            logger.debug("loadCode - end: {}", servResult);
+            return servResult;
         }
         
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> loadResult = null;
@@ -862,6 +943,7 @@ extends BaseService implements LoadCodeService {
         
         // constructing of final result
         if ( loadResult.getProcessingInfo().getError() != null ) {
+            logger.debug("loadCode - end: {}", loadResult);
             return loadResult;
         }
         
@@ -875,11 +957,15 @@ extends BaseService implements LoadCodeService {
             status = ServiceResult.Status.ERROR;
         }
         
-        return new BaseServiceResult<>(
+        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
+            = new BaseServiceResult<>(
                 status,
                 new LoadCodeResult(finalResultsMap),
                 new LoadCodeProcessingInfo()
         );
+        
+        logger.debug("loadCode - end: {}", servResult);
+        return servResult;
     }
 
     @Override

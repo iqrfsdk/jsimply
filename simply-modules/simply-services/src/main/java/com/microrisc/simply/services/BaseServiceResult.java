@@ -64,4 +64,18 @@ public class BaseServiceResult<R, I> implements ServiceResult<R, I> {
     public I getProcessingInfo() {
         return processingInfo;
     }
+    
+    @Override
+    public String toString() {
+        StringBuilder strBuilder = new StringBuilder();
+        String NEW_LINE = System.getProperty("line.separator");
+        
+        strBuilder.append(this.getClass().getSimpleName() + " { " + NEW_LINE);
+        strBuilder.append(" status: " + status + NEW_LINE);
+        strBuilder.append(" result: " + result + NEW_LINE);
+        strBuilder.append(" processing info: " + processingInfo + NEW_LINE);
+        strBuilder.append("}");
+        
+        return strBuilder.toString();
+    }
 }

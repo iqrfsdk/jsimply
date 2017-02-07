@@ -56,28 +56,29 @@ public final class DataPreparer {
      *
      * @return array of short[]
      */
-   public short[][] prepare() {
-      logger.debug("prepare - start");
+    public short[][] prepare() {
+        logger.debug("prepare - start");
       
-      List<Short[]> list = new LinkedList<>();
+        List<Short[]> list = new LinkedList<>();
       
-      for (long address = handlerBlock.getAddressStart() / SMALLEST_PART_SIZE;
-              address < handlerBlock.getAddressEnd() / SMALLEST_PART_SIZE;
-              address += SMALLEST_PART_SIZE / 2) {
-         list.add(getDataPart(address, 0, 3, SMALLEST_PART_SIZE));
-         list.add(getDataPart(address, 3, 4, SMALLEST_PART_SIZE));
-         list.add(getDataPart(address, 4, 5, SMALLEST_PART_SIZE));
-         list.add(getDataPart(address, 5, 8, SMALLEST_PART_SIZE));
-      }
+        for (long address = handlerBlock.getAddressStart() / SMALLEST_PART_SIZE;
+                address < handlerBlock.getAddressEnd() / SMALLEST_PART_SIZE;
+                address += SMALLEST_PART_SIZE / 2
+        ) {
+            list.add(getDataPart(address, 0, 3, SMALLEST_PART_SIZE));
+            list.add(getDataPart(address, 3, 4, SMALLEST_PART_SIZE));
+            list.add(getDataPart(address, 4, 5, SMALLEST_PART_SIZE));
+            list.add(getDataPart(address, 5, 8, SMALLEST_PART_SIZE));
+        }
       
-      short[][] resultData = new short[list.size()][];
-      for (int i = 0; i < resultData.length; i++) {
-         Short[] dataPart = list.get(i);
-         resultData[i] = new short[dataPart.length];
-         for (int j = 0; j < dataPart.length; j++) {
-            resultData[i][j] = dataPart[j];
-         }
-      }
+        short[][] resultData = new short[list.size()][];
+        for (int i = 0; i < resultData.length; i++) {
+            Short[] dataPart = list.get(i);
+            resultData[i] = new short[dataPart.length];
+            for (int j = 0; j < dataPart.length; j++) {
+               resultData[i][j] = dataPart[j];
+            }
+        }
       
         if ( logger.isDebugEnabled() ) {
             StringBuilder sb = new StringBuilder();
@@ -95,7 +96,7 @@ public final class DataPreparer {
             logger.debug("prepare - end: {}", sb.toString());
         }
       
-      return resultData;
+        return resultData;
     }
    
    /**
@@ -145,35 +146,39 @@ public final class DataPreparer {
     }
      
    
-   /**
-    * Returns data part.
-    *
-    * @param address of data
-    * @param startOffsetIndex start index of offset of data part
-    * @param endOffsetIndex end index of offset of data part
-    * @param smallestPartSize used while counting
-    * @return short[]
-    */
-   private Short[] getDataPart(long address, int startOffsetIndex,
-           int endOffsetIndex, int smallestPartSize) {
-      int dataPartLength = (endOffsetIndex - startOffsetIndex) *  smallestPartSize;
-      Short[] dataPart = new Short[dataPartLength];
-      int dataIndex = 0;
-      for (long j = (address + startOffsetIndex) * smallestPartSize;
-              j < (address + endOffsetIndex) * smallestPartSize; j++) 
-      {
-         dataPart[dataIndex] = getCheckedValue(j);
-         dataIndex++;
-      }
-      return dataPart;
-   }
+    /**
+     * Returns data part.
+     *
+     * @param address of data
+     * @param startOffsetIndex start index of offset of data part
+     * @param endOffsetIndex end index of offset of data part
+     * @param smallestPartSize used while counting
+     * @return short[]
+     */
+    private Short[] getDataPart(
+            long address, int startOffsetIndex, int endOffsetIndex, int smallestPartSize
+    ) {
+        int dataPartLength = (endOffsetIndex - startOffsetIndex) * smallestPartSize;
+        Short[] dataPart = new Short[dataPartLength];
+        int dataIndex = 0;
+        
+        for (long j = (address + startOffsetIndex) * smallestPartSize;
+                j < (address + endOffsetIndex) * smallestPartSize; 
+                j++
+        ) {
+           dataPart[dataIndex] = getCheckedValue(j);
+           dataIndex++;
+        }
+        
+        return dataPart;
+    }
 
-   /** Return value if it's in range, otherwise returns 0x34FF. */
-   private short getCheckedValue(long address) {
-      if (address >= handlerBlock.getAddressEnd()) {
-         return 0x34FF;
-      } else {
-         return (short) (data.get((int) address) & 0xFF);
-      }
-   }
+    /** Return value if it's in range, otherwise returns 0x34FF. */
+    private short getCheckedValue(long address) {
+        if (address > handlerBlock.getAddressEnd()) {
+           return 0x34FF;
+        } else {
+           return (short) (data.get((int) address) & 0xFF);
+        }
+    }
 }

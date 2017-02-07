@@ -15,7 +15,6 @@
  */
 package com.microrisc.simply.iqrf.dpa.v22x.examples.services;
 
-import com.microrisc.simply.Node;
 import com.microrisc.simply.SimplyException;
 import com.microrisc.simply.iqrf.dpa.DPA_Network;
 import com.microrisc.simply.iqrf.dpa.DPA_Node;
@@ -28,8 +27,6 @@ import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeServic
 import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingCodeProperties;
 import com.microrisc.simply.services.ServiceResult;
 import java.io.File;
-import java.util.Collection;
-import java.util.LinkedList;
 
 /**
  * Loading code into one specified node.

@@ -59,4 +59,16 @@ public final class LoadCodeResult {
     public Map<String, Boolean> getAllNodeResultsMap() {
         return new HashMap<>(nodeResultsMap);
     }
+    
+    @Override
+    public String toString() {
+        StringBuilder strBuilder = new StringBuilder();
+        String NEW_LINE = System.getProperty("line.separator");
+        
+        strBuilder.append(this.getClass().getSimpleName() + " { " + NEW_LINE);
+        strBuilder.append("   results: " +  nodeResultsMap + NEW_LINE);
+        strBuilder.append("}");
+        
+        return strBuilder.toString();
+    }
 }
