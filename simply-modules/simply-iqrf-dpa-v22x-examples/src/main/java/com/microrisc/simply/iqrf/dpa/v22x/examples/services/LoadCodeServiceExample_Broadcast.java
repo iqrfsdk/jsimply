@@ -75,6 +75,9 @@ public final class LoadCodeServiceExample_Broadcast {
         String[] nodeIds = new String[] { "1", "2", "3" };
         Collection<Node> targetNodes = getNodes(network1, nodeIds);
         
+        // add coordinator into target nodes
+        targetNodes.add(node0);
+        
         // getting Load Code Service on node 0
         LoadCodeService loadCodeService = node0.getService(LoadCodeService.class);
         if ( loadCodeService == null ) {
