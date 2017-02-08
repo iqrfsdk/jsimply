@@ -34,6 +34,9 @@ public final class DataPreparer {
     // dividing data on 48's part and 16's part
     static final int SMALLEST_PART_SIZE = 16;
    
+    // size of block
+    private static final int BLOCK_SIZE = 64;
+    
     private final CodeBlock handlerBlock;
     private ByteBuffer data;
     private static final Logger logger = LoggerFactory.getLogger(DataPreparer.class);
@@ -61,9 +64,10 @@ public final class DataPreparer {
       
         List<Short[]> list = new LinkedList<>();
       
-        for (long address = handlerBlock.getAddressStart() / SMALLEST_PART_SIZE;
-                address < handlerBlock.getAddressEnd() / SMALLEST_PART_SIZE;
-                address += SMALLEST_PART_SIZE / 2
+        for (
+            long address = handlerBlock.getAddressStart() / SMALLEST_PART_SIZE;
+            address < handlerBlock.getAddressEnd() / SMALLEST_PART_SIZE;
+            address += SMALLEST_PART_SIZE / 2
         ) {
             list.add(getDataPart(address, 0, 3, SMALLEST_PART_SIZE));
             list.add(getDataPart(address, 3, 4, SMALLEST_PART_SIZE));
@@ -105,18 +109,37 @@ public final class DataPreparer {
     * @return array of 16-length blocks
     */
     public short[][] prepareAs16BytesBlocks() {
-        logger.debug("prepare - start");
+        logger.debug("prepareAs16BytesBlocks - start");
       
         List<Short[]> blockList = new LinkedList<>();
-      
+        long address = handlerBlock.getAddressStart() / SMALLEST_PART_SIZE;
+        
+        // number of used smallest parts
+        int partsNum = 0;
+        
         for (
-            long address = handlerBlock.getAddressStart() / SMALLEST_PART_SIZE;
+            ;
             address < handlerBlock.getAddressEnd() / SMALLEST_PART_SIZE;
             address++
         ) {
             blockList.add(getDataPart(address, 0, 1, SMALLEST_PART_SIZE));
+            partsNum++;
         }
-      
+        
+        // it is necessary to also add bytes, which are past of last complete block boundary
+        if ( (handlerBlock.getAddressEnd() % SMALLEST_PART_SIZE) != 0 ) {
+            blockList.add(getDataPart(address, 0, 1, SMALLEST_PART_SIZE));
+            address++;
+            partsNum++;
+        }
+        
+        // it is necessary to add complete BLOCK of data to align with DPA specification
+        while ( ((partsNum * SMALLEST_PART_SIZE) % BLOCK_SIZE) != 0 ) {
+            blockList.add(getDataPart(address, 0, 1, SMALLEST_PART_SIZE));
+            address++;
+            partsNum++;
+        }
+        
         short[][] resultData = new short[blockList.size()][];
         for ( int i = 0; i < resultData.length; i++ ) {
             Short[] block = blockList.get(i);
@@ -139,7 +162,7 @@ public final class DataPreparer {
             }
             sb.append("\n}");
             
-            logger.debug("prepare - end: {}", sb.toString());
+            logger.debug("prepareAs16BytesBlocks - end: {}", sb.toString());
         }
       
         return resultData;
