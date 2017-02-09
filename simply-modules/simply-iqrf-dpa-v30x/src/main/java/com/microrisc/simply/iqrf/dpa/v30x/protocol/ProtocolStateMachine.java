@@ -655,7 +655,7 @@ final class ProtocolStateMachine implements ManageableObject {
                     return;
                 }
                 
-                // indicates, wheather waiting for new event timeouted 
+                // indicates, whether waiting for new event timeouted 
                 // more precisely: waiting on some type of events 
                 boolean timeouted = false;
                 
@@ -762,7 +762,7 @@ final class ProtocolStateMachine implements ManageableObject {
         // termination signal
         waitingTimeCounter.interrupt();
         
-        // indicates, wheather this thread is interrupted
+        // indicates, whether this thread is interrupted
         boolean isInterrupted = false;
         
         try {
@@ -807,7 +807,7 @@ final class ProtocolStateMachine implements ManageableObject {
     // received confirmation
     private DPA_Confirmation confirmation = null;
     
-    // indicates, wheather to count with confirmation in calculation of 
+    // indicates, whether to count with confirmation in calculation of 
     // waiting time
     private boolean countWithConfirmation = false;
     
@@ -965,7 +965,7 @@ final class ProtocolStateMachine implements ManageableObject {
     }
     
     /**
-     * Indicates, wheather it is possible to send next request.
+     * Indicates, whether it is possible to send next request.
      * @return {@code true} if it is possible to send next request
      *         {@code false} otherwise
      */

@@ -62,7 +62,7 @@ public final class IntegerFastQueryList {
     }
     
     /**
-     * Returns indication, wheather specified member is on the list.
+     * Returns indication, whether specified member is on the list.
      * @param member member whose presence to examine
      * @return {@code true} if specified member is present in this list
      *         {@code false}, otherwise

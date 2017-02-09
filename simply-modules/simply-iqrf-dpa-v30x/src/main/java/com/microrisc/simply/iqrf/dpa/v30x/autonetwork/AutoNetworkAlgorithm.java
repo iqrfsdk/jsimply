@@ -28,7 +28,7 @@ public interface AutoNetworkAlgorithm {
     void start();
     
     /**
-     * Indicates, wheather the algorithm has finished.
+     * Indicates, whether the algorithm has finished.
      * @return {@code true} if the algotithm has finished <br>
      *         {@code false} otherwise
      */

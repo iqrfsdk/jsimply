@@ -21,7 +21,8 @@ import java.util.Arrays;
 /**
  * Encapsulates information about used OS of IQMesh network.
  * 
- * @author Michal Konopa, Rostislav Spinar
+ * @author Michal Konopa, 
+ * @author Rostislav Spinar
  */
 public final class OsInfo {
     
@@ -121,12 +122,13 @@ public final class OsInfo {
     /** Flags. */
     private final int flags;
     
-    /** Reserved byte for future purpose */
-    private final Integer reserved;
+    /** Reserved byte for future purpose. */
+    private final int reserved;
     
     
     /**
      * Creates new {@code OsInfo} object (this constructor providing settings for OS 3.08 and newer)
+     * 
      * @param moduleId module ID
      * @param osVersion OS version
      * @param mcuType MCU type
@@ -154,6 +156,7 @@ public final class OsInfo {
     
      /**
      * Creates new {@code OsInfo} object (this constructor providing settings for OS 3.07 and older)
+     * 
      * @param moduleId module ID
      * @param osVersion OS version
      * @param mcuType MCU type
@@ -175,7 +178,7 @@ public final class OsInfo {
         this.rssi = rssi;
         this.supplyVoltage = supplyVoltage;
         this.flags = flags;
-        this.reserved = null;
+        this.reserved = -1;
     }
 
     /**
@@ -244,16 +247,11 @@ public final class OsInfo {
     /**
      * Reserved byte by DPA for future purpose only.
      *
-     * @return undefined value, reservation for future purpose only
-     * @throws IllegalArgumentException if reserved byte is null (it means, that
-     * OsInfo is from module with OS 3.07 or older)
+     * @return undefined value, reservation for future purpose only <br>
+     *         {@code -1} if OsInfo is from module with OS 3.07 or older
      */
     public int getReserved() {
-        if (reserved == null) {
-            throw new IllegalArgumentException("This OS Info is coming from module with OS 3.07 or older and doesn't containt info about reserved byte.");
-        } else {
-            return reserved;
-        }
+        return reserved;
     }
     
     @Override
@@ -270,9 +268,7 @@ public final class OsInfo {
         strBuilder.append(" RSSI: " + rssi + NEW_LINE);
         strBuilder.append(" Supply voltage: " + supplyVoltage + NEW_LINE);
         strBuilder.append(" Flags: " + flags + NEW_LINE);
-        if(reserved != null){
-            strBuilder.append(" Reserved: " + reserved + NEW_LINE);
-        }
+        strBuilder.append(" Reserved: " + reserved + NEW_LINE);
         strBuilder.append("}");
         
         return strBuilder.toString();
@@ -336,9 +332,7 @@ public final class OsInfo {
         strBuilder.append("RSSI: " + rssi + NEW_LINE);
         strBuilder.append("Supply voltage: " + supplyVoltage + NEW_LINE);
         strBuilder.append("Flags: " + flags + NEW_LINE);
-        if(reserved != null){
-            strBuilder.append("Reserved: " + reserved + NEW_LINE);
-        }
+        strBuilder.append("Reserved: " + reserved + NEW_LINE);
         
         return strBuilder.toString();
     }

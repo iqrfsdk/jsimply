@@ -31,7 +31,8 @@ import org.slf4j.LoggerFactory;
  * @author Martin Strouhal
  */
 // October 2015 - implemented toProtoValue and added conversion of undocumented byte
-// May 2016 - updated tp DPA 2.27, added RFPGM
+//  May 2016 - updated tp DPA 2.27, added RFPGM
+//  February 2017 - updated tp DPA 3.00
 public final class HWP_ConfigurationConvertor extends PrimitiveConvertor {
 
     /** Logger. */
@@ -61,6 +62,7 @@ public final class HWP_ConfigurationConvertor extends PrimitiveConvertor {
     static private final int RFSIGNAL_FILTER_POS = 0x09;
     static private final int TIMEOUT_RECV_RF_PACKETS = 0x0A;
     static private final int BAUD_RATE_OF_UART = 0x0B;
+    static private final int ALTERNATIVE_DSM_CHANNEL = 0x0C;
     static private final int RFCHANNEL_A_POS = 0x11;
     static private final int RFCHANNEL_B_POS = 0x12;
     static private final int RFPGM_POS = 0x20;
@@ -69,7 +71,7 @@ public final class HWP_ConfigurationConvertor extends PrimitiveConvertor {
     /** Only in response (ReadHWP) */
     static private final int UNDOCUMENTED_RESPONSE_LENGTH = 1;
     
-    static private final int RFPGM_SINGLE_CHANNEL_MASK = 0b00000011;
+    static private final int RFPGM_DUAL_CHANNEL_MASK = 0b00000011;
     static private final int RFPGM_LP_MODE_MASK = 0b00000100;
     static private final int RFPGM_INVOKE_BY_RESET_MASK = 0b00010000;
     static private final int RFPGM_AUTOMATIC_TERMINATION_MASK = 0b01000000;
@@ -143,7 +145,7 @@ public final class HWP_ConfigurationConvertor extends PrimitiveConvertor {
     }
 
     private HWP_Configuration.RFPGM getRFPGMAsObject(short rfpgmByte){
-       boolean singleChannel = (rfpgmByte & RFPGM_SINGLE_CHANNEL_MASK) == RFPGM_SINGLE_CHANNEL_MASK ? true : false;
+       boolean singleChannel = (rfpgmByte & RFPGM_DUAL_CHANNEL_MASK) == RFPGM_DUAL_CHANNEL_MASK ? true : false;
        boolean lpMode = (rfpgmByte & RFPGM_LP_MODE_MASK) == RFPGM_LP_MODE_MASK ? true : false;
        boolean invokeByReset = (rfpgmByte & RFPGM_INVOKE_BY_RESET_MASK) == RFPGM_INVOKE_BY_RESET_MASK ? true : false;
        boolean automaticTermination = (rfpgmByte & RFPGM_AUTOMATIC_TERMINATION_MASK) == RFPGM_AUTOMATIC_TERMINATION_MASK ? true : false;
@@ -155,7 +157,7 @@ public final class HWP_ConfigurationConvertor extends PrimitiveConvertor {
     
     private short getRFPGMToProtoValue(HWP_Configuration.RFPGM rfpgm){
       short rfpgmByte = 0;
-      rfpgmByte += rfpgm.isSingleChannel() ? (0xFF & RFPGM_SINGLE_CHANNEL_MASK) : 0;
+      rfpgmByte += rfpgm.isSingleChannel() ? (0xFF & RFPGM_DUAL_CHANNEL_MASK) : 0;
       rfpgmByte += rfpgm.isLpMode() ? (0xFF & RFPGM_LP_MODE_MASK) : 0;
       rfpgmByte += rfpgm.isInvokeRfpgmByReset() ? (0xFF & RFPGM_INVOKE_BY_RESET_MASK) : 0;
       rfpgmByte += rfpgm.isAutomaticTermination() ? (0xFF & RFPGM_AUTOMATIC_TERMINATION_MASK) : 0;
@@ -185,19 +187,23 @@ public final class HWP_ConfigurationConvertor extends PrimitiveConvertor {
      * @return converted {@link HWP_Configuration} object
      */
     private HWP_Configuration checkHWPConfig(Object config) {
-        if (!(config instanceof HWP_Configuration)) {
-            throw new IllegalArgumentException("Object to convert must be type of HWP configuration.");
-        }
-        if (config == null) {
+        if ( config == null ) {
             throw new IllegalArgumentException("HWP configuration cannot be null.");
         }
+        
+        if ( !(config instanceof HWP_Configuration) ) {
+            throw new IllegalArgumentException("Object to convert must be type of HWP configuration.");
+        }
+        
         HWP_Configuration hwp_config = (HWP_Configuration) config;
-        if (hwp_config.getUndocumented() == null) {
+        if ( hwp_config.getUndocumented() == null ) {
             throw new IllegalArgumentException("Undocumented byte cannot be null.");
         }
-        if (hwp_config.getUndocumented().length < 1) {
-            throw new IllegalArgumentException("Undocumented byte value cannot be smaller than 1.");
+        
+        if ( hwp_config.getUndocumented().length < 1 ) {
+            throw new IllegalArgumentException("Undocumented byte value cannot be less than 1.");
         }
+        
         return hwp_config;
     }
 
@@ -210,6 +216,7 @@ public final class HWP_ConfigurationConvertor extends PrimitiveConvertor {
 
         // put stanrd peripherals in protoValue to HWP config's protoValue
         putStandardPeriperals(protoValue, config.getStandardPeripherals());
+        
         // config flags
         protoValue[CONFIG_FLAGS_POS] = getConfigFlagsToProtoValue(config.getConfigFlags());
 
@@ -220,6 +227,7 @@ public final class HWP_ConfigurationConvertor extends PrimitiveConvertor {
         protoValue[RFSIGNAL_FILTER_POS] = (short) (config.getRFSignalFilter());
         protoValue[TIMEOUT_RECV_RF_PACKETS] = (short) (config.getTimeoutRecvRFPackets());
         protoValue[BAUD_RATE_OF_UART] = (short) (config.getBaudRateOfUARF());
+        protoValue[ALTERNATIVE_DSM_CHANNEL] = (short) (config.getAltDsmChannel());
         protoValue[RFCHANNEL_A_POS] = (short) (config.getRFChannelA());
         protoValue[RFCHANNEL_B_POS] = (short) (config.getRFChannelB());
         protoValue[RFPGM_POS] = getRFPGMToProtoValue(config.getRfpgm());
@@ -254,6 +262,7 @@ public final class HWP_ConfigurationConvertor extends PrimitiveConvertor {
         int RFSignalFilter = protoValue[RFSIGNAL_FILTER_POS] ^ XOR_OPERAND;
         int timeoutRecvRFPackets = protoValue[TIMEOUT_RECV_RF_PACKETS] ^ XOR_OPERAND;
         int baudRateOfUARF = protoValue[BAUD_RATE_OF_UART] ^ XOR_OPERAND;
+        int altDsmChannel = protoValue[ALTERNATIVE_DSM_CHANNEL] ^ XOR_OPERAND;
         int RFChannelA = protoValue[RFCHANNEL_A_POS] ^ XOR_OPERAND;
         int RFChannelB = protoValue[RFCHANNEL_B_POS] ^ XOR_OPERAND;
         HWP_Configuration.RFPGM rfpgm = getRFPGMAsObject(protoValue[RFPGM_POS]);
@@ -261,10 +270,19 @@ public final class HWP_ConfigurationConvertor extends PrimitiveConvertor {
         short[] undocumentedByte = getUndocumentedByte(protoValue);
 
         HWP_Configuration hwpConfig = new HWP_Configuration(
-                standardPeripherals, configFlags, RFChannelASubNetwork, 
-                RFChannelBSubNetwork, RFOutputPower, RFSignalFilter, 
-                timeoutRecvRFPackets, baudRateOfUARF, RFChannelA, RFChannelB, 
-                rfpgm, undocumentedByte
+                standardPeripherals, 
+                configFlags, 
+                RFChannelASubNetwork, 
+                RFChannelBSubNetwork, 
+                RFOutputPower, 
+                RFSignalFilter, 
+                timeoutRecvRFPackets, 
+                baudRateOfUARF, 
+                altDsmChannel, 
+                RFChannelA, 
+                RFChannelB, 
+                rfpgm, 
+                undocumentedByte
         );
 
         logger.debug("toObject - end: {}", hwpConfig);

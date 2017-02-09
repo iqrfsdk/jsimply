@@ -16,6 +16,8 @@
 
 package com.microrisc.simply.iqrf.dpa.v30x.types;
 
+import java.util.Arrays;
+
 /**
  * Information about peripheral enumeration on some network device.
  * 
@@ -71,8 +73,8 @@ public final class PeripheralEnumeration {
     /** Number of user defined peripherals. */
     private final short userDefPeripheralsNum;
     
-    /** Numbers of default peripherals present on the device. */
-    private final int[] defaultPeripherals;
+    /** Numbers of standard peripherals present on the device. */
+    private final int[] standardPeripherals;
     
     /** HW Profile ID. 0x0000 if not present. */
     private final int hwProfleID;
@@ -83,39 +85,37 @@ public final class PeripheralEnumeration {
     /** Flags. */
     private final int flags;
     
-    
-    private String getDefaultPeripheralsString() {
-        StringBuilder sb = new StringBuilder();
-        
-        sb.append("[");
-        for (int perNumber : defaultPeripherals) {
-            sb.append(perNumber);
-            sb.append(", ");
-        }
-        sb.append("]");
-        
-        return sb.toString();
-    }
+    /** Numbers of user peripherals present on the device. */
+    private final int[] userPeripherals;
+            
     
     /**
      * Creates new object of {@code PeripheralEnumeration}.
+     * 
      * @param dpaProtocolVersion DPA protocol version
      * @param userDefPeripheralsNum number of user defined peripherals
-     * @param defaultPeripherals numbers of enabled default peripherals
+     * @param defaultPeripherals numbers of enabled standard peripherals
      * @param hwProfleID HW profile ID
      * @param hwProfileVersion HW profile version
      * @param flags flags
+     * @param userPeripherals numbers of implemented user peripherals
      */
-    public PeripheralEnumeration(DPA_ProtocolVersion dpaProtocolVersion, 
-            short userDefPeripheralsNum, int[] defaultPeripherals, int hwProfleID, 
-            int hwProfileVersion, int flags 
+    public PeripheralEnumeration(
+            DPA_ProtocolVersion dpaProtocolVersion, 
+            short userDefPeripheralsNum, 
+            int[] defaultPeripherals, 
+            int hwProfleID, 
+            int hwProfileVersion, 
+            int flags,
+            int[] userPeripherals
     ) {
         this.dpaProtocolVersion = dpaProtocolVersion;
         this.userDefPeripheralsNum = userDefPeripheralsNum;
-        this.defaultPeripherals = defaultPeripherals;
+        this.standardPeripherals = defaultPeripherals;
         this.hwProfleID = hwProfleID;
         this.hwProfileVersion = hwProfileVersion;
         this.flags = flags;
+        this.userPeripherals = userPeripherals;
     }
     
     /**
@@ -133,11 +133,11 @@ public final class PeripheralEnumeration {
     }
 
     /**
-     * @return numbers of default peripherals present on the device
+     * @return numbers of standard peripherals present on the device
      */
-    public int[] getDefaultPeripherals() {
-        int[] perArrayCopy = new int[defaultPeripherals.length];
-        System.arraycopy(defaultPeripherals, 0, perArrayCopy, 0, defaultPeripherals.length);
+    public int[] getStandardPeripherals() {
+        int[] perArrayCopy = new int[standardPeripherals.length];
+        System.arraycopy(standardPeripherals, 0, perArrayCopy, 0, standardPeripherals.length);
         return perArrayCopy;
     }
 
@@ -162,6 +162,15 @@ public final class PeripheralEnumeration {
         return flags;
     }
     
+    /**
+     * @return numbers of user peripherals implemented on the device
+     */
+    public int[] getUserPeripherals() {
+        int[] perArrayCopy = new int[userPeripherals.length];
+        System.arraycopy(userPeripherals, 0, perArrayCopy, 0, userPeripherals.length);
+        return perArrayCopy;
+    }
+    
     @Override
     public String toString() {
         StringBuilder strBuilder = new StringBuilder();
@@ -170,10 +179,11 @@ public final class PeripheralEnumeration {
         strBuilder.append(this.getClass().getSimpleName() + " { " + NEW_LINE);
         strBuilder.append(" DPA protocol version: " + dpaProtocolVersion + NEW_LINE);
         strBuilder.append(" Number of user defined peripherals: " + userDefPeripheralsNum + NEW_LINE);
-        strBuilder.append(" Default peripherals: " + getDefaultPeripheralsString() + NEW_LINE);
+        strBuilder.append(" Standard peripherals: " + Arrays.toString(standardPeripherals) + NEW_LINE);
         strBuilder.append(" HW profile ID: " + hwProfleID + NEW_LINE);
         strBuilder.append(" HW profile version: " + hwProfileVersion + NEW_LINE);
         strBuilder.append(" Flags: " + flags + NEW_LINE);
+        strBuilder.append(" User peripherals: " + Arrays.toString(userPeripherals) + NEW_LINE);
         strBuilder.append("}");
         
         return strBuilder.toString();

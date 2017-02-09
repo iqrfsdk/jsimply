@@ -58,6 +58,10 @@ extends DPA_DeviceObject implements OS {
     // MID key length
     private static final int MID_KEY_LENGTH = 24; 
     
+    // length of security data
+    private static final int SECURITY_DATA_LEN = 16;
+    
+    
     private static void checkKey(short[] key) {
         if ( key == null ) {
             throw new IllegalArgumentException("Key cannot be null");
@@ -70,9 +74,32 @@ extends DPA_DeviceObject implements OS {
     }
     
     private static void checkLoadingCodeProperties(LoadingCodeProperties prop){
-       if(prop == null){
-          throw new IllegalArgumentException("Properties cannot be null.");
-       }
+        if( prop == null ) {
+           throw new IllegalArgumentException("Properties cannot be null.");
+        }
+    }
+    
+    private static int checkType(int type) {
+        if ( !DataTypesChecker.isByteValue(type)) {
+            throw new IllegalArgumentException("Type out of range");
+        }
+        return type;
+    }
+    
+    private static short[] checkSecurityData(short[] secData) {
+        if ( secData == null ) {
+            throw new IllegalArgumentException("Security data cannot be null.");
+        }
+        
+        if ( secData.length != SECURITY_DATA_LEN ) {
+            throw new IllegalArgumentException(
+                    "Security data length mismatch."
+                    + "Expected: " + SECURITY_DATA_LEN
+                    + ", got: " + secData.length
+            );
+        }
+        
+        return secData;
     }
     
     
@@ -333,6 +360,9 @@ extends DPA_DeviceObject implements OS {
     
     @Override
     public VoidType setSecurity(int type, short[] data) {
+        checkType(type);
+        checkSecurityData(data);
+        
         UUID uid = dispatchCall(
                 "7", new Object[] { getRequestHwProfile(), type, data }, getDefaultWaitingTimeout() 
         );

@@ -16,6 +16,7 @@
 
 package com.microrisc.simply.iqrf.dpa.v30x.typeconvertors;
 
+import com.microrisc.simply.iqrf.dpa.v30x.protocol.DPA_ProtocolProperties;
 import com.microrisc.simply.iqrf.dpa.v30x.types.PeripheralEnumeration;
 import com.microrisc.simply.protocol.mapping.ConvertorFactoryMethod;
 import com.microrisc.simply.typeconvertors.PrimitiveConvertor;
@@ -67,8 +68,8 @@ public final class PeripheralEnumerationConvertor extends PrimitiveConvertor {
     
     static private final int USER_PERS_NUM_POS = 2;
     
-    static private final int DEF_PERS_POS = 3;
-    static private final int DEF_PERS_LENGTH = 4;
+    static private final int STANDARD_PERS_POS = 3;
+    static private final int STANDARD_PERS_LENGTH = 4;
     
     static private final int HWPROFID_POS = 7;
     static private final int HWPROFID_LENGTH = 2;
@@ -78,17 +79,72 @@ public final class PeripheralEnumerationConvertor extends PrimitiveConvertor {
     
     static private final int FLAGS_POS = 11;
     
+    static private final int USER_PERS_POS = 12;
+    static private final int USER_PERS_MAX_LENGTH = 12;
+    
     
     // returns array of numbers of supported peripheral
-    private int[] getDefaultPeripherals(short[] defPers) {
+    private int[] getStandardPeripherals(short[] protoValue) {
+        short[] standardPerBitArr = new short[STANDARD_PERS_LENGTH];
+        System.arraycopy(protoValue, STANDARD_PERS_POS, standardPerBitArr, 0, STANDARD_PERS_LENGTH);
+        
         List<Integer> perNumbersList = new LinkedList<>();
         
         int byteRank = 0;
-        for (short defPersByte : defPers) {
+        for ( short defPersByte : standardPerBitArr ) {
             int bitComp = 1;
             for (int i = 0; i < 8; i++) {
                 if ((defPersByte & bitComp) == bitComp) {
                     perNumbersList.add(byteRank*8 + i);
+                }
+                bitComp *= 2; 
+            }
+            byteRank++;
+        }
+        
+        // toArray method works with reference types
+        int[] perNumberArr = new int[perNumbersList.size()];
+        int arrIndex = 0;
+        for (int perNumber : perNumbersList) {
+            perNumberArr[arrIndex++] = perNumber;
+        }
+        
+        return perNumberArr;
+    }
+    
+    // returns array of numbers of implemented user peripherals
+    private int[] getUserPeripherals(short[] protoValue) throws ValueConversionException {
+        int userPerBitArrLen = protoValue.length - USER_PERS_POS;
+        
+        // no implemted user peripherals
+        if ( userPerBitArrLen <= 0 ) {
+            logger.debug("No implemented user peripherals.");
+            return new int[0];
+        }
+        
+        if ( userPerBitArrLen > USER_PERS_MAX_LENGTH ) {
+            throw new ValueConversionException(
+                    "User peripherals bit array maximal length exceeded."
+                    + "Max = " + USER_PERS_MAX_LENGTH
+                    + ", actual length = " + userPerBitArrLen
+            );
+        }
+        
+        short[] userPerBitArr = new short[userPerBitArrLen];
+        System.arraycopy(protoValue, USER_PERS_POS, userPerBitArr, 0, userPerBitArrLen);
+        
+        List<Integer> perNumbersList = new LinkedList<>();
+        
+        int byteRank = 0;
+        for ( short defPersByte : userPerBitArr ) {
+            int bitComp = 1;
+            for (int i = 0; i < 8; i++) {
+                if ((defPersByte & bitComp) == bitComp) {
+                    perNumbersList.add(
+                            byteRank * 8 
+                            + i 
+                            + DPA_ProtocolProperties.PNUM_Properties.USER_PERIPHERAL_BEGIN
+                    );
                 }
                 bitComp *= 2; 
             }
@@ -148,13 +204,11 @@ public final class PeripheralEnumerationConvertor extends PrimitiveConvertor {
         logger.debug("toObject - start: protoValue={}", protoValue);
         
         short userDefPeripheralsNum = protoValue[USER_PERS_NUM_POS];
-        
-        short[] defPers = new short[DEF_PERS_LENGTH];
-        System.arraycopy(protoValue, DEF_PERS_POS, defPers, 0, DEF_PERS_LENGTH);
-        int[] defaultPeripherals = getDefaultPeripherals(defPers);
+        int[] stanardPeripherals = getStandardPeripherals(protoValue);
         int hwProfType = getHwProfID(protoValue);
         int hwProfVersion = getHwProfVersion(protoValue);
         int flags = protoValue[FLAGS_POS];
+        int[] userPeripherals = getUserPeripherals(protoValue);
         
         // dpa protocol version info
         // prevent one bit which describes demo HWP
@@ -165,8 +219,8 @@ public final class PeripheralEnumerationConvertor extends PrimitiveConvertor {
                 new PeripheralEnumeration.DPA_ProtocolVersion(protoMinorNumber, protoMajorNumber);
         
         PeripheralEnumeration perEnum = new PeripheralEnumeration(
-                dpaProtoVersion, userDefPeripheralsNum, defaultPeripherals, 
-                hwProfType, hwProfVersion, flags
+                dpaProtoVersion, userDefPeripheralsNum, stanardPeripherals, 
+                hwProfType, hwProfVersion, flags, userPeripherals
         );
         
         logger.debug("toObject - end: {}", perEnum);

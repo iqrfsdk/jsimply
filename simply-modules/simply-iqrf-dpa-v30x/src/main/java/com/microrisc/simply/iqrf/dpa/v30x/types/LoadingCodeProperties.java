@@ -50,8 +50,13 @@ public class LoadingCodeProperties {
     * @param length of the code image
     * @param checksum of the code image
     */
-   public LoadingCodeProperties(LoadingAction action, LoadingContent content,
-           int address, int length, int checksum) {
+   public LoadingCodeProperties(
+           LoadingAction action, 
+           LoadingContent content, 
+           int address, 
+           int length, 
+           int checksum
+   ) {
       this.action = action;
       this.content = content;
       this.address = address;

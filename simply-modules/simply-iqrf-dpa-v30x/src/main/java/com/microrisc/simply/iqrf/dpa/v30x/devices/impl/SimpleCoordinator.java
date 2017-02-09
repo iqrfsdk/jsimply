@@ -43,7 +43,7 @@ public final class SimpleCoordinator
 extends DPA_DeviceObject implements Coordinator {
    
     /** Network data length. */
-    public static final int NETWORK_DATA_LENGTH = 18;
+    public static final int NETWORK_DATA_LENGTH = 48;
     
     /** Network data length. */
     public static final int MODULE_ID_LENGTH = 4;
@@ -51,6 +51,21 @@ extends DPA_DeviceObject implements Coordinator {
     /** User data length. */
     public static final int USER_DATA_LENGTH = 4;
     
+    
+    // EEEPROM address range
+    private static final int EEEPROM_BEGIN_ADDRESS = 0x0000;
+    private static final int EEEPROM_END_ADDRESS = 0xFFFF;
+    
+    private static int checkEeepromAddress(int eeepromAddress) {
+        if ( eeepromAddress >= EEEPROM_BEGIN_ADDRESS && eeepromAddress <= EEEPROM_END_ADDRESS ) {
+            return eeepromAddress;
+        }
+        
+        throw new IllegalArgumentException(
+                "EEEPROM address out of range of: "
+                + EEEPROM_BEGIN_ADDRESS + ".." + EEEPROM_END_ADDRESS
+        );
+    }
     
     private static int checkNodeAddress(int nodeAddress) {
         if ( !DataTypesChecker.isByteValue(nodeAddress) ) {
@@ -351,7 +366,7 @@ extends DPA_DeviceObject implements Coordinator {
     
     @Override
     public UUID async_discoveryData(int address) {
-        checkNodeAddress(address);
+        checkEeepromAddress(address);
         return dispatchCall(
                 "11", new Object[] { getRequestHwProfile(), address }, getDefaultWaitingTimeout() 
         );
@@ -532,7 +547,7 @@ extends DPA_DeviceObject implements Coordinator {
     
     @Override
     public short[] discoveryData(int address) {
-        checkNodeAddress(address);
+        checkEeepromAddress(address);
         UUID uid = dispatchCall(
                 "11", new Object[] { getRequestHwProfile(), address }, getDefaultWaitingTimeout() 
         );

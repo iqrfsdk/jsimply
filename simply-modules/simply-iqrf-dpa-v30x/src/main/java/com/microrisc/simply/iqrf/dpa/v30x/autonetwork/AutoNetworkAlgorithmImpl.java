@@ -116,7 +116,7 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
     
     
     /** 
-     * Default indicator, wheather to use FRC automatically in checking 
+     * Default indicator, whether to use FRC automatically in checking 
      * the accessability of new bonded nodes. 
      */
     public static final boolean AUTOUSE_FRC_DEFAULT = true;
@@ -479,7 +479,7 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
         // termination signal to algo thread
         algoThread.interrupt();
         
-        // indicates, wheather this thread is interrupted
+        // indicates, whether this thread is interrupted
         boolean isInterrupted = false;
         
         try {
@@ -1445,7 +1445,7 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
     // number of nodes already bonded to the network from the start of the algorithm
     private int newBondedNodesCount = 0;
     
-    // indicates, wheather there is currently bonded the user specified number of nodes
+    // indicates, whether there is currently bonded the user specified number of nodes
     // in the network
     private boolean isBondedRequiredNumberOfNodes() {
         if ( numberOfNodesToBond == NODES_NUMBER_TO_BOND_MAX ) {

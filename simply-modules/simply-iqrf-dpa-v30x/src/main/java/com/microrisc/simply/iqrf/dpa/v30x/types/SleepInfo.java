@@ -80,7 +80,7 @@ public final class SleepInfo {
         RUN_CALIBRATION_BEFORE_SLEEP            (0b000010),
         GREEN_LED_FLASH_AFTER_SLEEP             (0b000100),
         WAKEUP_ON_PORTB4_POSITIVE_EDGE_CHANGE   (0b001000),
-        USE_32MS_UNIT                             (0b010000),
+        USE_32MS_UNIT                           (0b010000),
         USE_DEEP_SLEEP                          (0b100000);
         
         private final int bitsValue;

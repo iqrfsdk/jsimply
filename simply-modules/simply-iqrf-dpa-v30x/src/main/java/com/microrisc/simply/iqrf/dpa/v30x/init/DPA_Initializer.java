@@ -198,7 +198,7 @@ extends
             throw new SimplyException("No response from peripheral enumeration request.");
         }
         
-        int[] defaultPerNumbers = perEnum.getDefaultPeripherals();
+        int[] defaultPerNumbers = perEnum.getStandardPeripherals();
         int userPerTotal = perEnum.getUserDefPeripheralsNum();
         Set<Integer> allPerNumbers = new HashSet<>();
         for ( int defPerNumber : defaultPerNumbers ) {

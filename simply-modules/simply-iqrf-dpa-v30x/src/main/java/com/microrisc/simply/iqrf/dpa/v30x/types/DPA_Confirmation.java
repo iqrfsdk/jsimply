@@ -45,6 +45,7 @@ public final class DPA_Confirmation {
     
     /**
      * Creates new object of DPA Confirmation.
+     * 
      * @param dpaValue DPA value
      * @param hops Number of hops used to deliver the DPA request to the addressed node.
      * @param timeslotLength Timeslot length used to deliver the DPA request to the addressed node.

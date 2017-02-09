@@ -27,11 +27,11 @@ import com.microrisc.simply.SimplyException;
 import com.microrisc.simply.asynchrony.BaseAsynchronousMessage;
 import com.microrisc.simply.di_services.WaitingTimeoutService;
 import com.microrisc.simply.errors.NetworkInternalError;
-import com.microrisc.simply.iqrf.dpa.DPA_ResponseCode;
 import com.microrisc.simply.iqrf.dpa.asynchrony.DPA_AsynchronousMessage;
 import com.microrisc.simply.iqrf.dpa.asynchrony.SimpleDPA_AsynchronousMessageSource;
 import com.microrisc.simply.iqrf.dpa.broadcasting.BroadcastRequest;
 import com.microrisc.simply.iqrf.dpa.broadcasting.BroadcastResult;
+import com.microrisc.simply.iqrf.dpa.v30x.DPA_ResponseCode;
 import com.microrisc.simply.iqrf.dpa.v30x.devices.Coordinator;
 import com.microrisc.simply.iqrf.dpa.v30x.di_services.method_id_transformers.CoordinatorStandardTransformer;
 import com.microrisc.simply.iqrf.dpa.v30x.typeconvertors.DPA_ConfirmationConvertor;
@@ -168,7 +168,7 @@ implements ProtocolStateMachineListener
         initTimeUnlimitedRequests();
     }   
     
-    // indicates, wheather the specified request is time unlimited
+    // indicates, whether the specified request is time unlimited
     private static boolean isTimeUnlimitedRequest(CallRequest request) {
         TimeUnlimitedRequestInfo unlimRequestInfo 
                 = timeUnlimitedRequestsMap.get(request.getDeviceInterface());
@@ -180,15 +180,15 @@ implements ProtocolStateMachineListener
         return unlimRequestInfo.methodIds.contains(request.getMethodId());        
     }
 
-    // indicates, wheather a timeout is defined by user
+    // indicates, whether a timeout is defined by user
     private static boolean isTimeoutDefinedByUserRequest(long procTime) {
         return procTime != WaitingTimeoutService.UNLIMITED_WAITING_TIMEOUT;
     }
     
-    // indicates, wheather a time unlimited request is in process
+    // indicates, whether a time unlimited request is in process
     private volatile boolean isTimeUnlimitedRequestInProcess = false;
     
-    // indicates, wheather a timeout is defined by user
+    // indicates, whether a timeout is defined by user
     private volatile boolean isTimeoutDefinedByUserRequestInProcess = false;
     
     /** Last sent request. */

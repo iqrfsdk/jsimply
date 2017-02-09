@@ -25,6 +25,7 @@ public class HWP_ConfigurationByte {
 
    /**
     * Create a instance of object which encapsulate values mainly for DPA cmd WriteHWPConfigurationByte.
+    * 
     * @param address of item which will be set
     * @param value of item which will be set
     * @param mask which specifies bits of the configuration to set

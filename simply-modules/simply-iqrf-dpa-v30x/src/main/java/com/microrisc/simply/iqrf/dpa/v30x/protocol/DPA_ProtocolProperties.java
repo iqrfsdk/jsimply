@@ -16,7 +16,7 @@
 
 package com.microrisc.simply.iqrf.dpa.v30x.protocol;
 
-import com.microrisc.simply.iqrf.dpa.DPA_ResponseCode;
+import com.microrisc.simply.iqrf.dpa.v30x.DPA_ResponseCode;
 import com.microrisc.simply.typeconvertors.AbstractConvertor;
 import com.microrisc.simply.typeconvertors.ValueConversionException;
 import java.nio.ByteBuffer;
@@ -28,8 +28,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Encapsulates properties of IQRF DPA application protocol. 
  * Implemented according to:
- *  "IQRF DPA Framework. Technical guide. Version v2.27. IQRF OS v3.08D
- *  14.4.2016"
+ *  "IQRF DPA Framework. Technical guide. Version v3.00. IQRF OS v4.00D
+ *  27.1.2017"
  * document.
  * <p>
  * Request message format: <br>
@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
         length: 2 bytes
  PNUM - Perihperal number ( 0 IQMESH, 1 OS, 2-0x6F other peripherals )
  PCMD - Command specifying an action to be taken. Actual allowed value range 
-        depends on the peripheral type. The most significant bit indicates DPA_ProtocolProperties 
+        depends on the peripheral type. The most significant bit indicates DPA 
         response message.
  HWPID  - HW Profile, length: 2B
  DATA - array of bytes ( only optionally )
@@ -86,20 +86,6 @@ public final class DPA_ProtocolProperties {
 
         /** IQMESH Broadcast address. */
         public static final int IQMESH_BROADCAST_ADDRESS = 0xFF;
-        
-        /**
-         * Indicates, wheather the specified value of NADR is reserved.
-         * @param nadr NADR value to check
-         * @return {@code true} if {@code nadr} is reserved <br>
-         *         {@code false} otherwise
-         */
-        public static boolean isReserved(int nadr) {
-            return (
-                    ( nadr >= 0xF0 ) && ( nadr <= 0xFB )
-                    || ( nadr == 0xFD )
-                    || ( nadr >= 0x100 ) && ( nadr <= 0xFFFF )
-            );
-        }
     }
     
     /**
@@ -129,64 +115,9 @@ public final class DPA_ProtocolProperties {
         public static final int FRC =           0x0D;        
         
         /** User peripherals properties. */
-        public static final int USER_PERIPHERAL_START =   0x20;
-        public static final int USER_PERIPHERAL_END =     0x6F;
+        public static final int USER_PERIPHERAL_BEGIN =   0x20;
+        public static final int USER_PERIPHERAL_END =     0x3E;
         
-        /**
-         * Indicates, wheather the specified value of PNUM is a user peripheral.
-         * @param pnum PNUM value to check
-         * @return {@code true} if {@code pnum} is a user peripheral <br>
-         *         {@code false} otherwise
-         */
-        public static boolean isUser(int pnum) {
-            return (( pnum >= 0x20 ) && ( pnum <= 0x6F ));
-        }
-        
-        /**
-         * Indicates, wheather the specified value of PNUM is reserved.
-         * @param pnum PNUM value to check
-         * @return {@code true} if {@code pnum} is reserved <br>
-         *         {@code false} otherwise
-         */
-        public static boolean isReserved(int pnum) {
-            return (( pnum >= 0x70 ) && ( pnum <= 0xFF ));
-        }
-        
-        /**
-         * Indicates, wheather the specified value of PNum is reserved for standard
-         * peripheral.
-         * @param pnum PNUM value to check
-         * @return {@code true} if {@code pnum} is reserved for standard peripheral <br>
-         *         {@code false} otherwise
-         */
-        public static boolean isReservedForStandard(int pnum) {
-            return (( pnum >= 0x00 ) && ( pnum <= 0x1F ));
-        }
-    }
-    
-    /**
-     * PCMD properties.
-     */
-    public static class PCMD_Properties {
-        
-        // suppresses default constructor for noninstantiability
-        private PCMD_Properties() {
-            throw new AssertionError();
-        }
-        
-        /** PCmd values range. */
-        public static final int VALUE_MIN = 0x00;
-        public static final int VALUE_MAX = 0x3E;
-        
-        /**
-         * Indicates, wheather the specified value of PCMD is reserved.
-         * @param pcmd PCMD value to check
-         * @return {@code true} if {@code pcmd} is reserved <br>
-         *         {@code false} otherwise
-         */
-        public static boolean isReserved(int pcmd) {
-            return ( pcmd >= 0x3F ) && ( pcmd <= 0xFF ) ;
-        }
     }
     
    /**
@@ -195,17 +126,6 @@ public final class DPA_ProtocolProperties {
     * @author Michal Konopa
     */
    public static class HWPID_Properties {
-       
-       /**
-        * Types of HW profiles.
-        */
-       public static enum TYPE {
-           DEFAULT,
-           RESERVED,
-           CERTIFIED,
-           USER,
-           DO_NOT_CHECK
-       }
 
        /** Default HW profile. */
        public static final int DEFAULT = 0x00;
@@ -218,93 +138,11 @@ public final class DPA_ProtocolProperties {
        private HWPID_Properties() {
            throw new AssertionError();
        }
-       
-       /**
-        * Indicates, wheather the specified value of HWPID is reserved.
-        * @param hwpId HWPID to check
-        * @return {@code true} if {@code hwpId} is reserved HW profile <br>
-        *         {@code false} otherwise
-        */
-       public static boolean isReserved(int hwpId) {
-           if ( hwpId == DEFAULT ) {
-               return false;
-           }
-           return (hwpId & 0b01) == 0 || (hwpId == 0xFFFF);
-       }
-       
-       /**
-        * Indicates, wheather the specified value of HWPID is cirtified HW profile.
-        * @param hwpId HWPID to check
-        * @return {@code true} if {@code hwpId} is certified HW profile <br>
-        *         {@code false} otherwise
-        */
-       public static boolean isCertified(int hwpId) {
-           return (hwpId & 0b111) != 0 || (hwpId & 0b1110) != 0;
-       }
-
-       /**
-        * Indicates, wheather the specified value of HWPID is user HW profile.
-        * @param hwpId HW profile to check
-        * @return {@code true} if {@code hwpId} is user HW profile <br>
-        *         {@code false} otherwise
-        */
-       public static boolean isUser(int hwpId) {
-           if ( hwpId == 0xFFFF ) {
-               return false;
-           }
-           return (hwpId & 0b1111) == 0b1111;
-       }
-
-       /**
-        * Indicates, wheather the specified value of HWPID is "Do not check".
-        * @param hwpId HW profile to check
-        * @return {@code true} if {@code hwpId} is "Do not check"<br>
-        *         {@code false} otherwise
-        */
-       public static boolean isDoNotCheck(int hwpId) {
-           return ( hwpId == DO_NOT_CHECK );
-       }
-       
-
-       /**
-        * Returns type of the specified value of HW profile. 
-        * @param hwpId HW profile, which the type to return for
-        * @return type of HW profile
-        * @throws IllegalArgumentException if {@code hwpId} is out of [0 .. 0xFFFF] interval
-        */
-       public static TYPE getType(int hwpId) {
-           if ( (hwpId < 0) || (hwpId > 0xFFFF) ) {
-               throw new IllegalArgumentException("Value of HW profile out of bounds: " + hwpId);
-           }
-
-           if ( hwpId == DEFAULT ) {
-               return TYPE.DEFAULT;
-           }
-
-           if ( isCertified(hwpId) ) {
-               return TYPE.CERTIFIED;
-           }
-
-           if ( isUser(hwpId) ) {
-               return TYPE.USER;
-           }
-           
-           if ( isDoNotCheck(hwpId) ) {
-               return TYPE.DO_NOT_CHECK;
-           }
-           
-           if ( isReserved(hwpId) ) {
-               return TYPE.RESERVED;
-           }
-
-           // run should not reach this place
-           throw new IllegalStateException("Uknown value of HW profile: " + hwpId);
-       }
 
    }
    
     
-   /**
+    /**
      * FRC properties.
      */
     public static class FRC_Properties {
@@ -326,6 +164,7 @@ public final class DPA_ProtocolProperties {
         
         /**
          * For specified FRC command returns type of collected data. 
+         * 
          * If FRC command value is outside of all collected data types ranges, 
          * {@code null} is returned.
          * @param frcCommand FRC command, which to return type of collected data for
@@ -362,21 +201,15 @@ public final class DPA_ProtocolProperties {
     /** Start index of perihperal number field. */
     public static final int PNUM_START = 2;
     
-    /** Length of method perihperal number field. */
+    /** Length of perihperal number field. */
     public static final int PNUM_LENGTH = 1;
     
     
-    /** Start index of data address field. */
+    /** Start index of command field. */
     public static final int PCMD_START = 3;
     
-    /** Length of data address field. */
+    /** Length of command field. */
     public static final int PCMD_LENGTH = 1;
-    
-    /** Minimum value of PCMD field. */
-    public static final int PCMD_VALUE_MIN = 0x00;
-    
-    /** Maximal value of PCMD field. */
-    public static final int PCMD_VALUE_MAX = 0x3E;
     
     
     /** Start of HW Profile. */
@@ -420,16 +253,16 @@ public final class DPA_ProtocolProperties {
     
     /**
      * Sets part of specified protocol message to specified Integer data.
+     * 
      * @param protoMsg message to set
      * @param data source data
      * @param startIndex start index in the message
      * @param dataLength number of bytes to copy
      */
-    static private void setMessageData_Int(short[] protoMsg, int data, int startIndex, 
-            int dataLength) {
-        logger.debug("setMessageData_Integer - start: protoMsg={}, data={}", 
-                protoMsg, data
-        );
+    static private void setMessageData_Int(
+            short[] protoMsg, int data, int startIndex, int dataLength
+    ) {
+        logger.debug("setMessageData_Integer - start: protoMsg={}, data={}", protoMsg, data);
         
         ByteBuffer byteBuffer = ByteBuffer.allocate(4);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -448,15 +281,17 @@ public final class DPA_ProtocolProperties {
      * @param startIndex start index in the message
      * @param dataLength number of bytes
      */
-    static private int getMessageDataAsInt(short[] message, int startIndex, 
-            int dataLength
+    static private int getMessageDataAsInt(
+            short[] message, int startIndex, int dataLength
     ) {
-        logger.debug("getMessageDataAsInt - start: message={}, startIndex={}, dataLength={}",
+        logger.debug(
+            "getMessageDataAsInt - start: message={}, startIndex={}, dataLength={}",
             message, startIndex, dataLength
         );
         
         ByteBuffer byteBuffer = ByteBuffer.allocate(4);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        
         for (int byteId = 0; byteId < dataLength; byteId++) {
             byteBuffer.put((byte)message[startIndex + byteId]);
         }
@@ -477,6 +312,7 @@ public final class DPA_ProtocolProperties {
     
     /**
      * Sets NADR field of specified message to specified value.
+     * 
      * @param protoMsg message to set
      * @param nodeAddress value to use
      */
@@ -486,6 +322,7 @@ public final class DPA_ProtocolProperties {
     
     /**
      * Sets PNUM field of specified message to specified value.
+     * 
      * @param protoMsg message to set
      * @param perNumber value to use
      */
@@ -635,6 +472,7 @@ public final class DPA_ProtocolProperties {
     
     /**
      * Returns converted RESPONSE_DATA field.
+     * 
      * @param protoMsg source message
      * @param typeConvertor type convertor to use     
      * @return RESPONSE_DATA field of specified message.

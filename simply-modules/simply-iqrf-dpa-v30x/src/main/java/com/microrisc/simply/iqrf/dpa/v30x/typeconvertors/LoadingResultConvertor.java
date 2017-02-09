@@ -30,59 +30,62 @@ import org.slf4j.LoggerFactory;
  */
 public final class LoadingResultConvertor extends PrimitiveConvertor {
 
-   /** Logger. */
-   private static final Logger logger = LoggerFactory.getLogger(
-           LoadingResultConvertor.class);
+    /** Logger. */
+    private static final Logger logger = LoggerFactory.getLogger(LoadingResultConvertor.class);
 
-   private LoadingResultConvertor() {
-   }
+    private LoadingResultConvertor() {}
 
-   /** Singleton. */
-   private static final LoadingResultConvertor instance = new LoadingResultConvertor();
+    /** Singleton. */
+    private static final LoadingResultConvertor instance = new LoadingResultConvertor();
 
 
-   /**
-    * @return {@code LoadingResultConvertor} instance
-    */
-   @ConvertorFactoryMethod
-   static public LoadingResultConvertor getInstance() {
-      return instance;
-   }
+    /**
+     * @return {@code LoadingResultConvertor} instance
+     */
+    @ConvertorFactoryMethod
+    static public LoadingResultConvertor getInstance() {
+       return instance;
+    }
 
-   /** Size of returned response. */
-   static public final int TYPE_SIZE = 1;
+    /** Size of returned response. */
+    static public final int TYPE_SIZE = 1;
 
-   @Override
-   public int getGenericTypeSize() {
-      return TYPE_SIZE;
-   }
+    @Override
+    public int getGenericTypeSize() {
+       return TYPE_SIZE;
+    }
+    
+    
+    // postitions of fields
+    private static final int RESULT_POS = 0;
 
+    
+    /**
+     * Currently not supported. Throws {@code UnsupportedOperationException }.
+     *
+     * @throws UnsupportedOperationException
+     */
+    @Override
+    public short[] toProtoValue(Object value) throws ValueConversionException {
+       throw new UnsupportedOperationException("Not supported yet.");
+    }
 
-   /**
-    * Currently not supported. Throws {@code UnsupportedOperationException }.
-    *
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   public short[] toProtoValue(Object value) throws ValueConversionException {
-      throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   @Override
-   public Object toObject(short[] protoValue) throws ValueConversionException {
-      logger.debug("toObject - start: protoValue={}", protoValue);
-      LoadingResult result;
-      if (protoValue.length >= TYPE_SIZE) {
-         if (protoValue[0] == 1) {
+    @Override
+    public Object toObject(short[] protoValue) throws ValueConversionException {
+        logger.debug("toObject - start: protoValue={}", protoValue);
+        
+        if ( protoValue.length != TYPE_SIZE ) {
+            throw new ValueConversionException("Incorrect data length: " + protoValue.length);
+        }
+        
+        LoadingResult result = null;
+        if ( protoValue[RESULT_POS] == 1 ) {
             result = new LoadingResult(true);
-         } else {
+        } else {
             result = new LoadingResult(false);
-         }
-      } else {
-         logger.warn("Length of protoValue is 0 instead of 1.");
-         result = new LoadingResult(false);
-      }
-      logger.debug("toObject - end: {}", result);
-      return result;
-   }
+        }
+        
+        logger.debug("toObject - end: {}", result);
+        return result;
+    }
 }

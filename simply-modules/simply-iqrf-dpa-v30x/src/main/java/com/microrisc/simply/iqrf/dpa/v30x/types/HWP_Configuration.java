@@ -22,6 +22,7 @@ package com.microrisc.simply.iqrf.dpa.v30x.types;
  * @author Martin Strouhal
  */
 // October 2015 - added undocumented byte property and implemented equals method
+// February 2017 - updated tp DPA 3.00
 public final class HWP_Configuration {
 
     /** Standard peripherals. */
@@ -143,18 +144,22 @@ public final class HWP_Configuration {
 
     }
     
-    public static class RFPGM{
+    public static class RFPGM {
        
        /** Sets, if receiving on single channel or on dual channel. */
        private boolean singleChannel;
+       
        /** Sets, if uploaded TRs uses STD RX mode or LP RX mode */
        private boolean lpMode;
+       
        /** Sets, if RFPGM invoking by reset. {@code true} is enabled and
         * {@code false} is disabled. This bit operates like enableRFPGM or
         * disableRFPGM functions. */
        private boolean invokeRfpgmByReset;
+       
        /** Sets, if RFPGM is automatically terminated after ~1 minute. */
        private boolean automaticTermination;
+       
        /** Sets, if it is enabled RFPGM termination by MCU pin RB4. {@code true}
         * is enabled (default), {@code false} is disabled. If enabled, the
         * termination is invoked by log. 0 for at least ~0.25 s for single
@@ -164,9 +169,13 @@ public final class HWP_Configuration {
         * This time must be prolonged up to 2 s in case of strong RF noise. */
        private boolean terminationByPin;
 
-      public RFPGM(boolean singleChannel, boolean lpMode,
-              boolean invokeRfpgmByReset, boolean automaticTermination,
-              boolean terminationByPin) {
+      public RFPGM(
+              boolean singleChannel, 
+              boolean lpMode,
+              boolean invokeRfpgmByReset,
+              boolean automaticTermination,
+              boolean terminationByPin
+      ) {
          this.singleChannel = singleChannel;
          this.lpMode = lpMode;
          this.invokeRfpgmByReset = invokeRfpgmByReset;
@@ -311,7 +320,10 @@ public final class HWP_Configuration {
      * Open (i.e. 0x00 = 1200 ).
      */
     private int baudRateOfUARF;
-
+    
+    // alternative DSM channel
+    private int altDsmChannel;
+    
     /** RF channel A of the main network. Valid numbers depend on used RF band. */
     private int RFChannelA;
 
@@ -344,6 +356,7 @@ public final class HWP_Configuration {
      * frequency. Valid numbers 1-255. Also see API variable uns8 LP_XLP_toutRF.
      * @param baudRateOfUARF Baud rate of the UART interface if used. Uses the
      * same coding as UART Open (i.e. 0x00 = 1200 )
+     * @param altDsmChannel alternative DSM channel
      * @param RFChannelA RF channel A of the main network. Valid numbers depend
      * on used RF band.
      * @param RFChannelB RF channel B of the main network. Valid numbers depend
@@ -356,7 +369,8 @@ public final class HWP_Configuration {
             IntegerFastQueryList standardPeripherals, DPA_ConfigFlags configFlags,
             int RFChannelASubNetwork, int RFChannelBSubNetwork, int RFOutputPower,
             int RFSignalFilter, int timeoutRecvRFPackets, int baudRateOfUARF,
-            int RFChannelA, int RFChannelB, RFPGM rfpgm, short[] undocumented
+            int altDsmChannel, int RFChannelA, int RFChannelB, RFPGM rfpgm, 
+            short[] undocumented
     ) {
         this.standardPeripherals = standardPeripherals;
         this.configFlags = configFlags;
@@ -366,6 +380,7 @@ public final class HWP_Configuration {
         this.RFSignalFilter = RFSignalFilter;
         this.timeoutRecvRFPackets = timeoutRecvRFPackets;
         this.baudRateOfUARF = baudRateOfUARF;
+        this.altDsmChannel = altDsmChannel;
         this.RFChannelA = RFChannelA;
         this.RFChannelB = RFChannelB;
         this.rfpgm = rfpgm;
@@ -431,6 +446,13 @@ public final class HWP_Configuration {
     }
 
     /**
+     * @return the altDsmChannel
+     */
+    public int getAltDsmChannel() {
+        return altDsmChannel;
+    }
+
+    /**
      * @return RF channel A of the main network. Valid numbers depend on used RF
      * band.
      */
@@ -493,6 +515,13 @@ public final class HWP_Configuration {
         this.baudRateOfUARF = baudRateOfUARF;
     }
 
+    /**
+     * @param altDsmChannel the altDsmChannel to set
+     */
+    public void setAltDsmChannel(int altDsmChannel) {
+        this.altDsmChannel = altDsmChannel;
+    }
+
     public void setRFChannelA(int RFChannelA) {
         this.RFChannelA = RFChannelA;
     }
@@ -523,6 +552,7 @@ public final class HWP_Configuration {
         strBuilder.append(" RF signal filter: " + RFSignalFilter + NEW_LINE);
         strBuilder.append(" Timeout receiving RF packets at LP or XLP modes: " + timeoutRecvRFPackets + NEW_LINE);
         strBuilder.append(" Baud rate of the UART: " + baudRateOfUARF + NEW_LINE);
+        strBuilder.append(" Alternative DSM channel: " + altDsmChannel + NEW_LINE);
         strBuilder.append(" RF channel A of the main network: " + RFChannelA + NEW_LINE);
         strBuilder.append(" RF channel B of the main network: " + RFChannelB + NEW_LINE);
         strBuilder.append(" RFPGM: " + rfpgm + NEW_LINE);
@@ -544,6 +574,7 @@ public final class HWP_Configuration {
         strBuilder.append("RF signal filter: " + RFSignalFilter + NEW_LINE);
         strBuilder.append("Timeout receiving RF packets at LP or XLP modes: " + timeoutRecvRFPackets + NEW_LINE);
         strBuilder.append("Baud rate of the UART: " + baudRateOfUARF + NEW_LINE);
+        strBuilder.append("Alternative DSM channel: " + altDsmChannel + NEW_LINE);
         strBuilder.append("RF channel A of the main network: " + RFChannelA + NEW_LINE);
         strBuilder.append("RF channel B of the main network: " + RFChannelB + NEW_LINE);
         strBuilder.append("RFPGM: " + rfpgm + NEW_LINE);
@@ -553,20 +584,24 @@ public final class HWP_Configuration {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof HWP_Configuration) {
-            HWP_Configuration hwp = (HWP_Configuration) obj;
-            return (RFChannelA == hwp.getRFChannelA()
-                    && RFChannelASubNetwork == hwp.getRFChannelASubNetwork()
-                    && RFChannelB == hwp.getRFChannelB()
-                    && RFChannelBSubNetwork == hwp.getRFChannelBSubNetwork()
-                    && RFOutputPower == hwp.getRFOutputPower()
-                    && RFSignalFilter == hwp.getRFSignalFilter()
-                    && baudRateOfUARF == hwp.getBaudRateOfUARF()
-                    && configFlags.equals(hwp.getConfigFlags())
-                    && standardPeripherals.getList().equals(hwp.getStandardPeripherals().getList())
-                    && timeoutRecvRFPackets == hwp.getTimeoutRecvRFPackets()
-                    && rfpgm.equals(hwp.getRfpgm()));
+        if ( !(obj instanceof HWP_Configuration) ) {
+            return false;
         }
-        return false;
+        
+        HWP_Configuration hwp = (HWP_Configuration) obj;
+        return (
+                RFChannelA == hwp.getRFChannelA()
+                && RFChannelASubNetwork == hwp.getRFChannelASubNetwork()
+                && RFChannelB == hwp.getRFChannelB()
+                && RFChannelBSubNetwork == hwp.getRFChannelBSubNetwork()
+                && RFOutputPower == hwp.getRFOutputPower()
+                && RFSignalFilter == hwp.getRFSignalFilter()
+                && baudRateOfUARF == hwp.getBaudRateOfUARF()
+                && altDsmChannel == hwp.getAltDsmChannel()
+                && configFlags.equals(hwp.getConfigFlags())
+                && standardPeripherals.getList().equals(hwp.getStandardPeripherals().getList())
+                && timeoutRecvRFPackets == hwp.getTimeoutRecvRFPackets()
+                && rfpgm.equals(hwp.getRfpgm())
+        );
     }
 }

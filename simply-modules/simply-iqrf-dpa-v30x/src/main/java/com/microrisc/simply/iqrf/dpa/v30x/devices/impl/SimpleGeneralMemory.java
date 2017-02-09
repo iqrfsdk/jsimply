@@ -135,6 +135,7 @@ extends DPA_DeviceObject implements GeneralMemory {
     public short[] read(int address, int length) {
         checkAddress(address);
         checkDataLenToRead(length);
+        
         UUID uid = dispatchCall(
                 "1", new Object[] { getRequestHwProfile(), address, length },
                 getDefaultWaitingTimeout()
@@ -149,6 +150,7 @@ extends DPA_DeviceObject implements GeneralMemory {
     public VoidType write(int address, short[] data) {
         checkAddress(address);
         checkDataToWrite(data);
+        
         UUID uid = dispatchCall(
                 "2", new Object[] { getRequestHwProfile(), address, data }, 
                 getDefaultWaitingTimeout()

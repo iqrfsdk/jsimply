@@ -22,29 +22,37 @@ package com.microrisc.simply.iqrf.dpa.v30x.types;
  */
 public final class LoadingResult {
    
-   private boolean result;
+    private boolean result;
+
+
+    /**
+     * Creates result of loading code.
+     * 
+     * @param result must be {@code true} if all successful.
+     */
+    public LoadingResult(boolean result){
+       this.result = result;
+    }
    
-   /**
-    * Creates result of loading code.
-    * 
-    * @param result must be {@code true} if all successful.
-    */
-   public LoadingResult(boolean result){
-      this.result = result;
-   }
-   
-   /**
-    * Identify if code loading was successfully.
-    * 
-    * @return {@code true} if checksum was matched (and eventually code was
-    * loaded), otherwise return {@code false}
-    */
-   public boolean getResult(){
-      return result;
-   }
+    /**
+     * Indicatses whether code loading was successful.
+     * 
+     * @return {@code true} if checksum was matched (and code was possibly loaded) <br>
+     *         {@code false} otherwise
+     */
+    public boolean getResult(){
+       return result;
+    }
 
    @Override
-   public String toString() {
-      return "Successfully loading = " + result;
-   }
+    public String toString() {
+        StringBuilder strBuilder = new StringBuilder();
+        String NEW_LINE = System.getProperty("line.separator");
+        
+        strBuilder.append(this.getClass().getSimpleName() + " { " + NEW_LINE);
+        strBuilder.append(" Result: " + result + NEW_LINE);
+        strBuilder.append("}");
+        
+        return strBuilder.toString();
+    }
 }

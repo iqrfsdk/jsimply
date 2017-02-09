@@ -45,7 +45,7 @@ public final class BondedNodes {
     }
     
     /**
-     * Returns indication, wheather node of specified address is bonded or not.
+     * Returns indication, whether node of specified address is bonded or not.
      * @param nodeAddress address of node to examine
      * @return {@code true} if node with specified address is bonded
      *         {@code false}, otherwise
