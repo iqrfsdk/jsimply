@@ -353,7 +353,6 @@ extends BaseService implements LoadCodeService {
         int index = 0;
         while ( index < data.length ) {
             short[] dpaRequestData = createWriteDataToMemoryRequestData(frc, actualAddress, data[index]);
-            index++;
             
             // excludes nodes with failed write - it is useless to write next byte chunks into them
             excludeFailedNodes(nodesToWriteInto, finalResultsMap);  
@@ -407,6 +406,11 @@ extends BaseService implements LoadCodeService {
             
             // copy results map of 1 data chunk into final results map
             finalResultsMap.putAll(resultsMap);
+            
+            // increase target address
+            actualAddress += data[index].length;
+            
+            index++;
         }
         
         ServiceResult.Status serviceStatus = ( allWritesOk == true )?
