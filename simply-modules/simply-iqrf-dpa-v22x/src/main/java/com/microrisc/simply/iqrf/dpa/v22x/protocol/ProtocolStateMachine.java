@@ -1282,7 +1282,10 @@ final class ProtocolStateMachine implements ManageableObject {
         newEvent = null;
         stateChanged = false;
         error = false;
+        
         waitingTimeCounter = new WaitingTimeCounter();
+        waitingTimeCounter.start();
+        logger.info("Protocol Machine restarted");
         
         // send notification to listener about state change
         synchronized ( synchroListener ) {
