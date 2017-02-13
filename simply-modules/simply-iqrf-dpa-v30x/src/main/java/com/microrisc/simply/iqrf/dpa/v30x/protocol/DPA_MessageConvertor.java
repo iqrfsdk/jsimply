@@ -77,12 +77,14 @@ public final class DPA_MessageConvertor extends SimpleMessageConvertor {
         short[] data = new short[
                             networkData.getData().length - DPA_ProtocolProperties.PDATA_START
                         ];
-        System.arraycopy(networkData.getData(), DPA_ProtocolProperties.PDATA_START, 
+        System.arraycopy(
+                networkData.getData(), DPA_ProtocolProperties.PDATA_START, 
                 data, 0, data.length
         );
         
         return new DPA_AsynchronousMessage(
-                data, DPA_ProtocolProperties.getHWPID(networkData.getData()),
+                data, 
+                DPA_ProtocolProperties.getHWPID(networkData.getData()),
                 new SimpleDPA_AsynchronousMessageSource( 
                         new SimpleMessageSource(networkData.getNetworkId(), Integer.toString(nodeAddress)), 
                         perNum
@@ -145,6 +147,11 @@ public final class DPA_MessageConvertor extends SimpleMessageConvertor {
     public AbstractMessage convertToDOFormat(NetworkData networkData) 
             throws ValueConversionException {
         logger.debug("convertToDOFormat - start: networkData={}", networkData);
+        
+        // conversion of asynchronous messages
+        if ( !DPA_ProtocolProperties.isAsynchronous(networkData.getData()) ) {
+            return createAsynchronousMessage(networkData);
+        }
         
         // if message is NOT a response, handle it as a asynchronous message
         if ( !DPA_ProtocolProperties.isResponse(networkData.getData()) ) {

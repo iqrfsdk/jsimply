@@ -36,4 +36,9 @@ public interface ProtocolStateMachineListener {
      * Notifies, that waiting for response arrival timeouted.
      */
     void onResponseTimeouted();
+    
+    /**
+     * Notifies, that machine internal error occured. 
+     */
+    void onError();
 }

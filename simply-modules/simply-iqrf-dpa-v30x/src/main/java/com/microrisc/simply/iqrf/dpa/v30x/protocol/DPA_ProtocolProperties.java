@@ -400,6 +400,7 @@ public final class DPA_ProtocolProperties {
     
     /**
      * Returns PCMD field of specified message.
+     * 
      * @param protoMsg source message
      * @return PCMD field of specified message.
      */
@@ -505,5 +506,17 @@ public final class DPA_ProtocolProperties {
     public static boolean isResponse(short[] protoMsg) {
         int command = getCommand(protoMsg);
         return ((command & 0x80) == 0x80 );
+    }
+    
+    /**
+     * Determines, if the specified message is a asynchronous.
+     * 
+     * @param protoMsg source message
+     * @return {@code true} if specified message is asynchronous <br>
+     *         {@code false} otherwise
+     */
+    public static boolean isAsynchronous(short[] protoMsg) {
+        int command = getCommand(protoMsg);
+        return (command == DPA_ResponseCode.ASYNC_RESPONSE.getCodeValue());
     }
 }
