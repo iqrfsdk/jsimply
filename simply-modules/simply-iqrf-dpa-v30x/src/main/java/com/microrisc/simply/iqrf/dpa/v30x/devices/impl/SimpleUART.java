@@ -158,6 +158,7 @@ extends DPA_DeviceObject implements UART {
     public short[] writeAndRead(int readTimeout, short[] data) {
         checkReadTimeout(readTimeout);
         checkDataToWrite(data);
+        
         UUID uid = dispatchCall(
                 "3", new Object[] { getRequestHwProfile(), readTimeout, data }, 
                 getDefaultWaitingTimeout() 

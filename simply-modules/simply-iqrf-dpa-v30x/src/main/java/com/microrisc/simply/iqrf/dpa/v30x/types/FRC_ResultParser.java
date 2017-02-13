@@ -184,14 +184,15 @@ public final class FRC_ResultParser {
             InstantiationException,
             IllegalAccessException,
             IllegalArgumentException,
-            InvocationTargetException {
-        logger.debug("parseAsCollected2Bytes - start: frcData={}, type={}",
+            InvocationTargetException 
+    {
+        logger.debug(
+                "parseAsCollected2Bytes - start: frcData={}, type={}",
                 Arrays.toString(frcData), type
         );
 
         checkFrcData(frcData);
         java.lang.reflect.Constructor constructor = type.getConstructor(short.class, short.class);
-        
 
         Map<String, T> resultMap = new HashMap<>();
 

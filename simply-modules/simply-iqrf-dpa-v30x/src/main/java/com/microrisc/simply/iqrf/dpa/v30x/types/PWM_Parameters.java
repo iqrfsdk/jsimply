@@ -61,6 +61,14 @@ public final class PWM_Parameters {
     /** Prescaler. */
     private final Prescaler prescaler;
     
+    private static Prescaler checkPrescaler(Prescaler prescaler) {
+        if ( prescaler == null ) {
+            throw new IllegalArgumentException("Prescaler cannot be null");
+        }
+        return prescaler;
+    }
+    
+    
     /** Period. */
     private final int period;
     
@@ -97,6 +105,7 @@ public final class PWM_Parameters {
     
     /**
      * Creates new PWM parameters object.
+     * 
      * When all 3 parameters equal to 0, PWM is stopped.
      * @param prescaler prescaler
      * @param period period
@@ -106,18 +115,19 @@ public final class PWM_Parameters {
      *         specified duty cycle is out of [{@code DUTY_CYCLE_LOWER_BOUND}..{@code DUTY_CYCLE_UPPER_BOUND}] interval
      */
     public PWM_Parameters(Prescaler prescaler, int period, int dutyCycle) {
-        this.prescaler = prescaler;
+        this.prescaler = checkPrescaler(prescaler);
         this.period = checkPeriod(period);
         this.dutyCycle = checkDutyCycle(dutyCycle);
     }
     
     /**
      * Creates new PWM parameters object.
+     * 
      * When all 3 parameters equal to 0, PWM is stopped.
      * @param prescalerValue prescaler value
      * @param period period
      * @param dutyCycle duty cycle
-     * @throws IllegalArgumentException if {@code prescalerValue} is unknown
+     * @throws IllegalArgumentException if {@code prescalerValue} is unknown value
      */
     public PWM_Parameters(int prescalerValue, int period, int dutyCycle) {
         this.prescaler = getPrescaler(prescalerValue);

@@ -170,34 +170,33 @@ public final class FRC_UniversalWith2Bytes extends AbstractFRC_Command {
       return resultMap;
    }
 
-   /**
-    * Parses specified FRC data comming from IQRF into easiest map in this case
-    * - Map<String, Short>.
-    *
-    * @param frcData FRC data to parse
-    * @return map of results for each node. Identifiers of nodes are used as a
-    * keys of the returned map.
-    * @throws IllegalArgumentException if specified FRC data are not in correct
-    * format
-    * @throws Exception if parsing failed
-    */
-   public static Map<String, Short[]> parseIntoShort(
-           short[] frcData) throws Exception {
-      checkFrcData(frcData);
+    /**
+     * Parses specified FRC data comming from IQRF into easiest map in this case
+     * - Map<String, Short>.
+     *
+     * @param frcData FRC data to parse
+     * @return map of results for each node. Identifiers of nodes are used as a
+     * keys of the returned map.
+     * @throws IllegalArgumentException if specified FRC data are not in correct
+     * format
+     * @throws Exception if parsing failed
+     */
+    public static Map<String, Short[]> parseIntoShort(short[] frcData) throws Exception {
+        checkFrcData(frcData);
 
-      Map<String, FRC_UniversalWith2Bytes.Result> resultImplMap = parse(frcData);
-      Map<String, Short[]> resultEasyMap = new HashMap<>();
+        Map<String, FRC_UniversalWith2Bytes.Result> resultImplMap = parse(frcData);
+        Map<String, Short[]> resultEasyMap = new HashMap<>();
 
-      for (Entry<String, FRC_UniversalWith2Bytes.Result> e : resultImplMap.entrySet()) {
-         String key = e.getKey();
-         FRC_UniversalWith2Bytes.Result value = e.getValue();
+        for (Entry<String, FRC_UniversalWith2Bytes.Result> e : resultImplMap.entrySet()) {
+           String key = e.getKey();
+           FRC_UniversalWith2Bytes.Result value = e.getValue();
 
-         Short shortValues[] = new Short[]{value.getByte0(), value.getByte1()};         
-         resultEasyMap.put(key, shortValues);
-      }
+           Short shortValues[] = new Short[]{value.getByte0(), value.getByte1()};         
+           resultEasyMap.put(key, shortValues);
+        }
 
-      return resultEasyMap;
-   }
+       return resultEasyMap;
+    }
 
    private static short[] checkFrcData(short[] frcData) {
       if (frcData == null) {

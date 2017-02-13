@@ -24,7 +24,6 @@ import com.microrisc.simply.iqrf.dpa.v30x.di_services.method_id_transformers.FRC
 import com.microrisc.simply.iqrf.dpa.v30x.types.FRC_Command;
 import com.microrisc.simply.iqrf.dpa.v30x.types.FRC_Configuration;
 import com.microrisc.simply.iqrf.dpa.v30x.types.FRC_Data;
-import com.microrisc.simply.iqrf.types.VoidType;
 import java.util.UUID;
 
 /**
@@ -33,21 +32,23 @@ import java.util.UUID;
  * @author Rostislav Spinar
  */
 public final class SimpleFRC
-        extends DPA_DeviceObject implements FRC {
+extends DPA_DeviceObject implements FRC {
 
     private static FRC_Command checkCommand(FRC_Command frcCmd) {
-        if (frcCmd == null) {
+        if ( frcCmd == null ) {
             throw new IllegalArgumentException("FRC command cannot be null.");
         }
         return frcCmd;
     }
     
-    private static FRC_Configuration checkTime(FRC_Configuration config){
-        if(config == null){
-            throw new IllegalArgumentException("FRC_Configuration cannot be null.");
+    private static FRC_Configuration checkConfiguration(FRC_Configuration config){
+        if ( config == null ) {
+            throw new IllegalArgumentException("FRC configuration cannot be null.");
         }
         return config;
     }
+    
+    
     
     public SimpleFRC(String networkId, String nodeId, ConnectorService connector,
             CallRequestProcessingInfoContainer resultsContainer
@@ -133,7 +134,7 @@ public final class SimpleFRC
 
     @Override
     public UUID async_setFRCParams(FRC_Configuration config){
-        checkTime(config);
+        checkConfiguration(config);
         return dispatchCall("4", new Object[]{getRequestHwProfile(), config},
                 getDefaultWaitingTimeout()
         );
@@ -184,7 +185,7 @@ public final class SimpleFRC
     
     @Override
     public FRC_Configuration setFRCParams(FRC_Configuration config){
-        checkTime(config);
+        checkConfiguration(config);
         UUID uid = dispatchCall("4", new Object[]{getRequestHwProfile(), config},
                 getDefaultWaitingTimeout()
         );

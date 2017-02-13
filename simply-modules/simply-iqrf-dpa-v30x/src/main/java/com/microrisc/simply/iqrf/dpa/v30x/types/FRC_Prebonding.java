@@ -107,8 +107,7 @@ public final class FRC_Prebonding extends AbstractFRC_Command {
      * the {@link AbstractFRC_Command#AbstractFRC_Command() AbstractFRC_Command}
      * constructor.
      */
-    public FRC_Prebonding() {
-    }
+    public FRC_Prebonding() {}
 
     /**
      * Creates new object of {@code FRC_Prebonding} with

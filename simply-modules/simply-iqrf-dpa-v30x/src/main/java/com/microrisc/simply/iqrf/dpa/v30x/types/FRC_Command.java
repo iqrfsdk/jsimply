@@ -42,7 +42,8 @@ public interface FRC_Command {
     short[] getUserData();
 
     /**
-     * Selected node specify on which nodes will be FRC processed.
+     * Specify on which nodes will be the FRC command processed.
+     * 
      * Implementation should solve case in which is command sending as selected
      * without selected nodes, because command was created as normal command.
      *

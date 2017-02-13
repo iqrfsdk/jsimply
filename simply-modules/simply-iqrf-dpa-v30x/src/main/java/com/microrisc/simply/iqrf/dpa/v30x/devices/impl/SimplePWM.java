@@ -34,6 +34,14 @@ import java.util.UUID;
 public final class SimplePWM 
 extends DPA_DeviceObject implements PWM {
     
+    private static PWM_Parameters checkPwmParameters(PWM_Parameters params) {
+        if ( params == null ) {
+            throw new IllegalArgumentException("PWM parameters cannot be null.");
+        }
+        return params;
+    }
+    
+    
     public SimplePWM(String networkId, String nodeId, ConnectorService connector, 
             CallRequestProcessingInfoContainer resultsContainer
     ) {
@@ -70,9 +78,11 @@ extends DPA_DeviceObject implements PWM {
     // ASYNCHRONOUS METHODS IMPLEMENTATIONS
     
     @Override
-    public UUID async_set(PWM_Parameters param) {
+    public UUID async_set(PWM_Parameters params) {
+        checkPwmParameters(params);
+        
         return dispatchCall(
-                "1", new Object[] { getRequestHwProfile(), param }, getDefaultWaitingTimeout() 
+                "1", new Object[] { getRequestHwProfile(), params }, getDefaultWaitingTimeout() 
         );
     }
     
@@ -80,9 +90,11 @@ extends DPA_DeviceObject implements PWM {
     // SYNCHRONOUS WRAPPERS IMPLEMENTATIONS
     
     @Override
-    public VoidType set(PWM_Parameters param) {
+    public VoidType set(PWM_Parameters params) {
+        checkPwmParameters(params);
+        
         UUID uid = dispatchCall(
-                "1", new Object[] { getRequestHwProfile(), param }, getDefaultWaitingTimeout() 
+                "1", new Object[] { getRequestHwProfile(), params }, getDefaultWaitingTimeout() 
         );
         if ( uid == null ) {
             return null;

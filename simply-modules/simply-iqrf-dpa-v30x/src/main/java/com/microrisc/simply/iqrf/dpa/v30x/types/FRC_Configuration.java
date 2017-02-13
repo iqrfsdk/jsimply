@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MICRORISC s.r.o..
+ * Copyright 2015 MICRORISC s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,7 @@ public class FRC_Configuration {
 
     private final FRC_RESPONSE_TIME responseTime;
 
+    
     /**
      * Create new FRC Configuration with specified FRC response time. See
      * {@link FRC_RESPONSE_TIME}.

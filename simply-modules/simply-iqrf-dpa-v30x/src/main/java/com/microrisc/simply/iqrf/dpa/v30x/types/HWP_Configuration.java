@@ -144,7 +144,7 @@ public final class HWP_Configuration {
 
     }
     
-    public static class RFPGM {
+    public static final class RFPGM {
        
        /** Sets, if receiving on single channel or on dual channel. */
        private boolean singleChannel;
@@ -258,12 +258,15 @@ public final class HWP_Configuration {
          if (this == obj) {
             return true;
          }
+         
          if (obj == null) {
             return false;
          }
-         if (getClass() != obj.getClass()) {
+         
+         if ( !(obj instanceof RFPGM) ) {
             return false;
          }
+         
          final RFPGM other = (RFPGM) obj;
          return (this.singleChannel != other.isSingleChannel()
                  && this.lpMode != other.isLpMode()

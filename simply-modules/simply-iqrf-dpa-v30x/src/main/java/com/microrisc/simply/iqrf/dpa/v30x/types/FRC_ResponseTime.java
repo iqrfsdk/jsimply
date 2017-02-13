@@ -20,11 +20,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * FRC_ResponseTime command.<br>
- * FRC_ResponseTime is used to find out FRC response time of the specified user
+ * FRC response Time command.<br>
+ * This command is used to find out FRC response time of the specified user
  * FRC command. View more in DPA documentation.
  *
  * @author Martin Strouhal
+ * @author Michal Konopa
  */
 public final class FRC_ResponseTime extends AbstractFRC_Command {
 
@@ -110,8 +111,8 @@ public final class FRC_ResponseTime extends AbstractFRC_Command {
      * @throws IllegalArgumentException if {@code frcId} is invalid.
      */
     public FRC_ResponseTime(int frcId) {
-        super(new short[]{(short) frcId, (short) 0});
         checkFrcId(frcId);
+        this.userData = new short[]{(short) frcId, (short) 0};
     }
 
     /**
@@ -126,8 +127,8 @@ public final class FRC_ResponseTime extends AbstractFRC_Command {
      * constructor.
      */
     public FRC_ResponseTime(int frcId, Node[] selectedNodes) {
-        short[] frcIdUserData = new short[]{checkFrcId(frcId), (short) 0};
-        new FRC_ResponseTime(frcIdUserData, selectedNodes);
+        this.userData = new short[] { checkFrcId(frcId), (short) 0};
+        this.selectedNodes = selectedNodes;
     }
 
     //create instance from super abstract class
@@ -165,15 +166,18 @@ public final class FRC_ResponseTime extends AbstractFRC_Command {
     public static Map<String, Result> parse(short[] frcData) throws Exception {
         checkFrcData(frcData);
         Map<String, ResultImpl> resultImplMap = null;
+        
         try {
             resultImplMap = FRC_ResultParser.parseAsCollectedBytes(frcData, ResultImpl.class);
         } catch (Exception ex) {
             throw new Exception("Parsing failed: " + ex);
         }
+        
         Map<String, Result> resultMap = new HashMap<>();
         for (Map.Entry<String, ResultImpl> resImplEntry : resultImplMap.entrySet()) {
             resultMap.put(resImplEntry.getKey(), resImplEntry.getValue());
         }
+        
         return resultMap;
     }
 }

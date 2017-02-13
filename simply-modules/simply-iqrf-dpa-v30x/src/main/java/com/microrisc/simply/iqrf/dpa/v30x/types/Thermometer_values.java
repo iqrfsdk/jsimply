@@ -33,10 +33,12 @@ public final class Thermometer_values implements Serializable {
     
     /**
      * Creates new {@code Thermometer_values} object.
+     * 
      * @param value integer part in Celsius degree, not rounded. See return value 
-     * of getTemperature() OS function. If the temperature sensor is not installed 
-     * (see HWP Configuration) then the returned value is 0x80 = -128 Celsius degree.
-     * @param fractialValue fractional part of Celsius degree value 
+     *              of getTemperature() OS function. If the temperature sensor is 
+     *              not installed (see HWP Configuration) then the returned value 
+     *              is 0x80 = -128 Celsius degree.
+     * @param fractialValue fractional part
      */
     public Thermometer_values(short value, byte fractialValue) {
         this.value = value;
@@ -45,6 +47,7 @@ public final class Thermometer_values implements Serializable {
 
     /**
      * Integer part in Celsius degree, not rounded. See return value 
+     * 
      * of getTemperature() OS function. If the temperature sensor is not installed 
      * (see HWP Configuration) then the returned value is 0x80 = -128 Celsius degree.
      * @return integer part in Celsius degree, not rounded
@@ -54,7 +57,7 @@ public final class Thermometer_values implements Serializable {
     }
 
     /**
-     * @return fractional part of Celsius degree value
+     * @return fractional part of Celsius degree
      */
     public byte getFractialValue() {
         return fractialValue;

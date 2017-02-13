@@ -32,14 +32,15 @@ public final class FRC_UART_SPI_data extends AbstractFRC_Command {
     public static interface Result extends FRC_CollectedBits {
 
         /**
-         * @return {@code true} if a node is accessible <br> {@code false}
-         * otherwise
+         * @return {@code true} if a node is accessible <br> 
+         *         {@code false} otherwise
          */
         boolean isAccessible();
 
         /**
          * @return {@code true} if there is some data available for reading from
-         * UART or SPI peripheral. <br> {@code false} otherwise
+         *                      UART or SPI peripheral <br>
+         *         {@code false} otherwise
          */
         boolean isDataAvailable();
     }

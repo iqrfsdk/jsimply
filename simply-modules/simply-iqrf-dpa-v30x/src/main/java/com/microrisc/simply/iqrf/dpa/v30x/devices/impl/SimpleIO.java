@@ -35,6 +35,33 @@ import java.util.UUID;
 public final class SimpleIO 
 extends DPA_DeviceObject implements IO {
     
+    private static IO_DirectionSettings[] checkIoDirectionSettings(
+            IO_DirectionSettings[] ioDirectionSettings
+    ) {
+        if ( ioDirectionSettings == null ) {
+            throw new IllegalArgumentException("Direction settings cannot be null.");
+        }
+        
+        if ( ioDirectionSettings.length == 0 ) {
+            throw new IllegalArgumentException("Direction settings cannot be empty.");
+        }
+        
+        return ioDirectionSettings;
+    } 
+    
+    private static IO_Command[] checkIoCommands(IO_Command[] ioCommands) {
+        if ( ioCommands == null ) {
+            throw new IllegalArgumentException("IO commands cannot be null.");
+        }
+        
+        if ( ioCommands.length == 0 ) {
+            throw new IllegalArgumentException("IO commands cannot be empty.");
+        }
+        
+        return ioCommands;
+    }
+    
+    
     public SimpleIO(String networkId, String nodeId, ConnectorService connector, 
             CallRequestProcessingInfoContainer resultsContainer
     ) {
@@ -89,6 +116,8 @@ extends DPA_DeviceObject implements IO {
     
     @Override
     public UUID async_setDirection(IO_DirectionSettings[] directionSettings) {
+        checkIoDirectionSettings(directionSettings);
+        
         return dispatchCall(
                 "1", new Object[] { getRequestHwProfile(), directionSettings },
                 getDefaultWaitingTimeout() 
@@ -97,6 +126,8 @@ extends DPA_DeviceObject implements IO {
     
     @Override
     public UUID async_setOutputState(IO_Command[] ioCommands) {
+        checkIoCommands(ioCommands);
+        
         return dispatchCall(
                 "2", new Object[] { getRequestHwProfile(), ioCommands },
                 getDefaultWaitingTimeout() 
@@ -116,6 +147,8 @@ extends DPA_DeviceObject implements IO {
     
     @Override
     public VoidType setDirection(IO_DirectionSettings[] directionSettings) {
+        checkIoDirectionSettings(directionSettings);
+        
         UUID uid = dispatchCall(
                 "1", new Object[] { getRequestHwProfile(), directionSettings }, 
                 getDefaultWaitingTimeout() 
@@ -128,6 +161,8 @@ extends DPA_DeviceObject implements IO {
     
     @Override
     public VoidType setOutputState(IO_Command[] ioCommands) {
+        checkIoCommands(ioCommands);
+        
         UUID uid = dispatchCall(
                 "2", new Object[] { getRequestHwProfile(), ioCommands }, 
                 getDefaultWaitingTimeout() 

@@ -38,6 +38,7 @@ public final class FRC_Data {
     
     /**
      * Creates new FRC data object. 
+     * 
      * @param status Return code of the sendFRC() IQRF OS function.
      * @param data Data collected from the nodes.
      */

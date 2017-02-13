@@ -92,6 +92,7 @@ extends DPA_DeviceObject implements SPI {
     public UUID async_writeAndRead(int readTimeout, short[] data) {
         checkReadTimeout(readTimeout);
         checkDataToWrite(data);
+        
         return dispatchCall(
                 "2", new Object[] { getRequestHwProfile(), readTimeout, data }, 
                 getDefaultWaitingTimeout() 
@@ -106,6 +107,7 @@ extends DPA_DeviceObject implements SPI {
     public short[] writeAndRead(int readTimeout, short[] data) {
         checkReadTimeout(readTimeout);
         checkDataToWrite(data);
+        
         UUID uid = dispatchCall(
                 "2", new Object[] { getRequestHwProfile(), readTimeout, data }, 
                 getDefaultWaitingTimeout() 

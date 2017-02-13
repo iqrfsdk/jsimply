@@ -33,33 +33,46 @@ import java.util.UUID;
 public final class SimpleEEEPROM
 extends DPA_DeviceObject implements EEEPROM {
     
+    // maximal length of data [in bytes] to read or write
+    private static final int MAX_DATA_LEN = 54;
+    
     private static int checkAddressForRead(int address){
-        if ( address < 0 ) {
+        if ( address < 0x0000 || address > 0xFFFF ) {
             throw new IllegalArgumentException("Address out of bounds.");
         }
         return address;
     }
     
     private static int checkAddressForWrite(int address){
-        if (address < 0 || address > 0x3FFF) {
+        if ( address < 0x0000 || address > 0x3FFF ) {
             throw new IllegalArgumentException("Address out of bounds.");
         }
         return address;
     }
     
     private static void checkExtendedDataToWrite(int address, short[] dataToWrite){
-        if (dataToWrite.length < 1 || dataToWrite.length > 54){
-            throw new IllegalArgumentException("Length of data to write out of bounds (1 - 54 bytes)");
+        if (dataToWrite.length < 1 || dataToWrite.length > MAX_DATA_LEN){
+            throw new IllegalArgumentException(
+                    "Data length out of allowed range "
+                    + "[" + 0 + ".." + MAX_DATA_LEN + "]" 
+            );
         }
         
         if ((address % 64) + dataToWrite.length > 64){
-            throw new IllegalArgumentException("Writing to multiple adjacent 64 byte pages of the EEPROM chip or behind maximum address range by one extended write command is unsupported and undefined.");
+            throw new IllegalArgumentException(
+                    "Writing to multiple adjacent 64 byte pages of the EEPROM chip"
+                    + " or behind maximum address range by one extended write command"
+                    + " is unsupported and undefined."
+            );
         }
     }
     
     private static int checkExtendedDataLenToRead(int dataLen){
-        if (dataLen < 0 || dataLen > 54) {
-            throw new IllegalArgumentException("Data length out of allowed range (0 - 54 bytes)");
+        if ( dataLen < 0 || dataLen > MAX_DATA_LEN ) {
+            throw new IllegalArgumentException(
+                    "Data length out of allowed range "
+                    + "[" + 0 + ".." + MAX_DATA_LEN + "]" 
+            );
         }
         return dataLen;
     }
@@ -119,6 +132,7 @@ extends DPA_DeviceObject implements EEEPROM {
     public UUID async_extendedRead(int address, int length) {
         checkAddressForRead(address);
         checkExtendedDataLenToRead(length);
+        
         return dispatchCall(
                 "1", new Object[] { getRequestHwProfile(), address, length },
                 getDefaultWaitingTimeout()
@@ -129,6 +143,7 @@ extends DPA_DeviceObject implements EEEPROM {
     public UUID async_extendedWrite(int address, short[] data) {
         checkAddressForWrite(address);
         checkExtendedDataToWrite(address, data);
+        
         return dispatchCall(
                 "2", new Object[] { getRequestHwProfile(), address, data },
                 getDefaultWaitingTimeout()
@@ -143,6 +158,7 @@ extends DPA_DeviceObject implements EEEPROM {
     public short[] extendedRead(int address, int length) {
         checkAddressForRead(address);
         checkExtendedDataLenToRead(length);
+        
         UUID uid = dispatchCall(
                 "1", new Object[] { getRequestHwProfile(), address, length }, 
                 getDefaultWaitingTimeout()
@@ -157,6 +173,7 @@ extends DPA_DeviceObject implements EEEPROM {
     public VoidType extendedWrite(int address, short[] data) {
         checkAddressForWrite(address);
         checkExtendedDataToWrite(address, data);
+        
         UUID uid = dispatchCall(
                 "2", new Object[] { getRequestHwProfile(), address, data }, 
                 getDefaultWaitingTimeout()

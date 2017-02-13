@@ -49,10 +49,10 @@ extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
     
     /**
      * Sends method call request for setting PWM parameters
-     * @param param PWM to use for settting
+     * @param params PWM parameters to use for settting
      * @return unique identifier of sent request
      */
-    UUID async_set(PWM_Parameters param);
+    UUID async_set(PWM_Parameters params);
     
     
     
@@ -62,8 +62,8 @@ extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
      * Synchronous wrapper for {@link
      * #async_set(com.microrisc.simply.iqrf.dpa.v220.types.PWM_Parameters)
      * async_write} method.
-     * @param param PWM to use for settting
+     * @param params PWM parameters to use for settting
      * @return {@code VoidType} object, if method call has processed allright
      */
-    VoidType set(PWM_Parameters param);
+    VoidType set(PWM_Parameters params);
 }

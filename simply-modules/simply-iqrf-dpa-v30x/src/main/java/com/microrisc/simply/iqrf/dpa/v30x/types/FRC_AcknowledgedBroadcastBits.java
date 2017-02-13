@@ -109,6 +109,7 @@ public final class FRC_AcknowledgedBroadcastBits extends AbstractFRC_Command {
     
     /**
      * Creates new object of {@code FRC_AcknowledgedBroadcastBits} with specified user data.
+     * 
      * @param dpaRequest DPA request to take as a user data
      * @throws IllegalArgumentException if an error has occured during conversion 
      *         of specified DPA request into the series of bytes of user data
@@ -124,6 +125,7 @@ public final class FRC_AcknowledgedBroadcastBits extends AbstractFRC_Command {
     
     /**
      * Creates new object of {@code FRC_AcknowledgedBroadcastBits} with specified user data.
+     * 
      * @param userData user data
      * @throws IllegalArgumentException if {@code userData} is invalid. See the
      * {@link AbstractFRC_Command#AbstractFRC_Command(short[]) AbstractFRC_Command}
@@ -139,10 +141,9 @@ public final class FRC_AcknowledgedBroadcastBits extends AbstractFRC_Command {
      * {@link AbstractFRC_Command#AbstractFRC_Command() AbstractFRC_Command}
      * constructor.
      */
-    public FRC_AcknowledgedBroadcastBits() {
-    }
+    public FRC_AcknowledgedBroadcastBits() {}
 
-        /**
+    /**
      * Creates new object of {@code FRC_AcknowledgedBroadcastBits} with specified user data.
      *
      * @param userData user data
