@@ -15,17 +15,15 @@
  */
 package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code;
 
-import com.microrisc.simply.CallRequestProcessingState;
 import com.microrisc.simply.Node;
 import com.microrisc.simply.iqrf.dpa.protocol.DPA_ProtocolProperties;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.EEEPROM;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.FRC;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.OS;
-import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.RequestProcessingError;
-import com.microrisc.simply.iqrf.dpa.v22x.di_services.DPA_StandardServices;
-import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.LoadingContentError;
-import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.MissingPeripheralError;
-import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.ParamsError;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.LoadCodeError;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.LoadError;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.PreprocessingError;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.WriteError;
 import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_Request;
 import com.microrisc.simply.iqrf.dpa.v22x.types.FRC_AcknowledgedBroadcastBits;
 import com.microrisc.simply.iqrf.dpa.v22x.types.FRC_AcknowledgedBroadcastBits.Result;
@@ -150,50 +148,65 @@ extends BaseService implements LoadCodeService {
         return dataChecksum;
     }    
     
-    private ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> 
-            createRequestProcessingError(DPA_StandardServices dpaPer, String errMessage) 
-    {
-        CallRequestProcessingState reqState = dpaPer.getCallRequestProcessingStateOfLastCall();
-        if ( reqState == CallRequestProcessingState.ERROR ) {
-            return new BaseServiceResult<>(
-                ServiceResult.Status.ERROR, 
-                null, 
-                new LoadCodeProcessingInfo( 
-                        new RequestProcessingError(dpaPer.getCallRequestProcessingErrorOfLastCall())
-                )
-            );
+    // updates results and errors map according to failed nodes
+    private static void updateNodeResultsMaps(
+            Map<String, Boolean> resultsMap, 
+            Map<String, LoadCodeError> errorsMap,
+            LoadCodeError error,
+            Collection<Node> failedNodes
+    ) {
+        for ( Node node : failedNodes ) {
+            resultsMap.put(node.getId(), false);
+            errorsMap.put(node.getId(), error);
         }
-
+    }
+    
+    // creates error result for specified error, failed nodes and results map
+    private static ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> 
+            createErrorResult(
+                    LoadCodeError error, 
+                    Collection<Node> failedNodes,
+                    Map<String, Boolean> resultsMap,
+                    Map<String, LoadCodeError> errorsMap
+    ) {
+        updateNodeResultsMaps(resultsMap, errorsMap, error, failedNodes);
+        
         return new BaseServiceResult<>(
                 ServiceResult.Status.ERROR, 
-                null, 
-                new LoadCodeProcessingInfo( 
-                        new RequestProcessingError(errMessage + " State: " + reqState)
-                )
+                new LoadCodeResult(resultsMap, errorsMap), 
+                new LoadCodeProcessingInfo(error)
         );
-                
+    } 
+            
+    // creates error result for specified error and failed nodes
+    private static ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> 
+            createErrorResult(LoadCodeError error, Collection<Node> failedNodes) 
+    {
+        return createErrorResult(
+                error, 
+                failedNodes, 
+                new HashMap<String, Boolean>(),
+                new HashMap<String, LoadCodeError>()
+        );
     }
+    
     
     // writes data into EEEPROM of the context node
     private ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> writeDataToMemoryOfThisNode(
             int startAddress, short[][] data
     ) {
+        // preparing for hypotetical case when error occurs on context node
+        Collection<Node> contextNodeList = new LinkedList<>();
+        contextNodeList.add(contextNode);
+            
         EEEPROM eeeprom = this.contextNode.getDeviceObject(EEEPROM.class);
         if ( eeeprom == null ) {
-            return new BaseServiceResult<>(
-                    ServiceResult.Status.ERROR, 
-                    null, 
-                    new LoadCodeProcessingInfo( new MissingPeripheralError(EEEPROM.class))
-            );
+            return createErrorResult( new WriteError("Missing EEEPROM"), contextNodeList);
         }
         
         OS os = this.contextNode.getDeviceObject(OS.class);
         if ( os == null ) {
-            return new BaseServiceResult<>(
-                    ServiceResult.Status.ERROR, 
-                    null, 
-                    new LoadCodeProcessingInfo( new MissingPeripheralError(OS.class))
-            );
+            return createErrorResult( new WriteError("Missing OS"), contextNodeList);
         }
       
         int actualAddress = startAddress;
@@ -221,14 +234,20 @@ extends BaseService implements LoadCodeService {
 
                     VoidType result = os.batch( new DPA_Request[] { firstReq, secondReq } );
                     if ( result == null ) {
-                        return createRequestProcessingError(os, "Result of write data to EEEPROM not found.");
+                        return createErrorResult(
+                                new WriteError("Result of write data to EEEPROM not found."), 
+                                contextNodeList
+                        );
                     }
 
                     index += 2;
                 } else {
                     VoidType result = eeeprom.extendedWrite(actualAddress, data[index]);
                     if ( result == null ) {
-                        return createRequestProcessingError(os, "Result of write data to EEEPROM not found.");
+                        return createErrorResult(
+                                new WriteError("Result of write data to EEEPROM not found."), 
+                                contextNodeList
+                        );
                     }
                     actualAddress += data[index].length;
                     index++;
@@ -236,19 +255,24 @@ extends BaseService implements LoadCodeService {
             } else {
                 VoidType result = eeeprom.extendedWrite(actualAddress, data[index]);
                 if ( result == null ) {
-                    return createRequestProcessingError(os, "Result of write data to EEEPROM not found.");
+                    return createErrorResult(
+                            new WriteError("Result of write data to EEEPROM not found."), 
+                            contextNodeList
+                    );
                 }
                 actualAddress += data[index].length;
                 index++;
             }
         }
         
-        Map<String, Boolean> resultMap = new HashMap<>();
-        resultMap.put(this.contextNode.getId(), true);
+        Map<String, Boolean> nodeResultsMap = new HashMap<>();
+        Map<String, LoadCodeError> nodeErrorsMap = new HashMap<>();
+        
+        nodeResultsMap.put(this.contextNode.getId(), true);
         
         return new BaseServiceResult<>(
                 ServiceResult.Status.SUCCESSFULLY_COMPLETED,
-                new LoadCodeResult(resultMap),
+                new LoadCodeResult(nodeResultsMap, nodeErrorsMap),
                 new LoadCodeProcessingInfo()
         );
     }    
@@ -315,36 +339,39 @@ extends BaseService implements LoadCodeService {
     ) {
         FRC frc = this.contextNode.getDeviceObject(FRC.class);
         if ( frc == null ) {
-            return new BaseServiceResult<>(
-                    ServiceResult.Status.ERROR, 
-                    null, 
-                    new LoadCodeProcessingInfo( new MissingPeripheralError(FRC.class))
+            return createErrorResult(
+                    new WriteError("Missing FRC."),
+                    targetNodes
             );
         }
         
         // returns map of valid nodes in respect to start address
         Map<String, Node> validNodesMap = getStartAddressValidNodesMap(startAddress, targetNodes);
         if ( validNodesMap.isEmpty() ) {
-            return new BaseServiceResult<>(
-                    ServiceResult.Status.ERROR, 
-                    null, 
-                    new LoadCodeProcessingInfo( 
-                            new LoadingContentError("No start address valid nodes to load code in.")
-                    )
+            return createErrorResult(
+                    new WriteError("No start address valid nodes to load code in."),
+                    targetNodes
             );
         }
         
+        // nodes with correct start address
         Collection<Node> nodesToWriteInto = new LinkedList<>(validNodesMap.values());
-        
-        // final map of results
+         
+        // final maps of results
         Map<String, Boolean> finalResultsMap = new HashMap<>();
+        Map<String, LoadCodeError> errorsMap = new HashMap<>();
         
         // add all start address invalid nodes into final result map
+        WriteError invalidStartAddrError = new WriteError("Invalid start address.");
         for ( Node node : targetNodes ) {
             if ( !validNodesMap.containsKey(node.getId()) ) {
                 finalResultsMap.put(node.getId(), false);
+                errorsMap.put(node.getId(), invalidStartAddrError);
             }
         }
+        
+        // for usage in FRC results
+        WriteError writeError = new WriteError("Not response or HWP not match.");
         
         // indicator, if all writes were OK
         boolean allWritesOk = true;
@@ -362,12 +389,22 @@ extends BaseService implements LoadCodeService {
             );
 
             if ( result == null ) {
-                return createRequestProcessingError(frc, "Returning FRC result failed. ");
-            } 
+                return createErrorResult(
+                        new WriteError("Returning of FRC result failed."), 
+                        nodesToWriteInto,
+                        finalResultsMap,
+                        errorsMap
+                );
+            }
 
             short[] extraResult = frc.extraResult();
             if ( extraResult == null ) {
-                return createRequestProcessingError(frc, "Returning FRC extra result failed. ");
+                return createErrorResult(
+                        new WriteError("Returning of FRC extra result failed."), 
+                        nodesToWriteInto,
+                        finalResultsMap,
+                        errorsMap
+                );
             }
         
             // putting both parts of result together
@@ -378,15 +415,15 @@ extends BaseService implements LoadCodeService {
             try {
                 parsedResultMap = FRC_AcknowledgedBroadcastBits.parse(completeResult);
             } catch ( Exception ex ) {
-                return new BaseServiceResult<>(
-                    ServiceResult.Status.ERROR, 
-                    null, 
-                    new LoadCodeProcessingInfo( 
-                            new RequestProcessingError("Parsing of result failed")
-                    )
+                return createErrorResult(
+                        new WriteError("Parsing of FRC result failed."), 
+                        nodesToWriteInto,
+                        finalResultsMap,
+                        errorsMap
                 );
             }
-        
+            
+            // FRC results
             Map<String, Boolean> resultsMap = new HashMap<>();
 
             // creating final results of 1 data chunk
@@ -398,6 +435,7 @@ extends BaseService implements LoadCodeService {
                     || (devProcResult == DeviceProcResult.HWPID_NOT_MATCH)
                 ) {
                     resultsMap.put(node.getId(), false);
+                    errorsMap.put(node.getId(), writeError);
                     allWritesOk = false;
                 } else {
                     resultsMap.put(node.getId(), true);
@@ -419,9 +457,19 @@ extends BaseService implements LoadCodeService {
         
         return new BaseServiceResult<>(
                 serviceStatus,
-                new LoadCodeResult(finalResultsMap),
+                new LoadCodeResult(finalResultsMap, errorsMap),
                 new LoadCodeProcessingInfo()
         );
+    }
+    
+    // returns coordinator node from specified nodes
+    private static Node getCoordNode(Collection<Node> nodes) {
+        for ( Node node : nodes ) {
+            if ( node.getId().equals("0") ) {
+                return node;
+            }
+        }
+        return null;
     }
     
     // writes specified data into EEEPROM beginning from specified address    
@@ -448,16 +496,59 @@ extends BaseService implements LoadCodeService {
             );
         }
         
+        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> writeResult = null;
+        
         if ( (targetNodes == null) || (targetNodes.isEmpty()) ) {
-            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> writeResult 
-                = writeDataToMemoryOfThisNode(startAddress, data);
+            writeResult = writeDataToMemoryOfThisNode(startAddress, data);
             
             logger.debug("writeDataToMemory - end: {}", writeResult);
             return writeResult;
         }
         
-        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> writeResult 
-            = writeDataToMemoryUsingBroadcast(startAddress, data, targetNodes);
+        // coordinator requires unicast - does not function with FRC
+        Node coordNode = getCoordNode(targetNodes);
+        if ( coordNode != null ) {
+            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> coordWriteResult 
+                = writeDataToMemoryOfThisNode(startAddress, data);
+            
+            // for removing coordinator from FRC write
+            targetNodes.remove(coordNode);
+            
+            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> nodesWriteResult 
+                = writeDataToMemoryUsingBroadcast(startAddress, data, targetNodes);
+            
+            // put coordinator node back into target nodes
+            targetNodes.add(coordNode);
+            
+            // merging results together
+            Map<String, Boolean> mergedResultsMap = new HashMap<>();
+            mergedResultsMap.putAll(coordWriteResult.getResult().getResultsMap());
+            mergedResultsMap.putAll(nodesWriteResult.getResult().getResultsMap());
+            
+            // merging errors together
+            Map<String, LoadCodeError> mergedErrorsMap = new HashMap<>();
+            mergedErrorsMap.putAll(coordWriteResult.getResult().getErrorsMap());
+            mergedErrorsMap.putAll(nodesWriteResult.getResult().getErrorsMap());
+            
+            ServiceResult.Status mergedResult = ServiceResult.Status.SUCCESSFULLY_COMPLETED;
+            if ( 
+                coordWriteResult.getStatus() == ServiceResult.Status.ERROR
+                || nodesWriteResult.getStatus() == ServiceResult.Status.ERROR 
+            ) {
+                mergedResult = ServiceResult.Status.ERROR;
+            }
+
+            writeResult = new BaseServiceResult<>(
+                mergedResult,
+                new LoadCodeResult(mergedResultsMap, mergedErrorsMap),
+                new LoadCodeProcessingInfo()
+            );
+            
+            logger.debug("writeDataToMemory - end: {}", writeResult);
+            return writeResult;
+        }
+        
+        writeResult = writeDataToMemoryUsingBroadcast(startAddress, data, targetNodes);
         
         logger.debug("writeDataToMemory - end: {}", writeResult);
         return writeResult;
@@ -473,16 +564,17 @@ extends BaseService implements LoadCodeService {
                 params, length, dataChecksum
         );
         
+        // for hypotetical error during code load
+        Collection<Node> contextNodeList = new LinkedList<>();
+        contextNodeList.add(contextNode);
+        
+        // service result
+        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult = null;
+        
         // get access to OS peripheral
         OS os = this.contextNode.getDeviceObject(OS.class);
         if ( os == null ) {
-            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult 
-                = new BaseServiceResult<>(
-                    ServiceResult.Status.ERROR, 
-                    null, 
-                    new LoadCodeProcessingInfo( new MissingPeripheralError(OS.class))
-            );
-            
+            servResult = createErrorResult( new LoadError("Missing OS"), contextNodeList);
             logger.debug("loadCodeUnicast - end: {}", servResult);
             return servResult;
         }
@@ -499,8 +591,10 @@ extends BaseService implements LoadCodeService {
         );
         
         if ( result == null ) {
-            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
-                = createRequestProcessingError(os, "Load code result not found.");
+            servResult = createErrorResult( 
+                    new LoadError("Load code result not found."),
+                    contextNodeList
+            );
             
             logger.debug("loadCodeUnicast - end: {}", servResult);
             return servResult;
@@ -509,20 +603,21 @@ extends BaseService implements LoadCodeService {
         Map<String, Boolean> resultMap = new HashMap<>();
         resultMap.put(this.contextNode.getId(), result.getResult());
         
+        Map<String, LoadCodeError> errorsMap = new HashMap<>();
+        
         ServiceResult.Status status = ServiceResult.Status.SUCCESSFULLY_COMPLETED;
         LoadCodeProcessingInfo loadCodeProcessingInfo = new LoadCodeProcessingInfo();
         
         if ( result.getResult() == false ) {
             status = ServiceResult.Status.ERROR;
-            loadCodeProcessingInfo = new LoadCodeProcessingInfo( 
-                    new LoadingContentError("Checksum does not match.")
-            );
+            LoadError error = new LoadError("Checksum does not match.");
+            loadCodeProcessingInfo = new LoadCodeProcessingInfo(error);
+            errorsMap.put(this.contextNode.getId(), error);
         }
         
-        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
-            = new BaseServiceResult<>(
+        servResult = new BaseServiceResult<>(
                 status,
-                new LoadCodeResult(resultMap),
+                new LoadCodeResult(resultMap, errorsMap),
                 loadCodeProcessingInfo
         );
         
@@ -609,15 +704,12 @@ extends BaseService implements LoadCodeService {
                 params, length, dataChecksum, Arrays.toString(targetNodes.toArray())
         );
         
+        // service result
+        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult = null;
+        
         FRC frc = this.contextNode.getDeviceObject(FRC.class);
         if ( frc == null ) {
-            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult 
-                = new BaseServiceResult<>(
-                    ServiceResult.Status.ERROR, 
-                    null, 
-                    new LoadCodeProcessingInfo( new MissingPeripheralError(FRC.class))
-                );
-            
+            servResult = createErrorResult( new LoadError("Missing FRC"), targetNodes);
             logger.debug("loadCodeBroadcast - end: {}", servResult);
             return servResult;
         }
@@ -629,8 +721,10 @@ extends BaseService implements LoadCodeService {
         );
         
         if ( result == null ) {
-            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
-                = createRequestProcessingError(frc, "Returning FRC result failed. ");
+            servResult = createErrorResult( 
+                    new LoadError("Returning of FRC result failed."), 
+                    targetNodes
+            );
             
             logger.debug("loadCodeBroadcast - end: {}", servResult);
             return servResult;
@@ -638,11 +732,10 @@ extends BaseService implements LoadCodeService {
         
         short[] extraResult = frc.extraResult();
         if ( extraResult == null ) {
-            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
-                    = createRequestProcessingError(frc, "Returning FRC extra result failed. ");
-            
-            logger.debug("loadCodeBroadcast - end: {}", servResult);
-            return servResult;
+            servResult = createErrorResult( 
+                    new LoadError("Returning of FRC extra result failed."), 
+                    targetNodes
+            );
         }
         
         // putting both parts of result together
@@ -653,13 +746,9 @@ extends BaseService implements LoadCodeService {
         try {
             parsedResultMap = FRC_AcknowledgedBroadcastBits.parse(completeResult);
         } catch ( Exception ex ) {
-            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
-                = new BaseServiceResult<>(
-                    ServiceResult.Status.ERROR, 
-                    null, 
-                    new LoadCodeProcessingInfo( 
-                            new RequestProcessingError("Parsing of result failed")
-                    )
+            servResult = createErrorResult( 
+                    new LoadError("Parsing of FRC result failed."), 
+                    targetNodes
             );
             
             logger.debug("loadCodeBroadcast - end: {}", servResult);
@@ -667,7 +756,12 @@ extends BaseService implements LoadCodeService {
         }
         
         Map<String, Boolean> resultsMap = new HashMap<>();
+        Map<String, LoadCodeError> errorsMap = new HashMap<>();
+        
         boolean loadFailed = false;
+        
+        // for usage in FRC results
+        LoadError notResponseOrHwpError = new LoadError("Not response or HWP not match.");
         
         // creating final results
         for ( Node node : targetNodes ) {
@@ -678,6 +772,7 @@ extends BaseService implements LoadCodeService {
                 || (devProcResult == DeviceProcResult.HWPID_NOT_MATCH)
             ) {
                 resultsMap.put(node.getId(), false);
+                errorsMap.put(node.getId(), notResponseOrHwpError);
                 loadFailed = true;
             } else {
                 resultsMap.put(node.getId(), true);
@@ -688,10 +783,9 @@ extends BaseService implements LoadCodeService {
                                               ServiceResult.Status.SUCCESSFULLY_COMPLETED
                                               : ServiceResult.Status.ERROR;
         
-        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
-            = new BaseServiceResult<>(
+        servResult = new BaseServiceResult<>(
                 serviceStatus, 
-                new LoadCodeResult(resultsMap),
+                new LoadCodeResult(resultsMap, errorsMap),
                 new LoadCodeProcessingInfo()
         );
         
@@ -730,14 +824,16 @@ extends BaseService implements LoadCodeService {
     {
         logger.debug("loadCode - start: params={}", params);
         
+        // service result
+        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult = null;
+        
         LoadingCodeProperties.LoadingContent loadingContent = params.getLoadingContent();
         if ( loadingContent == null ) {
-            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
-                = new BaseServiceResult<>(
+            servResult = new BaseServiceResult<>(
                         ServiceResult.Status.ERROR,
                         null,
-                        new LoadCodeProcessingInfo( new LoadingContentError("Unspecified loading content."))
-                );
+                        new LoadCodeProcessingInfo( new PreprocessingError("Unspecified loading content."))
+            );
             
             logger.debug("loadCode - end: {}", servResult);
             return servResult;
@@ -747,14 +843,14 @@ extends BaseService implements LoadCodeService {
         boolean prepareDataForBroadcast = true;
         Collection<Node> targetNodes = params.getTargetNodes();
         
+        // if target nodes are not specified, load code target node is the context node
         if ( targetNodes == null || targetNodes.isEmpty() ) {
             if ( !isStartAddressValid(this.contextNode.getId(), params.getStartAddress()) ) {
-                ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
-                    =  new BaseServiceResult<>(
+                servResult = new BaseServiceResult<>(
                             ServiceResult.Status.ERROR,
                             null,
                             new LoadCodeProcessingInfo( 
-                                    new LoadingContentError("Invalid start address.")
+                                    new PreprocessingError("Invalid start address.")
                             )
                 );
                 
@@ -765,17 +861,36 @@ extends BaseService implements LoadCodeService {
         } else {
             // checking availability of target nodes
             if ( !areNodesAvalailable(targetNodes) ) {
-                ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
-                    = new BaseServiceResult<>(
+                servResult = new BaseServiceResult<>(
                         ServiceResult.Status.ERROR,
                         null,
                         new LoadCodeProcessingInfo( 
-                                new ParamsError("Some nodes not available.")
+                                new PreprocessingError("Some nodes not available.")
                         )
                 );
                 
                 logger.debug("loadCode - end: {}", servResult);
                 return servResult;
+            }
+            
+            // checking if target nodes contain coordinator node and if so then if
+            // the coordinator node is equal to the context node
+            if ( getCoordNode(targetNodes) != null ) {
+                if ( !contextNode.getId().equals("0") ) {
+                    servResult = new BaseServiceResult<>(
+                            ServiceResult.Status.ERROR,
+                            null,
+                            new LoadCodeProcessingInfo( 
+                                    new PreprocessingError(
+                                        "Coordinator target node can be used ONLY on"
+                                        + " coordinator context node."
+                                )
+                            )
+                        );
+
+                    logger.debug("loadCode - end: {}", servResult);
+                    return servResult;
+                }
             }
         }
         
@@ -789,11 +904,10 @@ extends BaseService implements LoadCodeService {
                 try {
                     file.parseIntelHex(params.getFileName());
                 } catch ( IOException ex ) {
-                    ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
-                        = new BaseServiceResult<>(
+                    servResult = new BaseServiceResult<>(
                             ServiceResult.Status.ERROR,
                             null,
-                            new LoadCodeProcessingInfo( new LoadingContentError(ex.getMessage()))
+                            new LoadCodeProcessingInfo(new PreprocessingError(ex))
                     );
                     
                     logger.debug("loadCode - end: {}", servResult);
@@ -803,13 +917,12 @@ extends BaseService implements LoadCodeService {
                 // separating code block with custom DPA handler block
                 CodeBlock handlerBlock = findHandlerBlock(file);
                 if (  handlerBlock == null ) {
-                    ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
-                        = new BaseServiceResult<>(
+                    servResult = new BaseServiceResult<>(
                             ServiceResult.Status.ERROR,
                             null,
                             new LoadCodeProcessingInfo( 
-                                new LoadingContentError(
-                                    "Selected .hex files does not include Custom DPA "
+                                new PreprocessingError(
+                                    "Selected .hex file does not include Custom DPA "
                                     + "handler section or the code does not start with"
                                     + "clrwdt() marker."
                                 )
@@ -833,12 +946,10 @@ extends BaseService implements LoadCodeService {
                 dataChecksum = calculateChecksum(file, handlerBlock, length);
                 logger.debug(" Checksum of data is: " + Integer.toHexString(dataChecksum));
                 
-                // prepare data to blocks for writing into EEEPROM
+                // splitting data into blocks for writing into EEEPROM
                 file.getData().position(0);
                 if ( prepareDataForBroadcast ) {
-                    DataPreparer dataPreparer = new DataPreparer(handlerBlock, file);
-                    dataToWrite = dataPreparer.prepareAs16BytesBlocks();
-                    //dataToWrite = new DataPreparer(handlerBlock, file).prepareAs16BytesBlocks();
+                    dataToWrite = new DataPreparer(handlerBlock, file).prepareAs16BytesBlocks();
                 } else {
                     dataToWrite = new DataPreparer(handlerBlock, file).prepare();
                 }
@@ -854,7 +965,7 @@ extends BaseService implements LoadCodeService {
                 dataChecksum = calculateChecksum(parsedData, length);
                 logger.debug(" Checksum of data is: " + Integer.toHexString(dataChecksum));
                 
-                // prepare data to blocks for writing into EEEPROM
+                // splitting data into blocks for writing into EEEPROM
                 if ( prepareDataForBroadcast ) {
                     dataToWrite = new DataPreparer(parsedData).prepareAs16BytesBlocks();
                 } else {
@@ -862,11 +973,12 @@ extends BaseService implements LoadCodeService {
                 }
                 break;
             default:
-                ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
-                    = new BaseServiceResult<>(
-                        ServiceResult.Status.ERROR,
-                        null,
-                        new LoadCodeProcessingInfo( new LoadingContentError("Unsupported loading content."))
+                servResult = new BaseServiceResult<>(
+                            ServiceResult.Status.ERROR,
+                            null,
+                            new LoadCodeProcessingInfo( 
+                                    new PreprocessingError("Unsupported loading content.")
+                            )
                 );
                 
                 logger.debug("loadCode - end: {}", servResult);
@@ -879,51 +991,93 @@ extends BaseService implements LoadCodeService {
                     params.getStartAddress(), dataToWrite, params.getTargetNodes()
         );
         
-        // if there was some fundamental error during data writing, it is useless to load code
-        if ( writeDataResult.getProcessingInfo().getError() != null ) {
+        // if there is no result, it is useless to load code
+        if ( writeDataResult.getResult() == null ) {
             logger.debug("loadCode - end: {}", writeDataResult);
             return writeDataResult;
         }
         
-        // results of data write
-        Map<String, Boolean> writeDataResultsMap = writeDataResult.getResult().getAllNodeResultsMap();
-        
         // final results map
         Map<String, Boolean> finalResultsMap = new HashMap<>();
+        
+        // final errors map
+        Map<String, LoadCodeError> finalErrorsMap = new HashMap<>();
         
         // nodes, which has been written data successfully into
         List<Node> nodesToLoad = new LinkedList<>();
         
-        // find out successfull nodes and store the unsucessful ones into final results map
+        // results of data write
+        Map<String, Boolean> writeDataResultsMap = writeDataResult.getResult().getResultsMap();
+        
+        // errors of data write
+        Map<String, LoadCodeError> writeErrorsMap = writeDataResult.getResult().getErrorsMap();
+        
+        // add all errors from write into final errors
+        finalErrorsMap.putAll(writeErrorsMap);
+        
+        // find out successfull nodes and store the unsuccessful ones into final results map
         if ( params.getTargetNodes() != null ) {
+            WriteError resultNotFound = new WriteError("Result not found");
+            
             for ( Node node : params.getTargetNodes() ) {
                 Boolean nodeResult = writeDataResultsMap.get(node.getId());
-                if ( nodeResult == null || nodeResult == false ) {
+                if ( nodeResult == null ) {
                     finalResultsMap.put(node.getId(), false);
+                    finalErrorsMap.put(node.getId(), resultNotFound);
+                    logger.error("Write result not found for node: " + node.getId());
                     continue;
                 }
-
+                
+                if ( nodeResult == false ) {
+                    finalResultsMap.put(node.getId(), false);
+                    if ( !writeErrorsMap.containsKey(node.getId()) ) {
+                        finalErrorsMap.put(node.getId(), resultNotFound);
+                        logger.error("Write error not found for node: " + node.getId());
+                    } else {
+                        finalErrorsMap.put(node.getId(), writeErrorsMap.get(node.getId()));
+                    }
+                    continue;
+                }
+                
+                // successfully written node
                 nodesToLoad.add(node);
             }
         }
         
         // possibly add context node into the target nodes
         if ( (params.getTargetNodes() == null) || (params.getTargetNodes().isEmpty()) ) {
+            if ( !writeDataResultsMap.containsKey(this.contextNode.getId()) ) {
+                finalResultsMap.put(this.contextNode.getId(), false);
+                finalErrorsMap.put(this.contextNode.getId(), new WriteError("Result not found"));
+                
+                servResult = new BaseServiceResult<>(
+                    ServiceResult.Status.ERROR,
+                    new LoadCodeResult(finalResultsMap, writeErrorsMap),
+                    new LoadCodeProcessingInfo( new WriteError("No result from context node."))
+                );
+            
+                logger.debug("loadCode - end: {}", servResult);
+                return servResult;
+            }
+            
             Boolean contextNodeResult = writeDataResultsMap.get(this.contextNode.getId());
-            if ( (contextNodeResult != null) && (contextNodeResult == true) ) {
+            if ( contextNodeResult == true ) {
                 nodesToLoad.add(contextNode);
             } else {
                 finalResultsMap.put(this.contextNode.getId(), false);
+                finalErrorsMap.put(
+                        this.contextNode.getId(), 
+                        writeErrorsMap.get(this.contextNode.getId())
+                );
             }
         }
         
         // there must be at least error in writing data into context node, which this
         // service resides on
         if ( nodesToLoad.isEmpty() ) {
-            ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
-                = new BaseServiceResult<>(
+            servResult = new BaseServiceResult<>(
                     ServiceResult.Status.ERROR,
-                    new LoadCodeResult(finalResultsMap), 
+                    new LoadCodeResult(finalResultsMap, finalErrorsMap), 
                     new LoadCodeProcessingInfo()
             );
             
@@ -942,38 +1096,72 @@ extends BaseService implements LoadCodeService {
                 loadResult = loadCodeBroadcast(params, length, dataChecksum, nodesToLoad);
             }
         } else {
-            loadResult = loadCodeBroadcast(params, length, dataChecksum, nodesToLoad);
+            // if to load into coordinator, use unicast
+            Node coordNode = getCoordNode(nodesToLoad);
+            if ( coordNode != null ) {
+                ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> coordLoadResult 
+                    = loadCodeUnicast(params, length, dataChecksum);
+                
+                // put away coordinator from nodes to load into
+                nodesToLoad.remove(coordNode);
+                ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> nodesLoadResult 
+                    = loadCodeBroadcast(params, length, dataChecksum, nodesToLoad);
+                
+                // put back coordinator
+                nodesToLoad.add(coordNode);
+                
+                // merging results together
+                Map<String, Boolean> mergedResultsMap = new HashMap<>();
+                mergedResultsMap.putAll(coordLoadResult.getResult().getResultsMap());
+                mergedResultsMap.putAll(nodesLoadResult.getResult().getResultsMap());
+                
+                // merging errors together
+                Map<String, LoadCodeError> mergedErrorsMap = new HashMap<>();
+                mergedErrorsMap.putAll(coordLoadResult.getResult().getErrorsMap());
+                mergedErrorsMap.putAll(nodesLoadResult.getResult().getErrorsMap());
+                
+                ServiceResult.Status mergedStatus = ServiceResult.Status.SUCCESSFULLY_COMPLETED;
+                if ( 
+                    coordLoadResult.getStatus() == ServiceResult.Status.ERROR
+                    || nodesLoadResult.getStatus() == ServiceResult.Status.ERROR
+                ) {
+                    mergedStatus = ServiceResult.Status.ERROR;
+                }
+                
+                loadResult = new BaseServiceResult<>(
+                    mergedStatus,
+                    new LoadCodeResult(mergedResultsMap, mergedErrorsMap),
+                    new LoadCodeProcessingInfo()
+                );
+                
+            } else {
+                loadResult = loadCodeBroadcast(params, length, dataChecksum, nodesToLoad);
+            }   
         }
         
-        // constructing of final result
-        if ( loadResult.getProcessingInfo().getError() != null ) {
-            logger.debug("loadCode - end: {}", loadResult);
-            return loadResult;
-        }
-        
-        // put load results into final results map
-        if ( loadResult.getResult() != null ) {
-            finalResultsMap.putAll(loadResult.getResult().getAllNodeResultsMap());
-        }
+        // put load results and errors into final maps
+        finalResultsMap.putAll(loadResult.getResult().getResultsMap());
+        finalErrorsMap.putAll(loadResult.getResult().getErrorsMap());
         
         ServiceResult.Status status = loadResult.getStatus();
         if ( writeDataResult.getStatus() == ServiceResult.Status.ERROR ) {
             status = ServiceResult.Status.ERROR;
         }
         
-        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> servResult
-            = new BaseServiceResult<>(
+        servResult = new BaseServiceResult<>(
                 status,
-                new LoadCodeResult(finalResultsMap),
+                new LoadCodeResult(finalResultsMap, finalErrorsMap),
                 new LoadCodeProcessingInfo()
         );
         
         logger.debug("loadCode - end: {}", servResult);
         return servResult;
     }
-
+    
+    /**
+     * Does nothning.
+     * @param params service parameters to set
+     */
     @Override
-    public void setServiceParameters(ServiceParameters params) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+    public void setServiceParameters(ServiceParameters params) {}
 }

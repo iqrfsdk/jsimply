@@ -16,18 +16,25 @@
 package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors;
 
 /**
- * Errors related to input parameters of Load Code Service.
+ * Errors related to starting phase before writing data into external EEPROM and 
+ * loading code. 
  * 
  * @author Michal Konopa
  */
-public final class ParamsError extends AbstractLoadCodeError {
-    private final LoadCodeErrorType errorType = LoadCodeErrorType.PARAMETERS;
+public final class PreprocessingError extends AbstractLoadCodeError {
+    
+    private final LoadCodeErrorType errorType = LoadCodeErrorType.PREPROCESS;
     
     
-    public ParamsError(String message) {}
+    public PreprocessingError(String message) {}
+    
+    public PreprocessingError(String message, Throwable cause) {}
+    
+    public PreprocessingError(Throwable cause) {}
     
     @Override
     public LoadCodeErrorType getErrorType() {
         return errorType;
     }
+    
 }

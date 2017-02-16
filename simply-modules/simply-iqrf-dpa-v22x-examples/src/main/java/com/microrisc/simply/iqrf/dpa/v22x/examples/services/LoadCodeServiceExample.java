@@ -24,9 +24,11 @@ import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeProces
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeResult;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeService;
 import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.LoadCodeServiceParameters;
+import com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors.LoadCodeError;
 import com.microrisc.simply.iqrf.dpa.v22x.types.LoadingCodeProperties;
 import com.microrisc.simply.services.ServiceResult;
 import java.io.File;
+import java.util.Map;
 
 /**
  * Loading code into one specified node.
@@ -100,12 +102,25 @@ public class LoadCodeServiceExample {
             System.out.println("Code successfully loaded.");
         } else {
             System.out.println("Code load was NOT successful.");
-            // find out details
-            LoadCodeProcessingInfo procInfo = serviceResult.getProcessingInfo();
-            System.out.println(procInfo);
-            // ...
+            
+            // find out details about errors for nodes, which failed to load code into
+            LoadCodeResult loadCodeResult = serviceResult.getResult();
+            if ( loadCodeResult != null ) {
+                System.out.println("Errors: ");
+                printLoadCodeErrors(loadCodeResult);
+            } else {
+                LoadCodeProcessingInfo procInfo = serviceResult.getProcessingInfo();
+                System.out.println(procInfo);
+            }
         }
         
         simply.destroy();
+    }
+    
+    // prints info about error for each failed node 
+    private static void printLoadCodeErrors(LoadCodeResult loadCodeResult) {
+        for ( Map.Entry<String, LoadCodeError> entry : loadCodeResult.getErrorsMap().entrySet() ) {
+            System.out.println("Node " + entry.getKey() + ": " + entry.getValue());
+        }
     }
 }

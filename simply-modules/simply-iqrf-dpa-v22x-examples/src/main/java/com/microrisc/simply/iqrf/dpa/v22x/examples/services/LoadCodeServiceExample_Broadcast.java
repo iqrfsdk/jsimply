@@ -102,20 +102,14 @@ public final class LoadCodeServiceExample_Broadcast {
         } else {
             System.out.println("Code load was NOT successful.");
             
-            // find out details about errors
-            // is there a principal error?
-            LoadCodeProcessingInfo procInfo = serviceResult.getProcessingInfo();
-            LoadCodeError error = procInfo.getError();
-            if ( error != null ) {
-                System.out.println("Error: " + error);
+            // find out details about errors for nodes, which failed to load code into
+            LoadCodeResult loadCodeResult = serviceResult.getResult();
+            if ( loadCodeResult != null ) {
+                System.out.println("Errors: ");
+                printLoadCodeErrors(loadCodeResult);
             } else {
-                // if there is no principal error, find out, which nodes failed
-                // to load code into
-                LoadCodeResult loadCodeResult = serviceResult.getResult();
-                if ( loadCodeResult != null ) {
-                    System.out.println("Loading code failed at nodes: ");
-                    printFailedNodes(loadCodeResult);
-                }
+                LoadCodeProcessingInfo procInfo = serviceResult.getProcessingInfo();
+                System.out.println(procInfo);
             }
         }
         
@@ -137,12 +131,10 @@ public final class LoadCodeServiceExample_Broadcast {
         return nodes;
     }
     
-    // prints nodes, which failed to load code into
-    private static void printFailedNodes(LoadCodeResult loadCodeResult) {
-        for ( Map.Entry<String, Boolean> entry : loadCodeResult.getAllNodeResultsMap().entrySet() ) {
-            if ( entry.getValue() == false ) {
-                System.out.println(entry.getKey());
-            }
+    // prints info about error for each failed node 
+    private static void printLoadCodeErrors(LoadCodeResult loadCodeResult) {
+        for ( Map.Entry<String, LoadCodeError> entry : loadCodeResult.getErrorsMap().entrySet() ) {
+            System.out.println("Node " + entry.getKey() + ": " + entry.getValue());
         }
     }
 }

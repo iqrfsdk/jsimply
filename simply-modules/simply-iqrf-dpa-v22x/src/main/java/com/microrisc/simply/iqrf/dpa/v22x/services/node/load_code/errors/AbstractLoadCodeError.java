@@ -30,7 +30,12 @@ extends Exception implements LoadCodeError
         super(message);
     }
     
+    protected AbstractLoadCodeError(String message, Throwable cause) {
+        super(message, cause);
+    }
+    
     protected AbstractLoadCodeError(Throwable cause) {
         super(cause);
     }
+    
 }

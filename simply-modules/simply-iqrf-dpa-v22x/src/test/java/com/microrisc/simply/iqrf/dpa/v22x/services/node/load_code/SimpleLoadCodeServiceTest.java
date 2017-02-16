@@ -95,11 +95,11 @@ public class SimpleLoadCodeServiceTest {
         assertNull(serviceResult.getProcessingInfo().getError());
         
         LoadCodeResult loadResult = serviceResult.getResult();
-        Map<String, Boolean> loadResultsMap = loadResult.getAllNodeResultsMap();
+        Map<String, Boolean> loadResultsMap = loadResult.getResultsMap();
         assertNotNull(loadResultsMap);
         assertEquals(loadResultsMap.size(), 1);
         
-        Boolean nodeResult = loadResult.getNodeResult("1");
+        Boolean nodeResult = loadResultsMap.get("1");
         assertNotNull(nodeResult);
         assertEquals(true, nodeResult);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MICRORISC s.r.o.
+ * Copyright 2017 MICRORISC s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +16,23 @@
 package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors;
 
 /**
- * Missing periheral error.
+ * Errors related to loading code from external EEPROM into FLASH.
  * 
  * @author Michal Konopa
  */
-public final class MissingPeripheralError extends AbstractLoadCodeError {
+public final class LoadError extends AbstractLoadCodeError {
     
-    private final LoadCodeErrorType errorType = LoadCodeErrorType.MISSING_PERIPHERAL;
-    
-    // missing peripheral
-    private final Class missingPeripheral;
+    private final LoadCodeErrorType errorType = LoadCodeErrorType.LOAD;
     
     
-    public MissingPeripheralError(Class peripheral) {
-        this.missingPeripheral = peripheral;
-    }
+    public LoadError(String message) {}
+    
+    public LoadError(String message, Throwable cause) {}
+    
+    public LoadError(Throwable cause) {}
     
     @Override
     public LoadCodeErrorType getErrorType() {
         return errorType;
-    }
-    
-    /**
-     * Returns class of missing peripheral.
-     * 
-     * @return missing peripheral
-     */
-    public Class getMissingPeripheral() {
-        return missingPeripheral;
     }
 }

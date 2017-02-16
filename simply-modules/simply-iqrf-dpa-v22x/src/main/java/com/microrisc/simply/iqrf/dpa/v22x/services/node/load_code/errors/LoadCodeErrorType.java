@@ -21,16 +21,12 @@ package com.microrisc.simply.iqrf.dpa.v22x.services.node.load_code.errors;
  * @author Michal Konopa
  */
 public enum LoadCodeErrorType {
+    /** Errors related to starting phase before write and code load. */
+    PREPROCESS,
     
-    /** Errors related to input parameters of the service. */
-    PARAMETERS,
+    /** Errors in write code into external EEPROM. */
+    WRITE,
     
-    /** Errors related to (processing of) a loading content. */
-    LOADING_CONTENT,
-    
-    /** Missing peripheral. */
-    MISSING_PERIPHERAL,
-    
-    /** Processing of request failed. */
-    REQUEST_PROCESSING
+    /** Errors related to load code from external EEPROM into FLASH. */
+    LOAD
 }
