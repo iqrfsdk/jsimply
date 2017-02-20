@@ -88,7 +88,7 @@ public final class DPA_ProtocolProperties {
         public static final int IQMESH_BROADCAST_ADDRESS = 0xFF;
         
         /**
-         * Indicates, wheather the specified value of NADR is reserved.
+         * Indicates, whether the specified value of NADR is reserved.
          * @param nadr NADR value to check
          * @return {@code true} if {@code nadr} is reserved <br>
          *         {@code false} otherwise
@@ -133,7 +133,7 @@ public final class DPA_ProtocolProperties {
         public static final int USER_PERIPHERAL_END =     0x6F;
         
         /**
-         * Indicates, wheather the specified value of PNUM is a user peripheral.
+         * Indicates, whether the specified value of PNUM is a user peripheral.
          * @param pnum PNUM value to check
          * @return {@code true} if {@code pnum} is a user peripheral <br>
          *         {@code false} otherwise
@@ -143,7 +143,7 @@ public final class DPA_ProtocolProperties {
         }
         
         /**
-         * Indicates, wheather the specified value of PNUM is reserved.
+         * Indicates, whether the specified value of PNUM is reserved.
          * @param pnum PNUM value to check
          * @return {@code true} if {@code pnum} is reserved <br>
          *         {@code false} otherwise
@@ -153,7 +153,7 @@ public final class DPA_ProtocolProperties {
         }
         
         /**
-         * Indicates, wheather the specified value of PNum is reserved for standard
+         * Indicates, whether the specified value of PNum is reserved for standard
          * peripheral.
          * @param pnum PNUM value to check
          * @return {@code true} if {@code pnum} is reserved for standard peripheral <br>
@@ -179,7 +179,7 @@ public final class DPA_ProtocolProperties {
         public static final int VALUE_MAX = 0x3E;
         
         /**
-         * Indicates, wheather the specified value of PCMD is reserved.
+         * Indicates, whether the specified value of PCMD is reserved.
          * @param pcmd PCMD value to check
          * @return {@code true} if {@code pcmd} is reserved <br>
          *         {@code false} otherwise
@@ -220,7 +220,7 @@ public final class DPA_ProtocolProperties {
        }
        
        /**
-        * Indicates, wheather the specified value of HWPID is reserved.
+        * Indicates, whether the specified value of HWPID is reserved.
         * @param hwpId HWPID to check
         * @return {@code true} if {@code hwpId} is reserved HW profile <br>
         *         {@code false} otherwise
@@ -233,7 +233,7 @@ public final class DPA_ProtocolProperties {
        }
        
        /**
-        * Indicates, wheather the specified value of HWPID is cirtified HW profile.
+        * Indicates, whether the specified value of HWPID is cirtified HW profile.
         * @param hwpId HWPID to check
         * @return {@code true} if {@code hwpId} is certified HW profile <br>
         *         {@code false} otherwise
@@ -243,7 +243,7 @@ public final class DPA_ProtocolProperties {
        }
 
        /**
-        * Indicates, wheather the specified value of HWPID is user HW profile.
+        * Indicates, whether the specified value of HWPID is user HW profile.
         * @param hwpId HW profile to check
         * @return {@code true} if {@code hwpId} is user HW profile <br>
         *         {@code false} otherwise
@@ -256,7 +256,7 @@ public final class DPA_ProtocolProperties {
        }
 
        /**
-        * Indicates, wheather the specified value of HWPID is "Do not check".
+        * Indicates, whether the specified value of HWPID is "Do not check".
         * @param hwpId HW profile to check
         * @return {@code true} if {@code hwpId} is "Do not check"<br>
         *         {@code false} otherwise
@@ -535,13 +535,14 @@ public final class DPA_ProtocolProperties {
     
     /**
      * Returns NADR field of specified message.
+     * 
      * @param protoMsg source message
      * @return NADR field of specified message.
      */
     static int getNodeAddress(short[] protoMsg) {
-        logger.debug("setUserData - start: protoMsg={}", protoMsg);
+        logger.debug("getNodeAddress - start: protoMsg={}", protoMsg);
         
-        int nodeAddress = getMessageDataAsInt(protoMsg, NADR_START, NADR_LENGTH); 
+        int nodeAddress = getMessageDataAsInt(protoMsg, NADR_START, 1); 
         
         logger.debug("getNodeAddress - end: {}", nodeAddress);
         return nodeAddress;
