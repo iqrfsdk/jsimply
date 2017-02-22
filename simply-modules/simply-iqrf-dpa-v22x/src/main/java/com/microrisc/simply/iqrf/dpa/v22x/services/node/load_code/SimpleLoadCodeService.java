@@ -46,6 +46,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,13 +63,16 @@ extends BaseService implements LoadCodeService {
 
     private static final int CRC_INIT_VALUE_HEX = 0x01;
     private static final int CRC_INIT_VALUE_IQRF = 0x03;
-   
+    
     private static final int FOURSOME_LEN = 1 
             + DPA_ProtocolProperties.PNUM_LENGTH
             + DPA_ProtocolProperties.PCMD_LENGTH
             + DPA_ProtocolProperties.HW_PROFILE_LENGTH
             ;
    
+    // total timeout[in ms] after code load - includes mainly reset operation
+    private static final int TIMEOUT_AFTER_LOAD = 5 + 100 + 300 + 300;
+    
     
     
     // checks, if the start address is valid in relation to node ID
@@ -803,6 +807,22 @@ extends BaseService implements LoadCodeService {
         return true;
     }
     
+    // indicates, whether some code has been successfully loaded into some module
+    private static boolean hasAnyCodeLoaded(LoadCodeResult loadCodeResult) {
+        Map<String, Boolean> resultsMap = loadCodeResult.getResultsMap();
+        if ( resultsMap == null ) {
+            return false;
+        }
+        
+        for ( Map.Entry<String, Boolean> entry : resultsMap.entrySet() ) {
+            if ( entry.getValue() == true ) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
     
             
     /**
@@ -986,10 +1006,13 @@ extends BaseService implements LoadCodeService {
         }
         
         // writing data to memory
+        System.out.println("Writing code into external EEPROM - begin");
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> writeDataResult 
             = writeDataToMemory(
                     params.getStartAddress(), dataToWrite, params.getTargetNodes()
         );
+        System.out.println("Writing code into external EEPROM - end");
+        
         
         // if there is no result, it is useless to load code
         if ( writeDataResult.getResult() == null ) {
@@ -1085,6 +1108,8 @@ extends BaseService implements LoadCodeService {
             return servResult;
         }
         
+        // loading code into FLASH
+        System.out.println("Loading code into FLASH - begin");
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> loadResult = null;
         
         // if a node to load code into is the context node, use unicast else use broadcast
@@ -1138,10 +1163,20 @@ extends BaseService implements LoadCodeService {
                 loadResult = loadCodeBroadcast(params, length, dataChecksum, nodesToLoad);
             }   
         }
+        System.out.println("Loading code into FLASH - end");
         
         // put load results and errors into final maps
         finalResultsMap.putAll(loadResult.getResult().getResultsMap());
         finalErrorsMap.putAll(loadResult.getResult().getErrorsMap());
+        
+        // waiting some time for TR module(s) reset
+        if ( hasAnyCodeLoaded(loadResult.getResult()) ) {
+            try {
+                Thread.sleep(TIMEOUT_AFTER_LOAD);
+            } catch ( InterruptedException ex ) {
+                logger.error("Waiting after code load interrupted.");
+            }
+        }
         
         ServiceResult.Status status = loadResult.getStatus();
         if ( writeDataResult.getStatus() == ServiceResult.Status.ERROR ) {
