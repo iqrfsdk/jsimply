@@ -807,20 +807,22 @@ extends BaseService implements LoadCodeService {
         return true;
     }
     
-    // indicates, whether some code has been successfully loaded into some module
-    private static boolean hasAnyCodeLoaded(LoadCodeResult loadCodeResult) {
+    // returns the number of successfully loaded nodes
+    private static int getNumOfSuccessfullyLoadedNodes(LoadCodeResult loadCodeResult) {
+        int succNodesNum = 0;
+        
         Map<String, Boolean> resultsMap = loadCodeResult.getResultsMap();
         if ( resultsMap == null ) {
-            return false;
+            return 0;
         }
         
         for ( Map.Entry<String, Boolean> entry : resultsMap.entrySet() ) {
             if ( entry.getValue() == true ) {
-                return true;
+                succNodesNum++;
             }
         }
         
-        return false;
+        return succNodesNum;
     }
     
     
@@ -1112,6 +1114,9 @@ extends BaseService implements LoadCodeService {
         System.out.println("Loading code into FLASH - begin");
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> loadResult = null;
         
+        // indicates, whether it has been waited after code load into coordinator
+        boolean waitedAfterCoordCodeLoad = false;
+        
         // if a node to load code into is the context node, use unicast else use broadcast
         if ( nodesToLoad.size() == 1 ) {
             Node nodeToLoadInto = nodesToLoad.get(0);
@@ -1126,6 +1131,17 @@ extends BaseService implements LoadCodeService {
             if ( coordNode != null ) {
                 ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> coordLoadResult 
                     = loadCodeUnicast(params, length, dataChecksum);
+                
+                // waiting some time for TR module(s) reset
+                if ( getNumOfSuccessfullyLoadedNodes(coordLoadResult.getResult()) > 0 ) {
+                    logger.debug("Waiting after coordinator code load.");
+                    try {
+                        Thread.sleep(TIMEOUT_AFTER_LOAD);
+                        waitedAfterCoordCodeLoad = true;
+                    } catch ( InterruptedException ex ) {
+                        logger.error("Waiting after coordinator code load interrupted.");
+                    }
+                }
                 
                 // put away coordinator from nodes to load into
                 nodesToLoad.remove(coordNode);
@@ -1169,8 +1185,10 @@ extends BaseService implements LoadCodeService {
         finalResultsMap.putAll(loadResult.getResult().getResultsMap());
         finalErrorsMap.putAll(loadResult.getResult().getErrorsMap());
         
-        // waiting some time for TR module(s) reset
-        if ( hasAnyCodeLoaded(loadResult.getResult()) ) {
+        
+        // it is neccessary to wait some time for TR module(s) reset
+        int successfullyLoadedNodesNum = getNumOfSuccessfullyLoadedNodes(loadResult.getResult());
+        if ( !(successfullyLoadedNodesNum == 1 && waitedAfterCoordCodeLoad) ) {
             try {
                 Thread.sleep(TIMEOUT_AFTER_LOAD);
             } catch ( InterruptedException ex ) {
