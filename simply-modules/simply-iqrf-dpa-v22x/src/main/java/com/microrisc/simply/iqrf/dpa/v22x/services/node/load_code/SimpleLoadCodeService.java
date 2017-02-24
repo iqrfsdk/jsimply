@@ -46,7 +46,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +72,35 @@ extends BaseService implements LoadCodeService {
     // total timeout[in ms] after code load - includes mainly reset operation
     private static final int TIMEOUT_AFTER_LOAD = 5 + 100 + 300 + 300;
     
+    
+    // is message printing enabled or not
+    private boolean isPrintingMessagesEnabled = false;
+    
+    // prints info message
+    private void printMessage(String message) {
+        if ( isPrintingMessagesEnabled ) {
+            System.out.println(message);
+        }
+    }
+    
+    // converts specified bytes into hexa string
+    private String toHexString(short[] arr) {
+        StringBuilder sb = new StringBuilder();
+        
+        sb.append('[');
+        for( short b : arr ) {
+           sb.append(String.format("%02x", b));
+           sb.append(", ");
+        }
+        
+        if ( arr.length > 0 ) {
+            sb.delete(sb.length() - 2, sb.length());
+        }
+        
+        sb.append(']');
+        
+        return sb.toString();
+    }
     
     
     // checks, if the start address is valid in relation to node ID
@@ -235,7 +263,12 @@ extends BaseService implements LoadCodeService {
                     );
 
                     actualAddress += data[index+1].length;
-
+                    
+                    printMessage(
+                            "\nData to write: " + toHexString(data[index]) 
+                            + " " + toHexString(data[index+1])
+                    );
+                    
                     VoidType result = os.batch( new DPA_Request[] { firstReq, secondReq } );
                     if ( result == null ) {
                         return createErrorResult(
@@ -243,9 +276,13 @@ extends BaseService implements LoadCodeService {
                                 contextNodeList
                         );
                     }
-
+                    
+                    printMessage("Completed.");
+                    
                     index += 2;
                 } else {
+                    printMessage("\nData to write: " + toHexString(data[index]));
+                    
                     VoidType result = eeeprom.extendedWrite(actualAddress, data[index]);
                     if ( result == null ) {
                         return createErrorResult(
@@ -253,10 +290,15 @@ extends BaseService implements LoadCodeService {
                                 contextNodeList
                         );
                     }
+                    
+                    printMessage("Completed.");
+                    
                     actualAddress += data[index].length;
                     index++;
                 }
             } else {
+                printMessage("\nData to write: " + toHexString(data[index]));
+                
                 VoidType result = eeeprom.extendedWrite(actualAddress, data[index]);
                 if ( result == null ) {
                     return createErrorResult(
@@ -264,6 +306,9 @@ extends BaseService implements LoadCodeService {
                             contextNodeList
                     );
                 }
+                
+                printMessage("Completed.");
+                
                 actualAddress += data[index].length;
                 index++;
             }
@@ -388,10 +433,12 @@ extends BaseService implements LoadCodeService {
             // excludes nodes with failed write - it is useless to write next byte chunks into them
             excludeFailedNodes(nodesToWriteInto, finalResultsMap);  
             
+            printMessage("\nData to write: " + toHexString(data[index]));
+            
             FRC_Data result = frc.sendSelective( new FRC_AcknowledgedBroadcastBits(
                     dpaRequestData, nodesToWriteInto.toArray( new Node[] {}))
             );
-
+            
             if ( result == null ) {
                 return createErrorResult(
                         new WriteError("Returning of FRC result failed."), 
@@ -410,7 +457,9 @@ extends BaseService implements LoadCodeService {
                         errorsMap
                 );
             }
-        
+            
+            printMessage("Completed.");
+            
             // putting both parts of result together
             short[] completeResult = getCompleteFrcResult(result.getData(), extraResult);
 
@@ -480,7 +529,7 @@ extends BaseService implements LoadCodeService {
     private ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> writeDataToMemory(
             int startAddress, short[][] data, Collection<Node> targetNodes
     ) {
-        if ( logger.isDebugEnabled() ){
+        if ( logger.isDebugEnabled() ) {
             StringBuilder debugData = new StringBuilder();
             
             debugData.append("{\n");
@@ -916,6 +965,8 @@ extends BaseService implements LoadCodeService {
             }
         }
         
+        isPrintingMessagesEnabled = params.isPrintingMessagesEnabled();
+        
         short[][] dataToWrite = null;
         final int length, dataChecksum;
         
@@ -962,11 +1013,15 @@ extends BaseService implements LoadCodeService {
                 
                 // calculating rounded length of handler in memory
                 length = (int) ((handlerBlock.getLength() + (64 - 1)) & ~(64 - 1));
-                logger.debug(" Length of data is: " + Integer.toHexString(length));
+                String msg = "Length of data is: " + Integer.toHexString(length);
+                logger.debug(msg);
+                printMessage(msg);
                 
                 // calculating checksum with initial value 1 (defined for DPA handler)
                 dataChecksum = calculateChecksum(file, handlerBlock, length);
-                logger.debug(" Checksum of data is: " + Integer.toHexString(dataChecksum));
+                msg = "Checksum of data is: " + Integer.toHexString(dataChecksum);
+                logger.debug(msg);
+                printMessage(msg);
                 
                 // splitting data into blocks for writing into EEEPROM
                 file.getData().position(0);
@@ -982,10 +1037,14 @@ extends BaseService implements LoadCodeService {
                 byte[] parsedData = parser.parse();
                 
                 length = parsedData.length;
-                logger.debug(" Length of data is: " + Integer.toHexString(length));
+                msg = "Length of data is: " + Integer.toHexString(length);
+                logger.debug(msg);
+                printMessage(msg);
                 
                 dataChecksum = calculateChecksum(parsedData, length);
-                logger.debug(" Checksum of data is: " + Integer.toHexString(dataChecksum));
+                msg = "Checksum of data is: " + Integer.toHexString(dataChecksum);
+                logger.debug(msg);
+                printMessage(msg);
                 
                 // splitting data into blocks for writing into EEEPROM
                 if ( prepareDataForBroadcast ) {
@@ -1008,12 +1067,12 @@ extends BaseService implements LoadCodeService {
         }
         
         // writing data to memory
-        System.out.println("Writing code into external EEPROM - begin");
+        printMessage("\nWriting code into external EEPROM - begin");
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> writeDataResult 
             = writeDataToMemory(
                     params.getStartAddress(), dataToWrite, params.getTargetNodes()
         );
-        System.out.println("Writing code into external EEPROM - end");
+        printMessage("Writing code into external EEPROM - end");
         
         
         // if there is no result, it is useless to load code
@@ -1111,7 +1170,7 @@ extends BaseService implements LoadCodeService {
         }
         
         // loading code into FLASH
-        System.out.println("Loading code into FLASH - begin");
+        printMessage("\nLoading code into FLASH - begin");
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> loadResult = null;
         
         // indicates, whether it has been waited after code load into coordinator
@@ -1179,7 +1238,7 @@ extends BaseService implements LoadCodeService {
                 loadResult = loadCodeBroadcast(params, length, dataChecksum, nodesToLoad);
             }   
         }
-        System.out.println("Loading code into FLASH - end");
+        printMessage("Loading code into FLASH - end");
         
         // put load results and errors into final maps
         finalResultsMap.putAll(loadResult.getResult().getResultsMap());

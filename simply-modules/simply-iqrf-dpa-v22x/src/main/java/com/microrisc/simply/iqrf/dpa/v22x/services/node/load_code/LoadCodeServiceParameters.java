@@ -44,6 +44,9 @@ public final class LoadCodeServiceParameters {
     // target nodes
     private Collection<Node> targetNodes;
     
+    // indicates, whether to print messages about service's progress
+    private boolean printMessages = false;
+    
     
     private String checkFileName(String fileName) {
         if ( fileName == null ) {
@@ -103,7 +106,8 @@ public final class LoadCodeServiceParameters {
      *          - {@code loadingContent} is {@code null}
      */
     public LoadCodeServiceParameters( 
-            String fileName, int startAddress,
+            String fileName, 
+            int startAddress,
             LoadingCodeProperties.LoadingAction loadingAction,
             LoadingCodeProperties.LoadingContent loadingContent
     ) {
@@ -130,7 +134,8 @@ public final class LoadCodeServiceParameters {
      *          - {@code loadingContent} is {@code null}
      */
     public LoadCodeServiceParameters( 
-            String fileName, int startAddress,
+            String fileName, 
+            int startAddress,
             LoadingCodeProperties.LoadingAction loadingAction,
             LoadingCodeProperties.LoadingContent loadingContent,
             Collection<Node> targetNodes
@@ -212,6 +217,28 @@ public final class LoadCodeServiceParameters {
         this.targetNodes = targetNodes;
     }
     
+    /**
+     * Indicates, whether to print messages about service's progress on standard
+     * output or not.
+     * 
+     * @return {@code true} messages will be printed <br>
+     *         {@code false}, otherwise
+     */
+    public boolean isPrintingMessagesEnabled() {
+        return this.printMessages;
+    }
+    
+    /**
+     * Sets, whether to print information messages about service's progress on
+     * standard output or not.
+     * 
+     * @param printMsg {@code true} to print messages <br>
+     *                 {@code false}, otherwise
+     */
+    public void enablePrintingMessages(boolean printMsg) {
+        this.printMessages = printMsg;
+    }
+    
     @Override
     public String toString() {
         StringBuilder strBuilder = new StringBuilder();
@@ -223,6 +250,7 @@ public final class LoadCodeServiceParameters {
         strBuilder.append("   loading action: " + loadingAction + NEW_LINE);
         strBuilder.append("   loading content: " + loadingContent + NEW_LINE);
         strBuilder.append("   target nodes: " + targetNodes + NEW_LINE);
+        strBuilder.append("   print messages: " + printMessages + NEW_LINE);
         strBuilder.append("}");
         
         return strBuilder.toString();

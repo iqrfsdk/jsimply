@@ -87,6 +87,7 @@ public class SimpleLoadCodeServiceTest {
                         LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithoutCodeLoading,
                         LoadingCodeProperties.LoadingContent.Hex
                 );
+        params.enablePrintingMessages(true);
         
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
                 = loadCodeService.loadCode(params);

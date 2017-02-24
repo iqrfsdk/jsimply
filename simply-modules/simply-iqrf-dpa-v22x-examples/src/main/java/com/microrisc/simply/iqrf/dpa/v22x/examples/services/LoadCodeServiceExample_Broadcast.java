@@ -84,17 +84,22 @@ public final class LoadCodeServiceExample_Broadcast {
             printMessageAndExit("Node 0 doesn't support Load Code Service.");
         }
         
-        // loading code
-        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
-            = loadCodeService.loadCode( 
-                    new LoadCodeServiceParameters(
+        // service's parameters 
+        LoadCodeServiceParameters params 
+                = new LoadCodeServiceParameters(
                         "config" + File.separator + "custom-dpa-handlers" + File.separator + "CustomDpaHandler-LED-Green-On-7xD-V228-160912.hex",
                         0x0800,
                         LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithCodeLoading,
                         LoadingCodeProperties.LoadingContent.Hex,
                         targetNodes
-                    )
-            );
+                );
+        
+        // enable printing info messages about service's progress
+        params.enablePrintingMessages(true);
+        
+        // run the service
+        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
+            = loadCodeService.loadCode( params );
         
         // getting results
         if ( serviceResult.getStatus() == ServiceResult.Status.SUCCESSFULLY_COMPLETED ) {
