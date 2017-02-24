@@ -30,8 +30,8 @@ import java.util.UUID;
  * @author Martin Strouhal
  */
 @DeviceInterface
-public interface AutonetworkPeripheral extends DPA_StandardServices,
-        GenericAsyncCallable, MethodIdTransformer {
+public interface AutonetworkPeripheral 
+extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
 
    /** Identifiers of this Device Interface's methods. */
    enum MethodID implements DeviceInterfaceMethodId {

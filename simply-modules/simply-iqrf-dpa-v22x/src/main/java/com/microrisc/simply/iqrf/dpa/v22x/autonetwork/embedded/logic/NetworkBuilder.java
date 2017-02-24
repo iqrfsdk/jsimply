@@ -30,6 +30,7 @@ import com.microrisc.simply.iqrf.dpa.v22x.devices.EEPROM;
 import com.microrisc.simply.iqrf.dpa.v22x.devices.RAM;
 import com.microrisc.simply.iqrf.dpa.v22x.typeconvertors.RemotelyBondedModuleIdConvertor;
 import com.microrisc.simply.iqrf.dpa.v22x.types.RemotelyBondedModuleId;
+import com.microrisc.simply.iqrf.types.VoidType;
 import com.microrisc.simply.typeconvertors.ValueConversionException;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -98,45 +99,49 @@ public final class NetworkBuilder implements
            Network sourceNetwork,
            AsynchronousMessagingManager<DPA_AsynchronousMessage, DPA_AsynchronousMessageProperties> asyncManager
    ) {
-      log.debug("<init> - start: sourceNetwork={}, asyncManager={}", 
-              sourceNetwork, asyncManager);
-      if (sourceNetwork == null) {
-         throw new RuntimeException("Source network doesn't exist");
-      }
-      if(asyncManager == null){
-         throw new RuntimeException("Async manager doesn't exist");
-      }
+        log.debug("<init> - start: sourceNetwork={}, asyncManager={}", 
+                sourceNetwork, asyncManager
+        );
 
-      // getting coordinator
-      coord = sourceNetwork.getNode("0");
-      if (coord == null) {
-         throw new RuntimeException("Coordinator doesn't exist");
-      }
+        if ( sourceNetwork == null ) {
+            throw new IllegalArgumentException("Source network must not be null.");
+        }
+      
+        if ( asyncManager == null ) {
+            throw new IllegalArgumentException("Async manager must not be null.");
+        }
 
-      // register the listener of asynchronous messages
-      this.asyncManager = asyncManager;
-      this.asyncManager.registerAsyncMsgListener(this);
+        // getting coordinator
+        coord = sourceNetwork.getNode("0");
+        if ( coord == null ) {
+            throw new IllegalArgumentException("Coordinator doesn't exist");
+        }
+
+        // register as the listener of asynchronous messages
+        this.asyncManager = asyncManager;
+        this.asyncManager.registerAsyncMsgListener(this);
+
+        autonetworkListeners = new LinkedList<>();
+        
+        // add native listener for dynamic network building
+        buildingListener = new AutonetworkBuildingListener(sourceNetwork);
+        autonetworkListeners.add(buildingListener);
+
+        // get peripheral for approver, if isn't accesible then disallow his using
+        autonetworkPer = coord.getDeviceObject(AutonetworkPeripheral.class);
+        if ( autonetworkPer == null ) {
+           log.warn("Autonetwork peripheral doesn't exist on Coordinator! Approver cannot be used!");
+           disallowedApprover = true;
+        }
+
+        // set default values
+        setValue(AutonetworkValueType.DISCOVERY_TX_POWER, 7);
+        setValue(AutonetworkValueType.BONDING_TIME, 8);
+        setValue(AutonetworkValueType.TEMPORARY_ADDRESS_TIMEOUT, 3);
+        setValue(AutonetworkValueType.UNBOND_AND_RESTART, true);
       
-      autonetworkListeners = new LinkedList<>();
-      // add native listener for dynmaic network building
-      buildingListener = new AutonetworkBuildingListener(sourceNetwork);
-      autonetworkListeners.add(buildingListener);
-      
-      // get peripheral for approver, if isn't accesible than disallow his using
-      autonetworkPer = coord.getDeviceObject(AutonetworkPeripheral.class);
-      if (autonetworkPer == null) {
-         String txt = "Autonetwork peripheral doesn't exist on Coordinator! Approver cannot be used!";
-         log.warn(txt);
-         disallowedApprover = true;
-      }
-      
-      // set default values
-      setValue(AutonetworkValueType.DISCOVERY_TX_POWER, 7);
-      setValue(AutonetworkValueType.BONDING_TIME, 8);
-      setValue(AutonetworkValueType.TEMPORARY_ADDRESS_TIMEOUT, 3);
-      setValue(AutonetworkValueType.UNBOND_AND_RESTART, true);
-      log.info("Initialization of network builder was completed.");
-      log.debug("<init> - end");
+        log.info("Initialization of network builder was completed.");
+        log.debug("<init> - end");
    }
 
    /**
@@ -181,29 +186,32 @@ public final class NetworkBuilder implements
       throw new IllegalArgumentException("Illegal DataType of config value.");
    }
    
-   /**
-    * Start autonetwork with specified count of waves and bond nodes approved by
-    * {@link NodeApprover} (if was set).
-    * 
-    * @param countOfWaves count of waves
-    *
-    */
-   public void startAutonetwork(int countOfWaves) {
-      log.debug("startAutonetwork - start: countOfWaves={}", countOfWaves);
-      // getting RAM DI
-      RAM ram = coord.getDeviceObject(RAM.class);
-      if (ram == null) {
-         String txt = "RAM doesn't exist on Coordinator!";
-         log.error(txt);
-         log.debug("startAutonetwork - end: {}", txt);
-         throw new RuntimeException(txt);
-      }
+    /**
+     * Start autonetwork with specified count of waves and bond nodes approved by
+     * {@link NodeApprover} (if was set).
+     * 
+     * @param countOfWaves count of waves
+     *
+     */
+    public void startAutonetwork(int countOfWaves) {
+       log.debug("startAutonetwork - start: countOfWaves={}", countOfWaves);
 
-      // start autonetwork on Coordinator
-      ram.write(0x00, new short[]{(short) countOfWaves});
-      alogirthmState = AlgorithmState.RUNNING;
-      log.debug("startAutonetwork - end");
-   }
+        // getting RAM DI
+        RAM ram = coord.getDeviceObject(RAM.class);
+        if ( ram == null ) {
+           throw new RuntimeException("RAM doesn't exist on Coordinator!");
+        }
+
+        // start autonetwork on Coordinator
+        VoidType writeResult = ram.write(0x00, new short[]{(short) countOfWaves});
+        if ( writeResult == null ) {
+            throw new RuntimeException("Write into RAM in Coordinator failed.");
+        }
+
+        alogirthmState = AlgorithmState.RUNNING;
+
+        log.debug("startAutonetwork - end");
+    }
   
    @Override
    public void onAsynchronousMessage(DPA_AsynchronousMessage message) {
@@ -275,16 +283,17 @@ public final class NetworkBuilder implements
     * Create actual copy of built network.
     * @return copy of actual network
     */
-   public Network getNetwork() {
-      log.debug("getNetwork - start");
-      if (alogirthmState != AlgorithmState.FINISHED) {
-         log.debug("getNetwork - end: Algoruthm is running still!");
-         throw new IllegalStateException("Algorithm is running still!");
-      }
-      Network network = buildingListener.getNetworkCopy();
-      log.debug("getNetwork - end: {}", network);
-      return network;
-   }
+    public Network getNetwork() {
+        log.debug("getNetwork - start");
+
+        if ( alogirthmState != AlgorithmState.FINISHED ) {
+            throw new RuntimeException("Algorithm is running still!");
+        }
+        Network network = buildingListener.getNetworkCopy();
+
+        log.debug("getNetwork - end: {}", network);
+        return network;
+    }
 
    /** Free up used resources. */
    public void destroy() {

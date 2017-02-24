@@ -40,6 +40,7 @@ public class AutonetworkEmbedded {
 
     /** reference to Simply */
     private static DPA_Simply simply;
+    
     /** reference to network */
     private static Network network1;
 
@@ -56,7 +57,8 @@ public class AutonetworkEmbedded {
         // creating the Simply instance
         try {
             simply = DPA_SimplyFactory.getSimply(
-                    "config" + File.separator + "simply" + File.separator +  "Simply.properties");
+                    "config" + File.separator + "simply" + File.separator +  "Simply.properties"
+            );
         } catch (SimplyException ex) {
             printMessageAndExit("Error while creating Simply: " + ex);
         }
@@ -85,17 +87,20 @@ public class AutonetworkEmbedded {
             printMessageAndExit("Clearing the coordinator network memory failed");
         }
         
-        NetworkBuilder builder = new NetworkBuilder(network1, 
-                simply.getAsynchronousMessagingManager()
+        NetworkBuilder builder = new NetworkBuilder(
+                network1, simply.getAsynchronousMessagingManager()
         );
 
         // max. power => 7
         int discoveryTXPower = 7;
+        
         // bonding time => 2.56*8 = 20.48 s
         int bondingTime = 8;
+        
         // temporary address timeout => 25.6 * 3 = 76.8 s
         int temporaryAddressTimeout = 3;
-        // yes unbond and restart 0xFE nodes
+        
+        // yes to unbond and restart 0xFE nodes
         boolean unbondAndRestart = true;
         
         // optional setting - see default values in constructor of builder
@@ -104,7 +109,7 @@ public class AutonetworkEmbedded {
         builder.setValue(AutonetworkValueType.TEMPORARY_ADDRESS_TIMEOUT, temporaryAddressTimeout);
         builder.setValue(AutonetworkValueType.UNBOND_AND_RESTART, unbondAndRestart);
         
-        // setting of node approver which deciding if should new node bonded
+        // setting of node approver which decides whether a new node should be bonded
         builder.setValue(AutonetworkValueType.APPROVER, new SimpleNodeApprover());
         
         // start first part algorithm with 2 waves
@@ -112,12 +117,12 @@ public class AutonetworkEmbedded {
         int countOfWaves = 0x02;
         builder.startAutonetwork(countOfWaves);
 
-        // waiting to end of algorithm
+        // waiting to the end of the algorithm
         while (builder.getAlgorithmState() != NetworkBuilder.AlgorithmState.FINISHED) {
             try {
                 Thread.sleep(3000);
             } catch (InterruptedException ex) {
-                System.out.println(ex);
+                System.out.println("Waiting to the end of algorithm interrupted.");
             }
         }
 
@@ -130,11 +135,10 @@ public class AutonetworkEmbedded {
         // generate 5 seconds time for turn on next unbonded module after 
         // LED on node 1 was light on
         try {
-          Thread.sleep(5000);
-       } catch (InterruptedException ex) {
-          System.out.println(ex);
-       }
-
+            Thread.sleep(5000);
+        } catch (InterruptedException ex) {
+            System.out.println("Waiting for turn on next unbonded module interrupted.");
+        }
         
         System.out.println("\nSecond part:");
         countOfWaves = 0x0A;
@@ -145,7 +149,7 @@ public class AutonetworkEmbedded {
             try {
                 Thread.sleep(3000);
             } catch (InterruptedException ex) {
-                System.out.println(ex);
+                System.out.println("Waiting to the end of algorithm interrupted.");
             }
         }
 
@@ -160,23 +164,22 @@ public class AutonetworkEmbedded {
         simply.destroy();
     }
     
+    // performs LEDG ON on specified node
     private static void lightOnLED(String nodeId) {
-      // getting node with nodeId
-      Node node1 = network1.getNode(nodeId);
-      if (node1 == null) {
-         printMessageAndExit("Node " + nodeId + " doesn't exist");
-      }
+        Node node1 = network1.getNode(nodeId);
+        if ( node1 == null ) {
+           printMessageAndExit("Node " + nodeId + " doesn't exist");
+        }
 
-      // getting LEDG interface
-      LEDG ledg = node1.getDeviceObject(LEDG.class);
-      if (ledg == null) {
-         printMessageAndExit("LEDG doesn't exist or is not enabled");
-      }
+        LEDG ledg = node1.getDeviceObject(LEDG.class);
+        if ( ledg == null ) {
+           printMessageAndExit("LEDG doesn't exist or is not enabled on node " + nodeId);
+        }
 
-      // setting state of LEDG to 'ON'
-      VoidType setResult = ledg.set(LED_State.ON);
-      if (setResult == null) {
-         System.out.println("Setting LEDG state ON failed");
-      }
-   }
+        // setting state of LEDG to 'ON'
+        VoidType setResult = ledg.set(LED_State.ON);
+        if ( setResult == null ) {
+           System.out.println("Setting LEDG state ON failed on node " + nodeId);
+        }
+    }
 }

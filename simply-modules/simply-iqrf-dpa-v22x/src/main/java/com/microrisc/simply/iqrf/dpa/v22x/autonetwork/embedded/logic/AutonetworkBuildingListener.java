@@ -33,31 +33,37 @@ import org.slf4j.LoggerFactory;
  */
 public class AutonetworkBuildingListener implements AutonetworkStateListener {
 
-   private static final Logger log = LoggerFactory.getLogger(
-           AutonetworkBuildingListener.class);
+    private static final Logger log = LoggerFactory.getLogger(AutonetworkBuildingListener.class);
 
-   private DynamicNetwork network;
+    private DynamicNetwork network = null;
 
-   public AutonetworkBuildingListener(Network srcNetwork) {
-      if (srcNetwork == null) {
-         String txt = "Source network cannot be null!";
-         log.warn(txt);
-         throw new IllegalArgumentException(txt);
-      }
-      network = new DynamicNetwork(srcNetwork.getId(), new HashMap<>(srcNetwork.
-              getNodesMap()));
+    
+    /**
+     * Creates new autonetwork listener.
+     * @param srcNetwork network to listen for changes in
+     */
+    public AutonetworkBuildingListener(Network srcNetwork) {
+        if ( srcNetwork == null ) {
+           throw new IllegalArgumentException("Source network cannot be null!");
+        }
+        
+        network = new DynamicNetwork(
+                srcNetwork.getId(), new HashMap<>(srcNetwork.getNodesMap())
+        );
    }
 
-   @Override
-   public void onAutonetworkState(AutonetworkState state) {
-      log.debug("onAutonetworkState - start: state={}", state);
-      if (state.getType() == AutonetworkStateType.S_Authorize) {
-         addNodeWithAllPeripherals(state.getAdditionalData(0));
-      } else if (state.getType() == AutonetworkStateType.S_CheckAuthorizedLoop) {
-         removeNode(state.getAdditionalData(0));
-      }
-      log.debug("onAutonetworkState - end");
-   }
+    @Override
+    public void onAutonetworkState(AutonetworkState state) {
+        log.debug("onAutonetworkState - start: state={}", state);
+        
+        if ( state.getType() == AutonetworkStateType.S_Authorize ) {
+           addNodeWithAllPeripherals(state.getAdditionalData(0));
+        } else if (state.getType() == AutonetworkStateType.S_CheckAuthorizedLoop) {
+           removeNode(state.getAdditionalData(0));
+        }
+        
+        log.debug("onAutonetworkState - end");
+    }
 
    private void addNodeWithAllPeripherals(int nodeIndex) {
       log.debug("addNodeWithAllPeripherals - start: nodeIndex={}", nodeIndex);

@@ -23,10 +23,12 @@ import com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.logic.NodeApprove
  * @author Martin Strouhal
  */
 public enum AutonetworkValueType {
+    
    DISCOVERY_TX_POWER(Integer.class, 0, 0), 
    BONDING_TIME(Integer.class, 1, 0), 
    TEMPORARY_ADDRESS_TIMEOUT(Integer.class, 2, 0), 
    UNBOND_AND_RESTART(Boolean.class, 3, 1), 
+   
    /** Identify if should use approver and which approver. */
    APPROVER(NodeApprover.class, 3, 0);
 
