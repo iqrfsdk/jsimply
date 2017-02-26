@@ -1,5 +1,7 @@
 # jSimply - Simple Application Framework
 
+[![Build Status](https://travis-ci.org/iqrfsdk/jsimply.svg?branch=develop)](https://travis-ci.org/iqrfsdk/jsimply)
+
 jSimply is a generic tool – a framework allowing to create applications which need to communicate with sensor networks (e.g. IQMESH). In general, jSimply is not connected with any particular technology, but forms a ground to support multiple technologies. Technology IQRF DPA is fully implemented and integral part of the framework.
 
 Before proceeding, please, get yourself familiar with the overview of the framework captured as single mind map, check out these files doc/en/jSimply-Framework.xmind or doc/en/jSimply-Framework.png. As you proceed reading you can refer to mind map and get yourself used to the main concepts. We also advise you to spend a time with DCTR, DPA and IQRF IDE before coming to use jSimply. jSimply requires that your network is already setup and functioning well. All the setup tasks can be nicely handled by IQRF IDE.
@@ -28,7 +30,7 @@ Fundamental concept of jSimply is based on an idea of encapsulating of each devi
 
 Example:
 
-Temperature sensor has its own interface called Thermometer which defines method ```getTemperature``` returning current temperature acquired by the sensor.
+Temperature sensor has its own interface called `Thermometer` which defines method `getTemperature` returning current temperature acquired by the sensor.
 
 ```Java
 public interface Thermometer {
@@ -60,9 +62,9 @@ Each of this layer offers services to the directly next higher layer (Network La
 
 Device Object DO represents concrete device (sensor, actuator, uC periphery) on concrete node in concrete connected network. Basic functionality of the DO defines DeviceObject interface. It contains methods to access:
 
-- Network ID which the node belongs to
-- Node ID which contains this device 
-- Class object which specifies implemented Device Interface
+-   Network ID which the node belongs to
+-   Node ID which contains this device
+-   Class object which specifies implemented Device Interface
 
 Base implementation of this interface is BaseDeviceObject class that serves as a ground for next possible extensions.
 
@@ -72,15 +74,15 @@ Creates link between clients which send Call Requests, usually Device Objects, w
 
 Main tasks handled:
 
-- management of outgoing messages (Call Requests) and sending them to the connected networks by means of lower layers
-- management of incoming Messages (responses) and directing their data (Call results) back to the clients which issued corresponding Call Requests 
+-   management of outgoing messages (Call Requests) and sending them to the connected networks by means of lower layers
+-   management of incoming Messages (responses) and directing their data (Call results) back to the clients which issued corresponding Call Requests
 
 The connector can be relatively complex entity – depending on the implemented management. jSimply defines so called Response Waiting Connector and provides also its simple implementation.
 
 Response Waiting Connector is a connector that sends Call Request and waits for the Response of this Call Request. A duration of this waiting is under a control of the connector and it can provide interface for its setting. Important is that this connector DOES NOT send next Call Request before:
 
-1. There is a Response for a previous Call Request
-2. Or timeout expires
+1.  There is a Response for a previous Call Request
+2.  Or timeout expires
 
 ### Protocol layer
 
@@ -88,8 +90,8 @@ Is a layer which provides a communication between Connector and Network Layer by
 
 Main functionality:
 
-- Conversion of incoming Call Requests to the data of application protocol and forwarding them to the Network Layer
-- Conversion of incoming data from the Network Layer into Messages (objects of type of AbstractMessage) and forwarding them to the registered Protocol Listener which is, in typical case, a Connector coupling of incoming Responses with sent Call Requests
+-   Conversion of incoming Call Requests to the data of application protocol and forwarding them to the Network Layer
+-   Conversion of incoming data from the Network Layer into Messages (objects of type of AbstractMessage) and forwarding them to the registered Protocol Listener which is, in typical case, a Connector coupling of incoming Responses with sent Call Requests
 
 ### Network layer
 
@@ -97,30 +99,30 @@ Encapsulates an access to the connected network and its communication technology
 
 Main functionality:
 
-- Getting application protocol data from the Protocol Layer, its conversion to used network communication technology and sending the converted data to the network
-- Reading data from the connected network, extraction of useful data from it and forwarding that extracted data to the registered listener (what is typically a Protocol Layer)
+-   Getting application protocol data from the Protocol Layer, its conversion to used network communication technology and sending the converted data to the network
+-   Reading data from the connected network, extraction of useful data from it and forwarding that extracted data to the registered listener (what is typically a Protocol Layer)
 
 jSimply currently defines this types of information about network connections:
 
-| Bus | Class                                      |
-| --- | ------------------------------------------ |
-| COM | ```com.microrisc.simply.network.comport``` |
-| SPI | ```com.microrisc.simply.network.spi```     |
-| UDP | ```com.microrisc.simply.network.udp```     |
+| Bus | Class                                  |
+| --- | -------------------------------------- |
+| COM | `com.microrisc.simply.network.comport` |
+| SPI | `com.microrisc.simply.network.spi`     |
+| UDP | `com.microrisc.simply.network.udp`     |
 
 
 ### Asynchronous method calls from DI
 
-The principle of asynchronous calls is a separation of method calls from DI into 2 phases: 
-sending Call Request and waiting for its result. 
+The principle of asynchronous calls is a separation of method calls from DI into 2 phases:
+sending Call Request and waiting for its result.
 
-For sending a Call Request, the user calls requested method from DI and, as a return value, gets identifier of this Call Request in the form of object java.util.UUID.  While the Call request is processed  and user's thread is not blocked. When the user requires to receive result of some Call Request, he can use one of the getCallResult method. 
+For sending a Call Request, the user calls requested method from DI and, as a return value, gets identifier of this Call Request in the form of object java.util.UUID.  While the Call request is processed  and user's thread is not blocked. When the user requires to receive result of some Call Request, he can use one of the getCallResult method.
 
 Furthermore, the user has an option to specify a default timeout.
 
 ### Synchronous method calls from DI
 
-Synchronous calls are usual blocking call of methods. The user simply calls method of required functionality from Device Interface and waits for a result. The user thread is blocked for all the time while waiting for the result. 
+Synchronous calls are usual blocking call of methods. The user simply calls method of required functionality from Device Interface and waits for a result. The user thread is blocked for all the time while waiting for the result.
 
 This approach has a drawback. The user must wait till there is call result which in some cases, especially in lager networks, can last number of tens of seconds or even minutes. There is a huge difference between calling of local and non-local functionality.
 
@@ -128,24 +130,22 @@ This approach has a drawback. The user must wait till there is call result which
 
 jSimply does not impose any particular configuration management. However, jSimply implements direct support for certain default configuration management.
 
-Initial configuration setting is available in a so called main configuration file located in config folder of the application:
-
-- ```Simply.properties```
+Initial configuration setting is available in a so called main configuration file located in config folder of the application: `Simply.properties`.
 
 Initial configuration file does not contain all settings directly but via references to additional configuration files also located in config folder of application. These are:
 
-- [```ImplMapping.xml```](#implmappingxml)
-- [```NetworkConnectionTypes.xml``](#networkconnectiontypesxml)`
-- [```NetworkSettings.xml```](#networksettingsxml)
-- [```PeripheralDistribution.xml```](#peripheraldistributionxml)
+-   [`ImplMapping.xml`](#implmappingxml)
+-   [`NetworkConnectionTypes.xml`](#networkconnectiontypesxml)
+-   [`NetworkSettings.xml`](#networksettingsxml)
+-   [`PeripheralDistribution.xml`](#peripheraldistributionxml)
 
 ### ImplMapping.xml
 
-The file links chosen Device Interfaces (written as Java interface) to implementation classes. The classes are used to create relevant Device Objects for each node in the connected networks. THE USER MUST MODIFY THE FILE ONLY IF NEW E.G. USER'S DPA PERIPHERAL IS INTRODUCED. 
+The file links chosen Device Interfaces (written as Java interface) to implementation classes. The classes are used to create relevant Device Objects for each node in the connected networks. THE USER MUST MODIFY THE FILE ONLY IF NEW E.G. USER'S DPA PERIPHERAL IS INTRODUCED.
 
 ### NetworkConnectionTypes.xml
 
-The file specifies network connection type for the networks that shall jSimply communicate with. THE USER MUST SELECT TYPE OF NETWORK CONNECTION. BY DEFAULT IS SERIAL CDC-IQRF. 
+The file specifies network connection type for the networks that shall jSimply communicate with. THE USER MUST SELECT TYPE OF NETWORK CONNECTION. BY DEFAULT IS SERIAL CDC-IQRF.
 
 ### NetworkSettings.xml
 
@@ -153,18 +153,18 @@ The file specifies settings of the networks to connect with jSimply. THE USER MU
 
 ### PeripheralDistribution.xml
 
-The file defines which DPA peripherals are selected on the nodes in the network. THE USER MUST DEFINE WHICH PERIPHERALS ARE ENABLED ON THE NODES. THIS MUST MATCH TO HOW THE USER CONFIGURED DCTR PERIPHERAL BEFOREHAND BY USING IQRF IDE. 
+The file defines which DPA peripherals are selected on the nodes in the network. THE USER MUST DEFINE WHICH PERIPHERALS ARE ENABLED ON THE NODES. THIS MUST MATCH TO HOW THE USER CONFIGURED DCTR PERIPHERAL BEFOREHAND BY USING IQRF IDE.
 
 ### Summary
 
 The default setting can be used. By default:
 
-| Layer              | Setting                                                       |
-| ------------------ | ------------------------------------------------------------- |
-| **Network layer**  | CDC-IQRF (CK-USB-04A or GW-USB-0x)                            |
-| **Protocol layer** | DPA (v2.1x or v2.2x)                                          |
-| **Connector**      | ResponseWaiting                                               |
-| **Device Objects** | According to the settings in ```PeripheralDistribution.xml``` |
+| Layer              | Setting                                                   |
+| ------------------ | --------------------------------------------------------- |
+| **Network layer**  | CDC-IQRF (CK-USB-04A or GW-USB-0x)                        |
+| **Protocol layer** | DPA (v2.1x or v2.2x)                                      |
+| **Connector**      | ResponseWaiting                                           |
+| **Device Objects** | According to the settings in `PeripheralDistribution.xml` |
 
 ## 3. Simply object
 
@@ -217,7 +217,7 @@ In order to access any DPA peripheral the user acquires relevant Device Object D
 
 ```Java
 //FRC frc = coordinator.getDeviceObject(FRC.class);
-Thermometer thermometer = node1.getDeviceObject(Thermometer.class); 
+Thermometer thermometer = node1.getDeviceObject(Thermometer.class);
 ...
 ```
 
@@ -241,8 +241,8 @@ Once the DO is acqiuired, there are two options how to call any functionality (D
 
 Defines splitting of method call into two phases:
 
-1. Sending request and returning ID of this request (Call Request)
-2. Blocking waiting for the result (according to ID of the sent request) with an option to define timeout 
+1.  Sending request and returning ID of this request (Call Request)
+2.  Blocking waiting for the result (according to ID of the sent request) with an option to define timeout
 
 The user is not blocked by an issued request. During the time the request is being processed, the user can handle other tasks, e.g. to send other call requests. Once there is a need, the user can issue blocking call to ask for the result with an option for timeout and repeated waiting.
 
@@ -276,7 +276,7 @@ It is possible to read the temperature by acquiring DO from the map created in p
 ```Java
 for (String nodeId : thermoMap.keySet()) {
   Thermometer thermo = thermoMap.get(nodeId);
-  Thermometer_values thermoValues = thermo.get(); 
+  Thermometer_values thermoValues = thermo.get();
   System.out.println("Temperature: \n" + thermoValues.toPrettyFormattedString());
 }
 ```
@@ -357,7 +357,7 @@ if (thermoValues == null) {
 
 ## 10. FRC Device object
 
-It is shown here how to access FRC peripheral using jSimply framework. 
+It is shown here how to access FRC peripheral using jSimply framework.
 
 Getting reference to the coordinator and its FRC peripheral:
 
@@ -402,7 +402,7 @@ The result is available as short array or can be further parsed e.g. into map st
 
 ### Selective FRC commands
 
-The user can select number of nodes on which the FRC command will be executed. 
+The user can select number of nodes on which the FRC command will be executed.
 
 ```Java
 Node[] selectedNodes = network.getNodes(new String[]{"1", "3"});
@@ -424,14 +424,14 @@ VoidType paramsResult = frc.setFRCParams(FRC_Configuration frcConfig);
 
 FRC_RESPONSE_TIME in FRC configuration defines maximum time reserved for preparing return FRC value.
 
-- TIME_40_MS(40)
-- TIME_320_MS(320)
-- TIME_640_MS(640)
-- TIME_1280_MS(1280)
-- TIME_2560_MS(2560)
-- TIME_5120_MS(5120)
-- TIME_10240_MS(10240)
-- TIME_20480_MS(20480)
+-   `TIME_40_MS(40)`
+-   `TIME_320_MS(320)`
+-   `TIME_640_MS(640)`
+-   `TIME_1280_MS(1280)`
+-   `TIME_2560_MS(2560)`
+-   `TIME_5120_MS(5120)`
+-   `TIME_10240_MS(10240)`
+-   `TIME_20480_MS(20480)`
 
 ### FRC timing
 
@@ -473,11 +473,11 @@ frc.setDefaultWaitingTimeout(timeout);
 // First up to 57 bytes of FRC result
 // short array as a parameter indicates bytes that are being transmitted to the nodes in the network
 UUID getFRCRequestUid = frc.async_send(new FRC_Temperature(new short[] {0, 0, 0, 0, 0}));
-        
+
 // ... do some other work
 System.out.println("Sleeping ... waiting for FRC result");
 Thread.sleep(timeout);
-        
+
 // getting the result of method call
 FRC_Data frcData = frc.getCallResultInDefaultWaitingTimeout(getFRCRequestUid, FRC_Data.class);
 
@@ -489,7 +489,7 @@ short[] frcExtraData = frc.extraResult();
 
 The main idea of broadcasting implementation within jSimply DPA Extension is based on the idea, that a broadcast request is simply the special type of an ordinary call request with a node identifier left unspecified. A result of the broadcast request can simply be of one of 2 states:
 
-OK: if broadcast has performed correctly 
+OK: if broadcast has performed correctly
 Error: if an error has occured during broadcast request processing
 
 
@@ -504,14 +504,14 @@ LED_State lStateOn = LED_State.ON;
 LED_State lStateOff = LED_State.OFF;
 
 UUID requestId1 = broadcastServices.sendRequest(
-  network1.getId(), LEDR.class, LEDG.MethodID.SET, 
+  network1.getId(), LEDR.class, LEDG.MethodID.SET,
   new Object[] {lStateOn}
 );
 
 Thread.sleep(500);
 
 UUID requestId2 = broadcastServices.sendRequest(
-  network1.getId(), LEDR.class, LEDG.MethodID.SET, 
+  network1.getId(), LEDR.class, LEDG.MethodID.SET,
   new Object[] {lStateOff}
 );
 ```
