@@ -181,20 +181,19 @@ final class ProtocolStateMachine implements ManageableObject {
     
     private static long countTimeslotLengthForSTD_Mode(
             TR_Type.TR_TypeSeries trSeries, int responseDataLength
-    ) {
+    ) { 
         if ( 
             (trSeries == TR_Type.TR_TypeSeries.TR72x) 
             || (trSeries == TR_Type.TR_TypeSeries.UNKNOWN) 
         ) {
-            if ( responseDataLength < 6 ) {
-                return 3;
-            }
-            if ( responseDataLength < 29 ){
+            if ( responseDataLength < 16 ) {
                 return 4;
             }
-            if ( responseDataLength < 52 ){
+            
+            if ( responseDataLength < 39 ){
                 return 5;
             }
+            
             return 6;
         } else {                
             throw new IllegalStateException("Not supported TR mode used: " + trSeries);            
@@ -208,12 +207,18 @@ final class ProtocolStateMachine implements ManageableObject {
             (trSeries == TR_Type.TR_TypeSeries.TR72x) 
             || (trSeries == TR_Type.TR_TypeSeries.UNKNOWN) 
         ) {            
-            if ( responseDataLength < 20 ){
+            if ( responseDataLength < 11 ){
+                return 8;
+            }
+            
+            if ( responseDataLength < 33 ){
                 return 9;
             }
-            if ( responseDataLength < 43 ){
+            
+            if ( responseDataLength < 56 ){
                 return 10;
             }
+            
             return 11;
         } else {
             throw new IllegalStateException("Not supported TR mode used: " + trSeries);
@@ -224,6 +229,9 @@ final class ProtocolStateMachine implements ManageableObject {
     private static long countTimeslotLength(
             TR_Type.TR_TypeSeries trSer, RF_Mode rfMode, int responseDataLength
     ) {
+        // Add internal data length tailed to the real data
+        responseDataLength += 4;
+        
         switch ( rfMode ) {
             case STD:
                 return countTimeslotLengthForSTD_Mode(trSer, responseDataLength);
