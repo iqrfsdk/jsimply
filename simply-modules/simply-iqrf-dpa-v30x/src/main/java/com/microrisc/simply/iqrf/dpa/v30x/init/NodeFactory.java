@@ -27,7 +27,10 @@ import com.microrisc.simply.compounddevices.CompoundDeviceObject;
 import com.microrisc.simply.compounddevices.CompoundDeviceObjectFactory;
 import com.microrisc.simply.iqrf.dpa.v30x.devices.PeripheralInfoGetter;
 import com.microrisc.simply.iqrf.dpa.v30x.services.node.load_code.LoadCodeService;
-import com.microrisc.simply.services.Service;
+import com.microrisc.simply.iqrf.dpa.v30x.services.node.load_code.LoadCodeServiceFactory;
+import com.microrisc.simply.iqrf.dpa.v30x.services.node.write_configuration.WriteConfigurationService;
+import com.microrisc.simply.iqrf.dpa.v30x.services.node.write_configuration.WriteConfigurationServiceFactory;
+import com.microrisc.simply.services.node.ServiceCreationInfo;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -44,6 +47,7 @@ import org.slf4j.LoggerFactory;
  * @author Michal Konopa
  */
 public final class NodeFactory {
+    
     /** Logger. */
     private static final Logger logger = LoggerFactory.getLogger(NodeFactory.class);
     
@@ -92,20 +96,20 @@ public final class NodeFactory {
         _initObjects = checkInitObjects(initObjects);
     }
     
-    /**
-     * Creates node services and returns them.
-     * @return node services
-     */
-    private static Map<Class, Service> createServices(Map<Class, DeviceObject> devices) {
-        Map<Class, Service> services = new HashMap<>();
+    private static Map<Class, ServiceCreationInfo> createServCreationInfoMap() {
+        Map<Class, ServiceCreationInfo> servCreationInfoMap = new HashMap<>();
         
-        // load code service
-        LoadCodeService loadCodeService = NodeServiceFactory.createService(LoadCodeService.class, devices);
-        if ( loadCodeService != null ) {
-            services.put(LoadCodeService.class, loadCodeService);
-        }
+        servCreationInfoMap.put(
+                LoadCodeService.class, 
+                new ServiceCreationInfo( new LoadCodeServiceFactory(), null)
+        );
         
-        return services;
+        servCreationInfoMap.put(
+                WriteConfigurationService.class, 
+                new ServiceCreationInfo( new WriteConfigurationServiceFactory(), null)
+        );
+        
+        return servCreationInfoMap;
     }
     
     // creates devices corresponding to specified DPA periherals number and
@@ -240,9 +244,10 @@ public final class NodeFactory {
         // creating compound devices
         createAndAddCompoundDevices(compoundDevicesConfigList, devices);
         
-        Map<Class, Service> services = createServices(devices);
+        // creating services info map
+        Map<Class, ServiceCreationInfo> servCreationInfoMap = createServCreationInfoMap();
         
-        DPA_Node node = new DPA_NodeImpl(networkId, nodeId, devices, services);
+        DPA_Node node = new DPA_NodeImpl(networkId, nodeId, devices, servCreationInfoMap);
         
         logger.debug("createNode - end: {}", node);
         return node;

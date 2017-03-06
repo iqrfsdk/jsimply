@@ -854,7 +854,7 @@ public final class XmlConfigurationParser {
      * @param defFileName configuration definition XML file
      * @param userSettingsFileName user settings XML file
      * @return parsed HWP representation
-     * @throws com.microrisc.simply.iqrf.dpa.v22x.services.node.write_configuration.XmlConfigurationParserException
+     * @throws com.microrisc.simply.iqrf.dpa.v30x.services.node.write_configuration.XmlConfigurationParserException
      *         if source file is NOT valid or if some error has occured during parsing
      */
     public static HWP_ConfigurationByte[] parse(

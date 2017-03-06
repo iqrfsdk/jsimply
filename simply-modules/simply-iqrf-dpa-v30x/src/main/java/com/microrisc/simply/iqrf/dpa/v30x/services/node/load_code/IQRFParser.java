@@ -24,6 +24,7 @@ import java.util.Scanner;
  * Parser for IQRF plugin files.
  *
  * @author Martin Strouhal
+ * @author Michal Konopa
  */
 final class IQRFParser {
 
@@ -39,29 +40,29 @@ final class IQRFParser {
       }
    }
 
-   /** Parses IQRF plugin file into short array.
-    *
-    * @return short[]
-    */
-   public short[] parse() {
-      ArrayList<Short> resultList = new ArrayList<>(100);
-      while (sc.hasNextLine()) {
-         String line = sc.nextLine();
-         if (line.startsWith("#")) {
-            continue;
-         }
-         if (line.length() != LINE_LENGTH) {
-            throw new IllegalArgumentException("Corrupted IQRF plugin file!");
-         }
-         for (int i = 0; i < LINE_LENGTH; i += 2) {
-            resultList.add(Short.parseShort(line.substring(i, i + 2), 16));
-         }
-      }
+    /** Parses IQRF plugin file into sequence of bytes.
+     *
+     * @return sequence of bytes of IQRF plugin
+     */
+    public byte[] parse() {
+        ArrayList<Byte> resultList = new ArrayList<>(100);
+        while (sc.hasNextLine()) {
+            String line = sc.nextLine();
+            if (line.startsWith("#")) {
+               continue;
+            }
+            if (line.length() != LINE_LENGTH) {
+               throw new IllegalArgumentException("Corrupted IQRF plugin file!");
+            }
+            for (int i = 0; i < LINE_LENGTH; i += 2) {
+               resultList.add(Byte.parseByte(line.substring(i, i + 2), 16));
+            }
+        }
 
-      short[] data = new short[resultList.size()];
-      for (int i = 0; i < data.length; i++) {
-         data[i] = resultList.get(i);
-      }
-      return data;
-   }
+        byte[] data = new byte[resultList.size()];
+        for (int i = 0; i < data.length; i++) {
+           data[i] = resultList.get(i);
+        }
+        return data;
+    }
 }

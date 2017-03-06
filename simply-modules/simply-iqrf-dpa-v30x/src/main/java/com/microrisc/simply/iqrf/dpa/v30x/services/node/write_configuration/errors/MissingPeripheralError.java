@@ -28,6 +28,7 @@ public final class MissingPeripheralError extends AbstractWriteConfigurationErro
     // missing peripheral
     private final Class missingPeripheral;
     
+    
     public MissingPeripheralError(Class peripheral) {
         this.missingPeripheral = peripheral;
     }

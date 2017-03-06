@@ -25,11 +25,14 @@ import com.microrisc.simply.services.ServiceParameters;
  * @author Michal Konopa
  */
 public class BaseService implements Service {
+    
+    // context network
     protected Network network;
     
     
     /**
-     * Creates new base service object.
+     * Creates new base service object with specified network in context.
+     * 
      * @param network network in context
      */
     public BaseService(Network network) {
@@ -41,6 +44,5 @@ public class BaseService implements Service {
      * @param params 
      */
     @Override
-    public void setServiceParameters(ServiceParameters params) {
-    }
+    public void setServiceParameters(ServiceParameters params) { }
 }

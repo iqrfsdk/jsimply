@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Document   : ImplMapping.xml
+    Created on : 6.3. 2017, 20:00
+    Author     : Michal Konopa
+    Description:
+        Contains mapping of Java DI onto its USED implementing classes.
+-->
+
+<implMappings>
+    <!-- standard peripheral -->
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.PeripheralInfoGetter</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimplePeripheralInfoGetter</implClass>
+        <note>Some note here.</note>
+    </implMapping>
+	
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.Coordinator</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimpleCoordinator</implClass>
+        <note></note>
+    </implMapping>
+	
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.Node</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimpleNode</implClass>
+        <note></note>
+    </implMapping>
+	
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.OS</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimpleOS</implClass>
+        <note></note>
+    </implMapping>
+	
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.LEDR</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimpleLEDR</implClass>
+        <note></note>
+    </implMapping>
+	
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.LEDG</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimpleLEDG</implClass>
+        <note></note>
+    </implMapping>
+	
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.IO</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimpleIO</implClass>
+        <note></note>
+    </implMapping>
+	
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.EEPROM</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimpleEEPROM</implClass>
+        <note></note>
+    </implMapping>
+	
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.EEEPROM</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimpleEEEPROM</implClass>
+        <note></note>
+    </implMapping>
+	
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.RAM</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimpleRAM</implClass>
+        <note></note>
+    </implMapping>
+	
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.SPI</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimpleSPI</implClass>
+        <note></note>
+    </implMapping>
+	
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.Thermometer</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimpleThermometer</implClass>
+        <note></note>
+    </implMapping>
+	
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.PWM</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimplePWM</implClass>
+        <note></note>
+    </implMapping>
+	
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.UART</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimpleUART</implClass>
+        <note></note>
+    </implMapping>
+    
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.FRC</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimpleFRC</implClass>
+        <note></note>
+    </implMapping>
+    
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.devices.Custom</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.devices.impl.SimpleCustom</implClass>
+        <note></note>
+    </implMapping>
+    
+
+    <!-- user peripherals -->
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.autonetwork.P2PPrebonder</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.autonetwork.SimpleP2PPrebonder</implClass>
+        <note></note>
+    </implMapping>    
+     
+    <implMapping>
+        <interface>com.microrisc.simply.iqrf.dpa.v30x.autonetwork.embedded.def.AutonetworkPeripheral</interface>
+        <implClass>com.microrisc.simply.iqrf.dpa.v30x.autonetwork.embedded.def.SimpleAutonetworkPeripheral</implClass>
+        <note></note>
+    </implMapping>    
+</implMappings>

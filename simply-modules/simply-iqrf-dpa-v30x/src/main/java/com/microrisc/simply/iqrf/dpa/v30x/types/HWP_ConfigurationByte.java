@@ -101,4 +101,19 @@ public class HWP_ConfigurationByte {
               + ", mask=" + mask + '}';
    }
 
+   @Override
+   public boolean equals(Object o) {
+       if ( !(o instanceof HWP_ConfigurationByte) ) {
+           return false;
+       }
+       
+       HWP_ConfigurationByte configByte = (HWP_ConfigurationByte) o;
+       return 
+               (
+                    this.address == configByte.address
+                    && this.value == configByte.value
+                    && this.mask == configByte.mask
+               );
+   }
+   
 }

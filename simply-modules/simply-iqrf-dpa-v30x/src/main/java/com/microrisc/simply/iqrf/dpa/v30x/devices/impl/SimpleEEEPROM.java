@@ -33,50 +33,55 @@ import java.util.UUID;
 public final class SimpleEEEPROM
 extends DPA_DeviceObject implements EEEPROM {
     
-    // maximal length of data [in bytes] to read or write
-    private static final int MAX_DATA_LEN = 54;
-    
-    private static int checkAddressForRead(int address){
-        if ( address < 0x0000 || address > 0xFFFF ) {
-            throw new IllegalArgumentException("Address out of bounds.");
+    private static void checkDataToWrite(short[] dataToWrite) {
+        if ( dataToWrite == null ) {
+            throw new IllegalArgumentException("Data to write cannot be null.");
         }
-        return address;
+        if ( dataToWrite.length < 1 ) {
+            throw new IllegalArgumentException("Data to write cannot be empty.");
+        }
     }
     
-    private static int checkAddressForWrite(int address){
-        if ( address < 0x0000 || address > 0x3FFF ) {
+    private static int checkBlockNumber(int blockNumber) {
+        if ( !DataTypesChecker.isByteValue(blockNumber) ) {
+            throw new IllegalArgumentException("Block number out of bounds.");
+        }
+        return blockNumber;
+    }
+    
+    private static int checkDataLenToRead(int dataLen) {
+        if ( !DataTypesChecker.isByteValue(dataLen) ) {
+            throw new IllegalArgumentException("Data length out of bounds.");
+        }
+        return dataLen;
+    }
+    
+    private static int checkAddress(int address){
+        if ( address < 0 || address > 0x3FFF ) {
             throw new IllegalArgumentException("Address out of bounds.");
         }
         return address;
     }
     
     private static void checkExtendedDataToWrite(int address, short[] dataToWrite){
-        if (dataToWrite.length < 1 || dataToWrite.length > MAX_DATA_LEN){
-            throw new IllegalArgumentException(
-                    "Data length out of allowed range "
-                    + "[" + 0 + ".." + MAX_DATA_LEN + "]" 
-            );
+        if ( dataToWrite.length < 1 || dataToWrite.length > 54 ) {
+            throw new IllegalArgumentException("Length of data to write out of bounds (1 - 54 bytes)");
         }
-        
         if ((address % 64) + dataToWrite.length > 64){
             throw new IllegalArgumentException(
-                    "Writing to multiple adjacent 64 byte pages of the EEPROM chip"
-                    + " or behind maximum address range by one extended write command"
-                    + " is unsupported and undefined."
+                    "Writing to multiple adjacent 64 byte pages of the EEPROM chip "
+                    + "or behind maximum address range by one extended write command "
+                    + "is unsupported and undefined."
             );
         }
     }
     
     private static int checkExtendedDataLenToRead(int dataLen){
-        if ( dataLen < 0 || dataLen > MAX_DATA_LEN ) {
-            throw new IllegalArgumentException(
-                    "Data length out of allowed range "
-                    + "[" + 0 + ".." + MAX_DATA_LEN + "]" 
-            );
+        if( dataLen < 0 || dataLen > 54 ){
+            throw new IllegalArgumentException("Data length out of allowed range (0 - 54 bytes)");
         }
         return dataLen;
     }
-    
     
     public SimpleEEEPROM(String networkId, String nodeId, ConnectorService connector, 
             CallRequestProcessingInfoContainer resultsContainer
@@ -92,11 +97,33 @@ extends DPA_DeviceObject implements EEEPROM {
         }
         
         switch ( (EEEPROM.MethodID)methodId ) {
+            case READ:
+                MethodArgumentsChecker.checkArgumentTypes(
+                        args, new Class[] { Integer.class, Integer.class } 
+                );
+                checkBlockNumber((Integer)args[0]);
+                checkDataLenToRead((Integer)args[1]);
+                return dispatchCall(
+                        methodIdStr, 
+                        new Object[] { getRequestHwProfile(), (Integer)args[0], (Integer)args[1] },
+                        getDefaultWaitingTimeout()
+                );
+            case WRITE:
+                MethodArgumentsChecker.checkArgumentTypes(
+                        args, new Class[] { Integer.class, short.class } 
+                );
+                checkBlockNumber((Integer)args[0]);
+                checkDataToWrite((short[])args[1]);
+                return dispatchCall(
+                        methodIdStr, 
+                        new Object[] { getRequestHwProfile(), (Integer)args[0], (short[])args[1] }, 
+                        getDefaultWaitingTimeout()
+                );
             case EXTENDED_READ:
                 MethodArgumentsChecker.checkArgumentTypes(
                         args, new Class[] { Integer.class, Integer.class } 
                 );
-                checkAddressForRead((Integer)args[0]);
+                checkAddress((Integer)args[0]);
                 checkExtendedDataLenToRead((Integer)args[1]);
                 return dispatchCall(
                         methodIdStr, 
@@ -107,7 +134,7 @@ extends DPA_DeviceObject implements EEEPROM {
                 MethodArgumentsChecker.checkArgumentTypes(
                         args, new Class[] { Integer.class, short.class } 
                 );
-                checkAddressForWrite((Integer)args[0]);
+                checkAddress((Integer)args[0]);
                 checkExtendedDataToWrite((Integer)args[0], (short[])args[1]);
                 return dispatchCall(
                         methodIdStr, 
@@ -129,23 +156,41 @@ extends DPA_DeviceObject implements EEEPROM {
     // ASYNCHRONOUS METHODS IMPLEMENTATIONS
     
     @Override
-    public UUID async_extendedRead(int address, int length) {
-        checkAddressForRead(address);
-        checkExtendedDataLenToRead(length);
-        
+    public UUID async_read(int blockNumber, int length) {
+        checkBlockNumber(blockNumber);
+        checkDataLenToRead(length);
         return dispatchCall(
-                "1", new Object[] { getRequestHwProfile(), address, length },
+                "1", new Object[] { getRequestHwProfile(), blockNumber, length },
+                getDefaultWaitingTimeout()
+        );
+    }
+    
+    @Override
+    public UUID async_write(int blockNumber, short[] data) {
+        checkBlockNumber(blockNumber);
+        checkDataToWrite(data);
+        return dispatchCall(
+                "2", new Object[] { getRequestHwProfile(), blockNumber, data },
+                getDefaultWaitingTimeout()
+        );
+    }
+
+    @Override
+    public UUID async_extendedRead(int address, int length) {
+        checkAddress(address);
+        checkExtendedDataLenToRead(length);
+        return dispatchCall(
+                "3", new Object[] { getRequestHwProfile(), address, length },
                 getDefaultWaitingTimeout()
         );
     }
 
     @Override
     public UUID async_extendedWrite(int address, short[] data) {
-        checkAddressForWrite(address);
+        checkAddress(address);
         checkExtendedDataToWrite(address, data);
-        
         return dispatchCall(
-                "2", new Object[] { getRequestHwProfile(), address, data },
+                "4", new Object[] { getRequestHwProfile(), address, data },
                 getDefaultWaitingTimeout()
         );
     }
@@ -153,14 +198,41 @@ extends DPA_DeviceObject implements EEEPROM {
     
     
     // SYNCHRONOUS WRAPPERS IMPLEMENTATIONS
+    
+    @Override
+    public short[] read(int blockNumber, int length) {
+        checkBlockNumber(blockNumber);
+        checkDataLenToRead(length);
+        UUID uid = dispatchCall(
+                "1", new Object[] { getRequestHwProfile(), blockNumber, length },
+                getDefaultWaitingTimeout()
+        );
+        if ( uid == null ) {
+            return null;
+        }
+        return getCallResult(uid, short[].class, getDefaultWaitingTimeout());
+    }
+    
+    @Override
+    public VoidType write(int blockNumber, short[] data) {
+        checkBlockNumber(blockNumber);
+        checkDataToWrite(data);
+        UUID uid = dispatchCall(
+                "2", new Object[] { getRequestHwProfile(), blockNumber, 
+                data }, getDefaultWaitingTimeout()
+        );
+        if ( uid == null ) {
+            return null;
+        }
+        return getCallResult(uid, VoidType.class, getDefaultWaitingTimeout());
+    }
 
     @Override
     public short[] extendedRead(int address, int length) {
-        checkAddressForRead(address);
+        checkAddress(address);
         checkExtendedDataLenToRead(length);
-        
         UUID uid = dispatchCall(
-                "1", new Object[] { getRequestHwProfile(), address, length }, 
+                "3", new Object[] { getRequestHwProfile(), address, length }, 
                 getDefaultWaitingTimeout()
         );
         if ( uid == null ) {
@@ -171,11 +243,10 @@ extends DPA_DeviceObject implements EEEPROM {
 
     @Override
     public VoidType extendedWrite(int address, short[] data) {
-        checkAddressForWrite(address);
+        checkAddress(address);
         checkExtendedDataToWrite(address, data);
-        
         UUID uid = dispatchCall(
-                "2", new Object[] { getRequestHwProfile(), address, data }, 
+                "4", new Object[] { getRequestHwProfile(), address, data }, 
                 getDefaultWaitingTimeout()
         );
         if ( uid == null ) {

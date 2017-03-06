@@ -15,7 +15,7 @@
  */
 package com.microrisc.simply.iqrf.dpa.v30x.typeconvertors;
 
-import com.microrisc.simply.iqrf.dpa.v30x.types.LoadingResult;
+import com.microrisc.simply.iqrf.dpa.v30x.types.LoadResult;
 import com.microrisc.simply.protocol.mapping.ConvertorFactoryMethod;
 import com.microrisc.simply.typeconvertors.PrimitiveConvertor;
 import com.microrisc.simply.typeconvertors.ValueConversionException;
@@ -78,11 +78,11 @@ public final class LoadingResultConvertor extends PrimitiveConvertor {
             throw new ValueConversionException("Incorrect data length: " + protoValue.length);
         }
         
-        LoadingResult result = null;
+        LoadResult result = null;
         if ( protoValue[RESULT_POS] == 1 ) {
-            result = new LoadingResult(true);
+            result = new LoadResult(true);
         } else {
-            result = new LoadingResult(false);
+            result = new LoadResult(false);
         }
         
         logger.debug("toObject - end: {}", result);

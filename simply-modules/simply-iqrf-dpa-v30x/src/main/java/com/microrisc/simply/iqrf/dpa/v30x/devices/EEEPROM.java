@@ -37,10 +37,25 @@ import java.util.UUID;
 public interface EEEPROM 
 extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
     
+    /** Bottom bound of valid address range for coordinator for extended read and write. */
+    int COORD_ADDRESS_MIN = 0x0700;
+    
+    /** Upper bound of valid adress range for coordinator for extended read and write. */
+    int COORD_ADDRESS_MAX = 0X3FFF;
+    
+    /** Bottom bound of valid adress range for node for extended read and write. */
+    int NODE_ADDRESS_MIN = 0x0000;
+    
+    /** Upper bound of valid adress range for node for extended read and write. */
+    int NODE_ADDRESS_MAX = 0X3FFF;
+    
+    
     /**
      * Identifiers of this device interface's methods.
      */
     enum MethodID implements DeviceInterfaceMethodId {
+        READ,
+        WRITE,
         EXTENDED_READ,
         EXTENDED_WRITE
     }
@@ -50,8 +65,25 @@ extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
     
     /**
      * Sends method call request for reading from peripheral.
+     * @param blockNumber number of (zero based) block to read from
+     * @param length length of the data to read (in bytes), must be equal to the block size
+     * @return unique identifier of sent request
+     */
+    UUID async_read(int blockNumber, int length);
+    
+    /**
+     * Sends method call request for writing to peripheral.
+     * @param blockNumber number of (zero based) block to write the data into
+     * @param data actual data to be written to the memory, its length must be 
+     *             equal to the block size
+     * @return unique identifier of sent request
+     */
+    UUID async_write(int blockNumber, short[] data);
+    
+    /**
+     * Sends method call request for reading from peripheral.
      * @param address (physical) to read data from. The address range for DCTR-7x
-     *        is 0x0000-0x3FFF.
+     *        is 0x0000-0x7FFF or 0x0700-0x7FFF at [N] or at [C] devices respectively.
      * @param length of the data to read in bytes. Allowed range is 0-54 bytes. 
      *        Reading behind maximum address range is undefined.
      * @return unique identifier of sent request
@@ -61,7 +93,7 @@ extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
     /**
      * Sends method call request for writing to peripheral.
      * @param address (physical) to write data to. The address range for DCTR-7x
-     *        is 0x0000-0x3FFF.
+     *        is 0x0000-0x7FFF or 0x0700-0x7FFF at [N] or at [C] devices respectively.
      * @param data actual data to be written to the memory. Length of the data 
      *        to write in bytes. Allowed range is 1-54 bytes. Writing to multiple
      *        adjacent 64 byte pages of the EEPROM chip or behind maximum address
@@ -71,9 +103,27 @@ extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
     UUID async_extendedWrite(int address, short[] data);
     
     
+    
     // SYNCHRONOUS WRAPPERS
     
     /**
+     * Synchronous wrapper for {@link #async_read(int, int) async_read} method.
+     * @param blockNumber number of (zero based) block to read from
+     * @param length length of the data to read (in bytes), must be equal to the block size
+     * @return read data
+     */
+    short[] read(int blockNumber, int length);
+    
+    /**
+     * Synchronous wrapper for {@link #async_write(int, short[])  async_write} method.
+     * @param blockNumber number of (zero based) block to write the data into
+     * @param data actual data to be written to the memory, its length must be 
+     *             equal to the block size
+     * @return {@code VoidType} object, if method call has processed allright
+     */
+    VoidType write(int blockNumber, short[] data);
+    
+        /**
      * Synchronous wrapper for {@link #async_read(int, int) async_read} method.
      * @param address number of (zero based) block to read from
      * @param length length of the data to read (in bytes), must be equal to the block size

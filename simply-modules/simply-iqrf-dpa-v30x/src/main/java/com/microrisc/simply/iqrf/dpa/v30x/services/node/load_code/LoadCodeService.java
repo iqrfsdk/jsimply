@@ -15,7 +15,6 @@
  */
 package com.microrisc.simply.iqrf.dpa.v30x.services.node.load_code;
 
-import com.microrisc.simply.iqrf.dpa.v30x.types.LoadingResult;
 import com.microrisc.simply.services.Service;
 import com.microrisc.simply.services.ServiceResult;
 
@@ -31,5 +30,5 @@ public interface LoadCodeService extends Service {
      * @param params parameters of code loading
      * @return result
      */
-    ServiceResult<LoadingResult, LoadCodeProcessingInfo> loadCode(LoadCodeServiceParameters params);
+    ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> loadCode(LoadCodeServiceParameters params);
 }

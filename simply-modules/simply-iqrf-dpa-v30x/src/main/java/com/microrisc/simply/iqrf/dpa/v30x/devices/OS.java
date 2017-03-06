@@ -24,7 +24,7 @@ import com.microrisc.simply.iqrf.dpa.v30x.types.DPA_Request;
 import com.microrisc.simply.iqrf.dpa.v30x.types.HWP_Configuration;
 import com.microrisc.simply.iqrf.dpa.v30x.types.HWP_ConfigurationByte;
 import com.microrisc.simply.iqrf.dpa.v30x.types.LoadingCodeProperties;
-import com.microrisc.simply.iqrf.dpa.v30x.types.LoadingResult;
+import com.microrisc.simply.iqrf.dpa.v30x.types.LoadResult;
 import com.microrisc.simply.iqrf.dpa.v30x.types.OsInfo;
 import com.microrisc.simply.iqrf.dpa.v30x.types.SleepInfo;
 import com.microrisc.simply.iqrf.types.VoidType;
@@ -257,7 +257,7 @@ public interface OS
     *
     * @param properties describing loading operation, see
     * {@link LoadingCodeProperties}
-    * @return {@link LoadingResult}
+    * @return {@link LoadResult}
     */
-   LoadingResult loadCode(LoadingCodeProperties properties);
+   LoadResult loadCode(LoadingCodeProperties properties);
 }

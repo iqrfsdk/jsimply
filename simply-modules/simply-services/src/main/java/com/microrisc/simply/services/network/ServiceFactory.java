@@ -26,12 +26,13 @@ import com.microrisc.simply.services.Service;
 public interface ServiceFactory {
     
     /**
-     * Creates new object of service.
+     * Creates new object of network-context service.
+     * 
      * @param network context network
      * @param args arguments for factory
      * @return service object
      * @throws java.lang.Exception if some error occured during creation of 
-     *         object service
+     *         a service object
      */
     Service create(Network network, Object[] args) throws Exception;
 }
