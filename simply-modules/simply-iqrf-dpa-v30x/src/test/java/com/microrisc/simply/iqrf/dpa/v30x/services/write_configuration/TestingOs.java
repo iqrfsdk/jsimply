@@ -43,8 +43,9 @@ public final class TestingOs implements DeviceObject, OS {
     private final String nodeId;
     private final String networkId;
     
-    // return value of writeHWPConfigurationByte method
+    // settable return values of methods
     private VoidType writeHWPConfigurationByteReturnValue = null;
+    private VoidType setSecurityReturnValue = null;
     
     
     public TestingOs() {
@@ -61,6 +62,12 @@ public final class TestingOs implements DeviceObject, OS {
     public void setWriteHWPConfigurationByteReturnValue(VoidType writeHWPConfigurationByteReturnValue) {
         this.writeHWPConfigurationByteReturnValue = writeHWPConfigurationByteReturnValue;
     }
+    
+    // sets return value of setSecurityReturnValue method
+    public void setSetSecurityReturnValue(VoidType setSecurityReturnValue) {
+        this.setSecurityReturnValue = setSecurityReturnValue;
+    }
+    
     
     @Override
     public UUID async_read() {
@@ -169,7 +176,7 @@ public final class TestingOs implements DeviceObject, OS {
 
     @Override
     public VoidType setSecurity(int type, short[] data) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return setSecurityReturnValue;
     }
     
     

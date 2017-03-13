@@ -15,6 +15,7 @@
  */
 package com.microrisc.simply.iqrf.dpa.v30x.examples.services;
 
+import com.microrisc.simply.Node;
 import com.microrisc.simply.SimplyException;
 import com.microrisc.simply.iqrf.dpa.DPA_Network;
 import com.microrisc.simply.iqrf.dpa.DPA_Node;
@@ -28,15 +29,16 @@ import com.microrisc.simply.iqrf.dpa.v30x.services.node.load_code.errors.LoadCod
 import com.microrisc.simply.iqrf.dpa.v30x.types.LoadingCodeProperties;
 import com.microrisc.simply.services.ServiceResult;
 import java.io.File;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * Loading code into one specified node.
+ * Using broadcast in Load Code Service.
  * 
  * @author Michal Konopa
- * @author Martin Strouhal
  */
-public class LoadCodeServiceExample {
+public final class LoadCodeServiceExample_Broadcast {
     private static DPA_Simply simply = null;
     
     // prints out specified message, destroys the Simply and exits
@@ -61,41 +63,43 @@ public class LoadCodeServiceExample {
         if ( network1 == null ) {
             printMessageAndExit("Network 1 doesn't exist");
         }
-
-        // getting coordinator
-        DPA_Node coordinator = network1.getNode("0");
-        if ( coordinator == null ) {
-            printMessageAndExit("Coordinator doesn't exist.");
+        
+        // getting node 0 - coordinator
+        // probably supports FRC peripheral - needed for performing a broadcast
+        DPA_Node node0 = network1.getNode("0");
+        if ( node0 == null ) {
+            printMessageAndExit("Node 0 doesn't exist.");
         }
+        
+        // target nodes to load code into
+        String[] nodeIds = new String[] { "1", "2", "3" };
+        Collection<Node> targetNodes = getNodes(network1, nodeIds);
+        
+        // add coordinator into target nodes
+        targetNodes.add(node0);
         
         // getting Load Code Service on node 0
-        LoadCodeService loadCodeService = coordinator.getService(LoadCodeService.class);
+        LoadCodeService loadCodeService = node0.getService(LoadCodeService.class);
         if ( loadCodeService == null ) {
-            printMessageAndExit("Coordinator doesn't support Load Code Service.");
+            printMessageAndExit("Node 0 doesn't support Load Code Service.");
         }
         
-        // loading code
-        ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
-            = loadCodeService.loadCode( 
-                    new LoadCodeServiceParameters(
+        // service's parameters 
+        LoadCodeServiceParameters params 
+                = new LoadCodeServiceParameters(
                         "config" + File.separator + "custom-dpa-handlers" + File.separator + "CustomDpaHandler-LED-Green-On-7xD-V228-160912.hex",
                         0x0800,
                         LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithCodeLoading,
-                        LoadingCodeProperties.LoadingContent.Hex
-                    )
-            );
-
-        /*        
+                        LoadingCodeProperties.LoadingContent.Hex,
+                        targetNodes
+                );
+        
+        // enable printing info messages about service's progress
+        params.enablePrintingMessages(true);
+        
+        // run the service
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
-            = loadCodeService.loadCode( 
-                    new LoadCodeServiceParameters(
-                        "config" + File.separator + "custom-dpa-handlers" + File.separator + "CustomDpaHandler-LED-Red-On-7xD-V228-160912.hex"
-                        0x0800,
-                        LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithCodeLoading,
-                        LoadingCodeProperties.LoadingContent.Hex
-                    )
-            );
-        */        
+            = loadCodeService.loadCode( params );
         
         // getting results
         if ( serviceResult.getStatus() == ServiceResult.Status.SUCCESSFULLY_COMPLETED ) {
@@ -115,6 +119,21 @@ public class LoadCodeServiceExample {
         }
         
         simply.destroy();
+    }
+    
+    
+    // returns collection of nodes from specified network corresponding to specified node IDs
+    private static Collection<Node> getNodes(DPA_Network network, String[] nodeIds) {
+        Collection<Node> nodes = new LinkedList<>();
+        for ( String nodeId : nodeIds ) {
+            DPA_Node node = network.getNode(nodeId);
+            if ( node == null ) {
+                printMessageAndExit("Node " + nodeId + " doesn't exist.");
+            }
+            nodes.add(node);
+        }
+        
+        return nodes;
     }
     
     // prints info about error for each failed node 

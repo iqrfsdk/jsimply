@@ -37,6 +37,8 @@ import com.microrisc.simply.services.node.BaseService;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default implementation of Write Configuration Service. 
@@ -45,6 +47,8 @@ import java.util.Map;
  */
 public final class WriteConfigurationServiceImpl 
 extends BaseService implements WriteConfigurationService {
+    
+    private static final Logger logger = LoggerFactory.getLogger(WriteConfigurationServiceImpl.class);
     
     // length [in number of bytes] of one configuration item in HWP_ConfigurationByte array
     private static final int CONFIG_ITEM_LEN = 3;
@@ -92,9 +96,64 @@ extends BaseService implements WriteConfigurationService {
         return resultMap;
     }
     
+    // write security attributes for specified node using unicast
+    private WriteResult.SecurityResult setSecurityUsingUnicast(ConfigSettings.Security security) {
+        OS os = this.contextNode.getDeviceObject(OS.class);
+       
+        boolean passwordToWrite = false;
+        boolean passwordWriteResult = false;
+
+        if ( security.getPassword() != null ) {
+            passwordToWrite = true;
+            if ( os.setSecurity(0, security.getPassword()) != null ) {
+                passwordWriteResult = true;
+            }
+        }
+
+        boolean keyToWrite = false;
+        boolean keyWriteResult = false;
+
+        if ( security.getKey() != null ) {
+            keyToWrite = true;
+            if ( os.setSecurity(1, security.getKey()) != null ) {
+                keyWriteResult = true;
+            }
+        }
+
+        return new WriteResult.SecurityResultImpl(
+                passwordToWrite, passwordWriteResult, keyToWrite, keyWriteResult
+        );
+    }
+    
+    // indicates, whether setting of security attibutes was successful or not
+    private boolean settingSecuritySuccessful(WriteResult.SecurityResult result) {
+        if ( result.isPasswordToWrite() && result.getPaswordWriteResult() == false ) {
+            return false;
+        }
+        
+        if ( result.isKeyToWrite() && result.getKeyWriteResult() == false ) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // indicates, whether setting of security attibutes was successful or not
+    private boolean settingSecuritySuccessful(
+            Map<String, WriteResult.SecurityResult> results
+    ) {
+        for ( WriteResult.SecurityResult result : results.values() ) {
+            if ( !settingSecuritySuccessful(result) ) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
     // writes configuration to this contextNode
     private ServiceResult<WriteResult, WriteConfigurationProcessingInfo>  
-        writeConfigurationToThisNode(HWP_ConfigurationByte[] hwpConfigBytes, int hwpId) 
+        writeConfigurationToThisNode(ConfigSettings configSettings, int hwpId) 
     {
         OS os = this.contextNode.getDeviceObject(OS.class);
         if ( os == null ) {
@@ -106,6 +165,26 @@ extends BaseService implements WriteConfigurationService {
         }
         
         os.setRequestHwProfile(hwpId);
+        
+        
+        // 1.PART - SETTING SECURITY
+        WriteResult.SecurityResult securityResult = setSecurityUsingUnicast(configSettings.getSecurity());
+        
+        
+        
+        // 2.PART - WRITING CONFIGURATION BYTES
+        HWP_ConfigurationByte[] hwpConfigBytes = configSettings.getHwpConfigBytes();
+        
+        // no bytes to write
+        if ( (hwpConfigBytes == null) || (hwpConfigBytes.length == 0) ) {
+            logger.warn("Configuration bytes are missing");
+            
+            return new BaseServiceResult<>(
+                    ServiceResult.Status.ERROR, 
+                    null, 
+                    new WriteConfigurationProcessingInfo( new NoConfigurationDataError() )
+            );
+        }
         
         int configBytePos = 0;
         int maxChunkLen = getMaxChunkLengthForUnicast();
@@ -136,13 +215,18 @@ extends BaseService implements WriteConfigurationService {
         }
         
         WriteResult.NodeWriteResult nodeWriteResult 
-                = new WriteResult.NodeWriteResultImpl(toMap(hwpConfigBytes), writingFailedBytes);
+                = new WriteResult.NodeWriteResultImpl(
+                        toMap(hwpConfigBytes), 
+                        writingFailedBytes,
+                        securityResult
+                );
         Map<String, WriteResult.NodeWriteResult> nodeResultsMap = new HashMap<>();
         nodeResultsMap.put(((DeviceObject)os).getNodeId(), nodeWriteResult);
         
-        ServiceResult.Status serviceStatus = ( writingFailedBytes.isEmpty() )?
-                                              ServiceResult.Status.SUCCESSFULLY_COMPLETED
-                                              : ServiceResult.Status.ERROR;
+        ServiceResult.Status serviceStatus = ServiceResult.Status.SUCCESSFULLY_COMPLETED;
+        if ( !writingFailedBytes.isEmpty() || !settingSecuritySuccessful(securityResult) ) {
+            serviceStatus = ServiceResult.Status.ERROR;
+        } 
         
         return new BaseServiceResult<>(
                 serviceStatus, 
@@ -171,12 +255,14 @@ extends BaseService implements WriteConfigurationService {
             Map<Integer, HWP_ConfigurationByte> bytesToWrite,
             Map<Integer, HWP_ConfigurationByte> writingFailedBytes, 
             Map<String, WriteResult.NodeWriteResult> nodeResultsMap,
+            WriteResult.SecurityResult securityResult,
             String nodeId
     ) {
         NodeWriteResultImpl nodeResult = (WriteResult.NodeWriteResultImpl)nodeResultsMap.get(nodeId);
         if ( nodeResult == null ) {
             nodeResultsMap.put(
-                nodeId, new WriteResult.NodeWriteResultImpl(bytesToWrite, writingFailedBytes)
+                nodeId, 
+                new WriteResult.NodeWriteResultImpl(bytesToWrite, writingFailedBytes, securityResult)
             );
         } else {
             nodeResult.getWritingFailedBytes().putAll(writingFailedBytes);
@@ -189,6 +275,7 @@ extends BaseService implements WriteConfigurationService {
             Map<Integer, HWP_ConfigurationByte> bytesToWrite,
             Map<Integer, HWP_ConfigurationByte> writingFailedBytes, 
             Map<String, WriteResult.NodeWriteResult> nodeResultsMap,
+            Map<String, WriteResult.SecurityResult> securityResults,
             Collection<Node> nodes
     ) {
         for ( Node node : nodes ) {
@@ -196,7 +283,9 @@ extends BaseService implements WriteConfigurationService {
             if ( nodeResult == null ) {
                 nodeResultsMap.put(
                     node.getId(), 
-                    new WriteResult.NodeWriteResultImpl(bytesToWrite, writingFailedBytes)
+                    new WriteResult.NodeWriteResultImpl(
+                            bytesToWrite, writingFailedBytes, securityResults.get(node.getId())
+                    )
                 );
             } else {
                 nodeResult.getWritingFailedBytes().putAll(writingFailedBytes);
@@ -212,10 +301,179 @@ extends BaseService implements WriteConfigurationService {
         return completeResult;
     }
     
+    // returns map with all values set to false
+    private Map<String, Boolean> getFalseMap(Collection<Node> nodes) {
+        Map<String, Boolean> falseMap = new HashMap<>();
+        
+        for ( Node node : nodes ) {
+            falseMap.put(node.getId(), Boolean.FALSE);
+        }
+        
+        return falseMap;
+    }
+    
+    // type of security datas 
+    private static enum SecurityDataType {
+        PASSWORD, 
+        KEY
+    }
+    
+    // sets security data into nodes
+    private Map<String, Boolean> setSecurityDataUsingBroadcast(
+            short[] data,
+            Collection<Node> targetNodes,
+            int hwpId,
+            SecurityDataType secDataType
+    ) {
+        short[] foursome = new short[FOURSOME_LEN];
+        foursome[0] = (short)(FOURSOME_LEN + data.length + 1);
+        foursome[1] = DPA_ProtocolProperties.PNUM_Properties.OS; 
+        foursome[2] = 0x07;
+        foursome[3] = (short)(hwpId & 0xFF);
+        foursome[4] = (short)((hwpId >> 8) & 0xFF);
+        
+        short[] dpaRequestData = new short[foursome[0]];
+        System.arraycopy(foursome, 0, dpaRequestData, 0, foursome.length);
+        
+        switch ( secDataType ) {
+            case PASSWORD:
+                dpaRequestData[foursome.length] = 0;
+                break;
+            case KEY:
+                dpaRequestData[foursome.length] = 1;
+                break;
+            default:
+                throw new IllegalStateException("Unsupported security data type: " + secDataType);
+        }
+        
+        System.arraycopy(data, 0, dpaRequestData, foursome.length+1, data.length);
+        
+        FRC frc = this.contextNode.getDeviceObject(FRC.class);
+        
+        FRC_Data result = frc.sendSelective( 
+                new FRC_AcknowledgedBroadcastBits(
+                    dpaRequestData, targetNodes.toArray( new Node[] {})
+                )
+        );
+        
+        // results map
+        Map<String, Boolean> resultsMap = new HashMap<>();
+        
+        // getting the first part of the result
+        if ( result == null ) {
+            return getFalseMap(targetNodes);
+        }
+
+        // getting the remainder of the result
+        short[] extraResult = frc.extraResult();
+        if ( extraResult == null ) {
+            return getFalseMap(targetNodes);
+        }
+
+        // put both parts together
+        short[] completeResult = getCompleteFrcResult(result.getData(), extraResult);
+
+        // parsing result
+        Map<String, Result> parsedResultMap = null;
+        try {
+            parsedResultMap = FRC_AcknowledgedBroadcastBits.parse(completeResult);
+        } catch ( Exception ex ) {
+            return getFalseMap(targetNodes);
+        }
+
+        // adding config bytes, which failed to write
+        for ( Node node : targetNodes ) {
+            Result parsedNodeResult = parsedResultMap.get(node.getId());
+
+            DeviceProcResult devProcResult = parsedNodeResult.getDeviceProcResult();
+            if ( 
+                ( devProcResult == DeviceProcResult.NOT_RESPOND ) 
+                || ( devProcResult == DeviceProcResult.HWPID_NOT_MATCH )
+            ) {
+                resultsMap.put(node.getId(), Boolean.FALSE);
+            } else {
+                resultsMap.put(node.getId(), Boolean.TRUE);
+            }
+        }
+        
+        return resultsMap;
+    }
+    
+    // sets security settings to nodes using broadcast
+    Map<String, WriteResult.SecurityResult> setSecurityUsingBroadcast(
+            ConfigSettings.Security settings, 
+            Collection<Node> targetNodes,
+            int hwpId
+    ) {
+        if ( settings == null ) {
+            return null;
+        }
+        
+        Map<String, Boolean> passwordResultsMap = null;
+        
+        short[] password = settings.getPassword();
+        if ( password != null ) {
+            passwordResultsMap = setSecurityDataUsingBroadcast(
+                password, targetNodes, hwpId, SecurityDataType.PASSWORD
+            );
+        }
+        
+        Map<String, Boolean> keyResultsMap = null;
+        
+        short[] key = settings.getKey();
+        if ( key != null ) {
+            keyResultsMap = setSecurityDataUsingBroadcast(
+                key, targetNodes, hwpId, SecurityDataType.KEY
+            );
+        }
+       
+        // putting result together
+        Map<String, WriteResult.SecurityResult> resultsMap = new HashMap<>();
+        for ( Node node : targetNodes ) {
+            boolean passwordToWrite = false;
+            boolean passwordWriteResult = false;
+            boolean keyToWrite = false;
+            boolean keyWriteResult = false;
+            
+            if ( password != null ) {
+                passwordToWrite = true;
+                if ( 
+                    passwordResultsMap.get(node.getId()) != null 
+                    && passwordResultsMap.get(node.getId()) == true     
+                ) {
+                    passwordWriteResult = true;
+                }
+            }
+            
+            if ( key != null ) {
+                keyToWrite = true;
+                if ( 
+                    keyResultsMap.get(node.getId()) != null 
+                    && keyResultsMap.get(node.getId()) == true     
+                ) {
+                    keyWriteResult = true;
+                }
+            }
+            
+            resultsMap.put(
+                    node.getId(), 
+                    new WriteResult.SecurityResultImpl(
+                            passwordToWrite, 
+                            passwordWriteResult, 
+                            keyToWrite, 
+                            keyWriteResult
+                    )
+            );
+        }
+        
+        return resultsMap;
+    }
+    
     // writes configuration to nodes using broadcast
     private ServiceResult<WriteResult, WriteConfigurationProcessingInfo> 
         writeConfigurationUsingBroadcast(
-                HWP_ConfigurationByte[] hwpConfigBytes, Collection<Node> targetNodes,
+                ConfigSettings configSettings, 
+                Collection<Node> targetNodes,
                 int hwpId
     ) {
         FRC frc = this.contextNode.getDeviceObject(FRC.class);
@@ -228,6 +486,19 @@ extends BaseService implements WriteConfigurationService {
         }
         
         frc.setRequestHwProfile(hwpId);
+        
+        // 1.part - set security attributes using broadcast
+        Map<String, WriteResult.SecurityResult> securityResults
+            = setSecurityUsingBroadcast(
+                configSettings.getSecurity(),
+                targetNodes,
+                hwpId
+        ); 
+        
+        
+        
+        // 2.part - writing configuration bytes
+        HWP_ConfigurationByte[] hwpConfigBytes = configSettings.getHwpConfigBytes();
         
         int configBytePos = 0;
         int maxChunkLen = getMaxChunkLengthForBroadcast();
@@ -273,7 +544,8 @@ extends BaseService implements WriteConfigurationService {
                 addConfigBytesIntoNodeResultsMap(
                         bytesToWriteMap,
                         getWritingFailedBytes(configBytePos, chunkLen, hwpConfigBytes),
-                        nodeResultsMap, 
+                        nodeResultsMap,
+                        securityResults,
                         targetNodes
                 );
                 
@@ -287,7 +559,8 @@ extends BaseService implements WriteConfigurationService {
                 addConfigBytesIntoNodeResultsMap(
                         bytesToWriteMap,
                         getWritingFailedBytes(configBytePos, chunkLen, hwpConfigBytes),
-                        nodeResultsMap, 
+                        nodeResultsMap,
+                        securityResults,
                         targetNodes
                 );
                 
@@ -317,12 +590,19 @@ extends BaseService implements WriteConfigurationService {
                 Result parsedNodeResult = parsedResultMap.get(node.getId());
                 
                 DeviceProcResult devProcResult = parsedNodeResult.getDeviceProcResult();
-                if ( (devProcResult == DeviceProcResult.NOT_RESPOND) 
+                if ( 
+                    (devProcResult == DeviceProcResult.NOT_RESPOND) 
                     || (devProcResult == DeviceProcResult.HWPID_NOT_MATCH)
                 ) {
                     Map<Integer, HWP_ConfigurationByte> writingFailedBytes
                         = getWritingFailedBytes(configBytePos, chunkLen, hwpConfigBytes);
-                    addConfigBytesIntoMap(bytesToWriteMap, writingFailedBytes, nodeResultsMap, node.getId());
+                    addConfigBytesIntoMap(
+                            bytesToWriteMap, 
+                            writingFailedBytes, 
+                            nodeResultsMap,
+                            securityResults.get(node.getId()),
+                            node.getId()
+                    );
                     writeFailed = true;
                 }
             }
@@ -334,15 +614,17 @@ extends BaseService implements WriteConfigurationService {
                 WriteResult.NodeWriteResultImpl nodeResult 
                     = new NodeWriteResultImpl(
                             bytesToWriteMap, 
-                            new HashMap<Integer, HWP_ConfigurationByte>()
+                            new HashMap<Integer, HWP_ConfigurationByte>(),
+                            securityResults.get(node.getId())
                     );
                 nodeResultsMap.put(node.getId(), nodeResult);
             }
         }
         
-        ServiceResult.Status serviceStatus = ( writeFailed == false )?
-                                              ServiceResult.Status.SUCCESSFULLY_COMPLETED
-                                              : ServiceResult.Status.ERROR;
+        ServiceResult.Status serviceStatus = ServiceResult.Status.SUCCESSFULLY_COMPLETED;
+        if ( writeFailed || !settingSecuritySuccessful(securityResults) ) {
+            serviceStatus = ServiceResult.Status.ERROR;
+        }
         
         return new BaseServiceResult<>(
                 serviceStatus, 
@@ -369,21 +651,31 @@ extends BaseService implements WriteConfigurationService {
     public ServiceResult<WriteResult, WriteConfigurationProcessingInfo> 
         writeConfiguration(WriteConfigurationServiceParameters params) 
     {
-        HWP_ConfigurationByte[] hwpConfigBytes = null;
+        logger.debug("writeConfiguration - start: params={}", params);
+        
+        ServiceResult<WriteResult, WriteConfigurationProcessingInfo> result = null;
+        
+        ConfigSettings configSettings = null;
         try {
-            hwpConfigBytes = XmlConfigurationParser.parse(
-                    params.getDefFileName(), params.getUserSettingsFileName()
+            configSettings = XmlConfigurationParser.parse(
+                    params.getDefFileName(), 
+                    params.getUserSettingsFileName()
             );
         } catch ( XmlConfigurationParserException ex ) {
-            return new BaseServiceResult<>(
+            result = new BaseServiceResult<>(
                     ServiceResult.Status.ERROR, 
                     null, 
                     new WriteConfigurationProcessingInfo( new ConfigFileParsingError(ex) )
             );
+            
+            logger.debug("writeConfiguration - end: {}", result);
+            return result;
         }
         
-        // no bytes to write
-        if ( (hwpConfigBytes == null) || (hwpConfigBytes.length == 0) ) {
+        // basic checking of security attributes
+        if ( configSettings.getSecurity() == null ) {
+            logger.warn("Security settings are missing");
+            
             return new BaseServiceResult<>(
                     ServiceResult.Status.ERROR, 
                     null, 
@@ -393,10 +685,16 @@ extends BaseService implements WriteConfigurationService {
         
         Collection<Node> targetNodes = params.getTargetNodes();
         if ( (targetNodes == null) || (targetNodes.isEmpty()) ) {
-            return writeConfigurationToThisNode(hwpConfigBytes, params.getHwpId());
+            result = writeConfigurationToThisNode(configSettings, params.getHwpId());
+            
+            logger.debug("writeConfiguration - end: {}", result);
+            return result;
         }
         
-        return writeConfigurationUsingBroadcast(hwpConfigBytes, targetNodes, params.getHwpId());
+        result = writeConfigurationUsingBroadcast(configSettings, targetNodes, params.getHwpId());
+        
+        logger.debug("writeConfiguration - end: {}", result);
+        return result;
     }
     
 }

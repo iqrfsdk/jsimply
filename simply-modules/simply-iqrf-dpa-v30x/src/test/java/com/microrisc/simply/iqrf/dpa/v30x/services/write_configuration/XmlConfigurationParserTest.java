@@ -15,6 +15,8 @@
  */
 package com.microrisc.simply.iqrf.dpa.v30x.services.write_configuration;
 
+import com.microrisc.simply.iqrf.dpa.v30x.services.node.write_configuration.ConfigSettings;
+import com.microrisc.simply.iqrf.dpa.v30x.services.node.write_configuration.ConfigSettings.Security;
 import com.microrisc.simply.iqrf.dpa.v30x.services.node.write_configuration.XmlConfigurationParser;
 import com.microrisc.simply.iqrf.dpa.v30x.types.HWP_ConfigurationByte;
 import java.io.File;
@@ -57,33 +59,66 @@ public class XmlConfigurationParserTest {
     @Test
     public void testParse() throws Exception {
         System.out.println("parse");
-        String defFileName = "write_config_service" + File.separator + "TR_config_2_00.xml";
+        String defFileName = "write_config_service" + File.separator + "TR_config_3_00.xml";
         String userSettingsFileName = "write_config_service" + File.separator + "config.xml";
-        HWP_ConfigurationByte[] result = XmlConfigurationParser.parse(defFileName, userSettingsFileName);
         
-        HWP_ConfigurationByte[] expResult = new HWP_ConfigurationByte[12];
-        expResult[0] = new HWP_ConfigurationByte(1, 0b11111000, 0b11111000);
-        expResult[1] = new HWP_ConfigurationByte(2, 0b00100110, 0b00111111);
-        expResult[2] = new HWP_ConfigurationByte(5, 0b00000011, 0b00111111);
-        expResult[3] = new HWP_ConfigurationByte(6, 42, 0xFF);
-        expResult[4] = new HWP_ConfigurationByte(8, 1, 0xFF);
-        expResult[5] = new HWP_ConfigurationByte(9, 5, 0xFF);
-        expResult[6] = new HWP_ConfigurationByte(10, 6, 0xFF);
-        expResult[7] = new HWP_ConfigurationByte(11, 3, 0b00000111);
-        expResult[8] = new HWP_ConfigurationByte(12, 0, 0xFF);
-        expResult[9] = new HWP_ConfigurationByte(17, 52, 0xFF);
-        expResult[10] = new HWP_ConfigurationByte(18, 5, 0xFF);
-        expResult[11] = new HWP_ConfigurationByte(0x20, 0b11010101, 0b11010101);
+        ConfigSettings configSettings = XmlConfigurationParser.parse(defFileName, userSettingsFileName);
+        assertNotNull(configSettings);
+        
+        HWP_ConfigurationByte[] configBytes = configSettings.getHwpConfigBytes();
+        assertNotNull(configBytes);
+        
+        HWP_ConfigurationByte[] expConfigBytes = new HWP_ConfigurationByte[12];
+        expConfigBytes[0] = new HWP_ConfigurationByte(1, 0b11111000, 0b11111000);
+        expConfigBytes[1] = new HWP_ConfigurationByte(2, 0b00000010, 0b00110111);
+        expConfigBytes[2] = new HWP_ConfigurationByte(5, 0b00000000, 0b00111111);
+        expConfigBytes[3] = new HWP_ConfigurationByte(6, 42, 0xFF);
+        expConfigBytes[4] = new HWP_ConfigurationByte(8, 7, 0xFF);
+        expConfigBytes[5] = new HWP_ConfigurationByte(9, 0, 0xFF);
+        expConfigBytes[6] = new HWP_ConfigurationByte(10, 6, 0xFF);
+        expConfigBytes[7] = new HWP_ConfigurationByte(11, 6, 0b00000111);
+        expConfigBytes[8] = new HWP_ConfigurationByte(12, 0, 0xFF);
+        expConfigBytes[9] = new HWP_ConfigurationByte(17, 52, 0xFF);
+        expConfigBytes[10] = new HWP_ConfigurationByte(18, 2, 0xFF);
+        expConfigBytes[11] = new HWP_ConfigurationByte(0x20, 0b10000011, 0b11010111);
         
         /*
         System.out.println("Configuration bytes: ");
-        for ( HWP_ConfigurationByte configByte : result ) {
+        for ( HWP_ConfigurationByte configByte : configBytes ) {
             System.out.println(configByte);
         }
         */
         
-        assertEquals(expResult.length, result.length);
-        assertArrayEquals(expResult, result);
+        assertEquals(expConfigBytes.length, configBytes.length);
+        assertArrayEquals(expConfigBytes, configBytes);
+        
+        // checking of security attributes
+        Security security = configSettings.getSecurity();
+        assertNotNull(security);
+        
+        short[] password = security.getPassword();
+        assertNotNull(password);
+        
+        short[] expPassword = new short[6];
+        expPassword[0] = (short)98;
+        expPassword[1] = 108;
+        expPassword[2] = 97;
+        expPassword[3] = 98;
+        expPassword[4] = 108;
+        expPassword[5] = 97;
+ 
+        assertArrayEquals(expPassword, password);
+        
+        short[] key = security.getKey();
+        assertNotNull(key);
+        
+        short[] expKey = new short[3];
+        expKey[0] = 0x10;
+        expKey[1] = 0xAF;
+        expKey[2] = 0xB0;
+        
+        assertArrayEquals(expKey, key);
+        
     }
     
 }

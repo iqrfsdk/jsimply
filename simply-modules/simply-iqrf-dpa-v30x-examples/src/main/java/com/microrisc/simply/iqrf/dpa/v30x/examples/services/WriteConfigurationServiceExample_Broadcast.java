@@ -15,6 +15,7 @@
  */
 package com.microrisc.simply.iqrf.dpa.v30x.examples.services;
 
+import com.microrisc.simply.Node;
 import com.microrisc.simply.SimplyException;
 import com.microrisc.simply.iqrf.dpa.DPA_Network;
 import com.microrisc.simply.iqrf.dpa.DPA_Node;
@@ -28,13 +29,15 @@ import com.microrisc.simply.iqrf.dpa.v30x.services.node.write_configuration.Writ
 import com.microrisc.simply.iqrf.dpa.v30x.types.HWP_ConfigurationByte;
 import com.microrisc.simply.services.ServiceResult;
 import java.io.File;
+import java.util.Collection;
+import java.util.LinkedList;
 
 /**
- * Usage of Write Configuration Service.
+ * Using broadcast in Write Configuration Service.
  * 
  * @author Michal Konopa
  */
-public final class WriteConfigurationServiceExample {
+public final class WriteConfigurationServiceExample_Broadcast {
     private static DPA_Simply simply = null;
     
     // prints out specified message, destroys the Simply and exits
@@ -59,27 +62,31 @@ public final class WriteConfigurationServiceExample {
         if ( network1 == null ) {
             printMessageAndExit("Network 1 doesn't exist");
         }
-
-        // getting node 1
-        DPA_Node node1 = network1.getNode("1");
-        if ( node1 == null ) {
-            printMessageAndExit("Node 1 doesn't exist.");
+        
+        // getting node 0 - coordinator
+        // probably supports FRC peripheral - needed for performing a broadcast
+        DPA_Node node0 = network1.getNode("0");
+        if ( node0 == null ) {
+            printMessageAndExit("Node 0 doesn't exist.");
         }
         
-        // getting Write Configuration Service on node 1
-        WriteConfigurationService writeConfigService = node1.getService(WriteConfigurationService.class);
+        // target nodes to write configuration into
+        String[] nodeIds = new String[] { "1", "2", "3" };
+        Collection<Node> targetNodes = getNodes(network1, nodeIds);
+        
+        // getting Write Configuration Service on node 0
+        WriteConfigurationService writeConfigService = node0.getService(WriteConfigurationService.class);
         if ( writeConfigService == null ) {
-            printMessageAndExit("Node 1 doesn't support Write Configuration Service.");
+            printMessageAndExit("Node 0 doesn't support Write Configuration Service.");
         }
         
         // setting service parameters
         WriteConfigurationServiceParameters serviceParams 
                 = new WriteConfigurationServiceParameters(
                         "config" + File.separator + "dctr-configs" + File.separator + "dpa-3xx" + File.separator + "TR_config_3_00.xml",
-                        "config" + File.separator + "dctr-configs" + File.separator + "node.xml"
-        );
-        
-        // do not check HWP ID
+                        "config" + File.separator + "dctr-configs" + File.separator + "node.xml",
+                        targetNodes
+                );
         serviceParams.setHwpId(DPA_ProtocolProperties.HWPID_Properties.DO_NOT_CHECK);
         
         // writing configuration - only for node, which this service resides on
@@ -103,6 +110,22 @@ public final class WriteConfigurationServiceExample {
         }
         
         simply.destroy();
+    }
+    
+    
+    // returns collection of nodes from specified network corresponding to specified node IDs
+    private static Collection<Node> getNodes(DPA_Network network, String[] nodeIds) {
+        Collection<Node> nodes = new LinkedList<>();
+        for ( String nodeId : nodeIds ) {
+            // getting node
+            DPA_Node node = network.getNode(nodeId);
+            if ( node == null ) {
+                printMessageAndExit("Node " + nodeId + " doesn't exist.");
+            }
+            nodes.add(node);
+        }
+        
+        return nodes;
     }
     
     // prints results of writing for each node
@@ -131,5 +154,4 @@ public final class WriteConfigurationServiceExample {
             System.out.println();
         }
     }
-    
 }

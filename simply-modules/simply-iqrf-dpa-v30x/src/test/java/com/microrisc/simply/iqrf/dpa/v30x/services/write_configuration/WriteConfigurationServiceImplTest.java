@@ -155,64 +155,64 @@ public class WriteConfigurationServiceImplTest {
         assertEquals(bytesToWriteMap.size(), 12);
         
         HWP_ConfigurationByte configByte = bytesToWriteMap.get(1);
-        assertEquals(configByte.getAddress(), 1);
-        assertEquals(configByte.getValue(), 0b11111000);
-        assertEquals(configByte.getMask(), 0b11111000);
+        assertEquals(1, configByte.getAddress());
+        assertEquals(0b11111000, configByte.getValue() );
+        assertEquals(0b11111000, configByte.getMask());
         
         configByte = bytesToWriteMap.get(2);
-        assertEquals(configByte.getAddress(), 2);
-        assertEquals(configByte.getValue(), 0b00100110);
-        assertEquals(configByte.getMask(), 0b00111111);
+        assertEquals(2, configByte.getAddress());
+        assertEquals(0b00000010, configByte.getValue());
+        assertEquals(0b00110111, configByte.getMask());
         
         configByte = bytesToWriteMap.get(5);
-        assertEquals(configByte.getAddress(), 5);
-        assertEquals(configByte.getValue(), 0b00000011);
-        assertEquals(configByte.getMask(), 0b00111111);
+        assertEquals(5, configByte.getAddress());
+        assertEquals(0b00000000, configByte.getValue());
+        assertEquals(0b00111111, configByte.getMask());
         
         configByte = bytesToWriteMap.get(6);
-        assertEquals(configByte.getAddress(), 6);
-        assertEquals(configByte.getValue(), 42);
-        assertEquals(configByte.getMask(), 0xFF);
+        assertEquals(6, configByte.getAddress());
+        assertEquals(42, configByte.getValue());
+        assertEquals(0xFF, configByte.getMask());
         
         configByte = bytesToWriteMap.get(8);
-        assertEquals(configByte.getAddress(), 8);
-        assertEquals(configByte.getValue(), 1);
-        assertEquals(configByte.getMask(), 0xFF);
+        assertEquals(8, configByte.getAddress());
+        assertEquals(7, configByte.getValue());
+        assertEquals(0xFF, configByte.getMask());
         
         configByte = bytesToWriteMap.get(9);
-        assertEquals(configByte.getAddress(), 9);
-        assertEquals(configByte.getValue(), 5);
-        assertEquals(configByte.getMask(), 0xFF);
+        assertEquals(9, configByte.getAddress());
+        assertEquals(0, configByte.getValue());
+        assertEquals(0xFF, configByte.getMask());
         
         configByte = bytesToWriteMap.get(10);
-        assertEquals(configByte.getAddress(), 10);
-        assertEquals(configByte.getValue(), 6);
-        assertEquals(configByte.getMask(), 0xFF);
+        assertEquals(10, configByte.getAddress());
+        assertEquals(6, configByte.getValue());
+        assertEquals(0xFF, configByte.getMask());
         
         configByte = bytesToWriteMap.get(11);
-        assertEquals(configByte.getAddress(), 11);
-        assertEquals(configByte.getValue(), 3);
-        assertEquals(configByte.getMask(), 0b00000111);
+        assertEquals(11, configByte.getAddress());
+        assertEquals(6, configByte.getValue());
+        assertEquals(0b00000111, configByte.getMask());
         
         configByte = bytesToWriteMap.get(12);
-        assertEquals(configByte.getAddress(), 12);
-        assertEquals(configByte.getValue(), 0);
-        assertEquals(configByte.getMask(), 0xFF);
+        assertEquals(12, configByte.getAddress());
+        assertEquals(0, configByte.getValue());
+        assertEquals(0xFF, configByte.getMask());
         
         configByte = bytesToWriteMap.get(17);
-        assertEquals(configByte.getAddress(), 17);
-        assertEquals(configByte.getValue(), 52);
-        assertEquals(configByte.getMask(), 0xFF);
+        assertEquals(17, configByte.getAddress());
+        assertEquals(52, configByte.getValue());
+        assertEquals(0xFF, configByte.getMask());
         
         configByte = bytesToWriteMap.get(18);
-        assertEquals(configByte.getAddress(), 18);
-        assertEquals(configByte.getValue(), 5);
-        assertEquals(configByte.getMask(), 0xFF);
+        assertEquals(18, configByte.getAddress());
+        assertEquals(2, configByte.getValue());
+        assertEquals(0xFF, configByte.getMask());
         
         configByte = bytesToWriteMap.get(0x20);
-        assertEquals(configByte.getAddress(), 0x20);
-        assertEquals(configByte.getValue(), 0b11010101);
-        assertEquals(configByte.getMask(), 0b11010101);
+        assertEquals(0x20, configByte.getAddress());
+        assertEquals(0b10000011, configByte.getValue());
+        assertEquals(0b11010111, configByte.getMask());
     }
     
     
@@ -232,13 +232,14 @@ public class WriteConfigurationServiceImplTest {
         */
         TestingOs os = new TestingOs("1", "1");
         os.setWriteHWPConfigurationByteReturnValue(new VoidType());
+        os.setSetSecurityReturnValue(new VoidType());
         
         Map<Class, DeviceObject> deviceObjects = new HashMap<>();
         deviceObjects.put(OS.class, (DeviceObject)os);
         WriteConfigurationServiceImpl writeConfigService 
                 = new WriteConfigurationServiceImpl( new BaseNode("1", "1", deviceObjects));
         
-        String defFileName = "write_config_service" + File.separator + "TR_config_2_00.xml";
+        String defFileName = "write_config_service" + File.separator + "TR_config_3_00.xml";
         String userSettingsFileName = "write_config_service" + File.separator + "config.xml";
         WriteConfigurationServiceParameters params 
                 = new WriteConfigurationServiceParameters(defFileName, userSettingsFileName);
@@ -246,7 +247,7 @@ public class WriteConfigurationServiceImplTest {
         ServiceResult<WriteResult, WriteConfigurationProcessingInfo> serviceResult 
                 = writeConfigService.writeConfiguration(params);
         
-        assertEquals(serviceResult.getStatus(), ServiceResult.Status.SUCCESSFULLY_COMPLETED);
+        assertEquals(ServiceResult.Status.SUCCESSFULLY_COMPLETED, serviceResult.getStatus());
         assertNull(serviceResult.getProcessingInfo().getError());
         
         WriteResult writeResult = serviceResult.getResult();
@@ -256,7 +257,16 @@ public class WriteConfigurationServiceImplTest {
         testBytesToWriteMap(nodeResult.getBytesToWrite());
         
         Map<Integer, HWP_ConfigurationByte> writingFailedBytesMap = nodeResult.getWritingFailedBytes();
-        assertEquals(writingFailedBytesMap.size(), 0);
+        assertEquals(0, writingFailedBytesMap.size());
+        
+        // test security
+        WriteResult.SecurityResult secResult = nodeResult.getSecurityResult();
+        assertNotNull(secResult);
+        
+        assertTrue(secResult.isPasswordToWrite());
+        assertTrue(secResult.isKeyToWrite());
+        assertTrue(secResult.getPaswordWriteResult());
+        assertTrue(secResult.getKeyWriteResult());
     }
     
     /**
@@ -266,13 +276,14 @@ public class WriteConfigurationServiceImplTest {
     public void unicastFailed_nullResult() {
         TestingOs os = new TestingOs("1", "1");
         os.setWriteHWPConfigurationByteReturnValue(null);
+        os.setSetSecurityReturnValue(new VoidType());
         
         Map<Class, DeviceObject> deviceObjects = new HashMap<>();
         deviceObjects.put(OS.class, (DeviceObject)os);
         WriteConfigurationServiceImpl writeConfigService 
                 = new WriteConfigurationServiceImpl(new BaseNode("1", "1", deviceObjects));
         
-        String defFileName = "write_config_service" + File.separator + "TR_config_2_00.xml";
+        String defFileName = "write_config_service" + File.separator + "TR_config_3_00.xml";
         String userSettingsFileName = "write_config_service" + File.separator + "config.xml";
         WriteConfigurationServiceParameters params 
                 = new WriteConfigurationServiceParameters(defFileName, userSettingsFileName);
@@ -280,7 +291,7 @@ public class WriteConfigurationServiceImplTest {
         ServiceResult<WriteResult, WriteConfigurationProcessingInfo> serviceResult 
                 = writeConfigService.writeConfiguration(params);
         
-        assertEquals(serviceResult.getStatus(), ServiceResult.Status.ERROR);
+        assertEquals(ServiceResult.Status.ERROR, serviceResult.getStatus());
         assertNull(serviceResult.getProcessingInfo().getError());
         
         WriteResult writeResult = serviceResult.getResult();
@@ -290,7 +301,60 @@ public class WriteConfigurationServiceImplTest {
         testBytesToWriteMap(nodeResult.getBytesToWrite());
         
         Map<Integer, HWP_ConfigurationByte> writingFailedBytesMap = nodeResult.getWritingFailedBytes();
-        assertEquals(writingFailedBytesMap.size(), 12);
+        assertEquals(12, writingFailedBytesMap.size());
+        
+        // test security
+        WriteResult.SecurityResult secResult = nodeResult.getSecurityResult();
+        assertNotNull(secResult);
+        
+        assertTrue(secResult.isPasswordToWrite());
+        assertTrue(secResult.isKeyToWrite());
+        assertTrue(secResult.getPaswordWriteResult());
+        assertTrue(secResult.getKeyWriteResult());
+    }
+    
+    /**
+     * Unicast failed - null result from setSecurity method.
+     */
+    @Test
+    public void unicastFailed_setSecurityFailed() {
+        TestingOs os = new TestingOs("1", "1");
+        os.setWriteHWPConfigurationByteReturnValue(new VoidType());
+        os.setSetSecurityReturnValue(null);
+        
+        Map<Class, DeviceObject> deviceObjects = new HashMap<>();
+        deviceObjects.put(OS.class, (DeviceObject)os);
+        WriteConfigurationServiceImpl writeConfigService 
+                = new WriteConfigurationServiceImpl(new BaseNode("1", "1", deviceObjects));
+        
+        String defFileName = "write_config_service" + File.separator + "TR_config_3_00.xml";
+        String userSettingsFileName = "write_config_service" + File.separator + "config.xml";
+        WriteConfigurationServiceParameters params 
+                = new WriteConfigurationServiceParameters(defFileName, userSettingsFileName);
+        
+        ServiceResult<WriteResult, WriteConfigurationProcessingInfo> serviceResult 
+                = writeConfigService.writeConfiguration(params);
+        
+        assertEquals(ServiceResult.Status.ERROR, serviceResult.getStatus());
+        assertNull(serviceResult.getProcessingInfo().getError());
+        
+        WriteResult writeResult = serviceResult.getResult();
+        WriteResult.NodeWriteResult nodeResult = writeResult.getNodeResult("1");
+        assertNotNull(nodeResult);
+        
+        testBytesToWriteMap(nodeResult.getBytesToWrite());
+        
+        Map<Integer, HWP_ConfigurationByte> writingFailedBytesMap = nodeResult.getWritingFailedBytes();
+        assertEquals(0, writingFailedBytesMap.size());
+        
+        // test security
+        WriteResult.SecurityResult secResult = nodeResult.getSecurityResult();
+        assertNotNull(secResult);
+        
+        assertTrue(secResult.isPasswordToWrite());
+        assertTrue(secResult.isKeyToWrite());
+        assertFalse(secResult.getPaswordWriteResult());
+        assertFalse(secResult.getKeyWriteResult());
     }
     
     /**
@@ -313,7 +377,7 @@ public class WriteConfigurationServiceImplTest {
         WriteConfigurationServiceImpl writeConfigService 
                 = new WriteConfigurationServiceImpl(new BaseNode("1", "1", deviceObjects));
         
-        String defFileName = "write_config_service" + File.separator + "TR_config_2_00.xml";
+        String defFileName = "write_config_service" + File.separator + "TR_config_3_00.xml";
         String userSettingsFileName = "write_config_service" + File.separator + "config.xml";
         Node node1 = new BaseNode("1", "1", deviceObjects);
         Collection<Node> nodes = new LinkedList<>();
@@ -324,7 +388,7 @@ public class WriteConfigurationServiceImplTest {
         ServiceResult<WriteResult, WriteConfigurationProcessingInfo> serviceResult 
                 = writeConfigService.writeConfiguration(params);
         
-        assertEquals(serviceResult.getStatus(), ServiceResult.Status.SUCCESSFULLY_COMPLETED);
+        assertEquals(ServiceResult.Status.SUCCESSFULLY_COMPLETED, serviceResult.getStatus());
         assertNull(serviceResult.getProcessingInfo().getError());
         
         WriteResult writeResult = serviceResult.getResult();
@@ -334,7 +398,16 @@ public class WriteConfigurationServiceImplTest {
         testBytesToWriteMap(nodeResult.getBytesToWrite());
         
         Map<Integer, HWP_ConfigurationByte> writingFailedBytesMap = nodeResult.getWritingFailedBytes();
-        assertEquals(writingFailedBytesMap.size(), 0);
+        assertEquals(0, writingFailedBytesMap.size());
+        
+        // test security
+        WriteResult.SecurityResult secResult = nodeResult.getSecurityResult();
+        assertNotNull(secResult);
+        
+        assertTrue(secResult.isPasswordToWrite());
+        assertTrue(secResult.isKeyToWrite());
+        assertTrue(secResult.getPaswordWriteResult());
+        assertTrue(secResult.getKeyWriteResult());
     }
     
     /**
@@ -351,7 +424,7 @@ public class WriteConfigurationServiceImplTest {
         WriteConfigurationServiceImpl writeConfigService 
                 = new WriteConfigurationServiceImpl(new BaseNode("1", "1", deviceObjects));
         
-        String defFileName = "write_config_service" + File.separator + "TR_config_2_00.xml";
+        String defFileName = "write_config_service" + File.separator + "TR_config_3_00.xml";
         String userSettingsFileName = "write_config_service" + File.separator + "config.xml";
         Node node1 = new BaseNode("1", "1", deviceObjects);
         Collection<Node> nodes = new LinkedList<>();
@@ -362,7 +435,7 @@ public class WriteConfigurationServiceImplTest {
         ServiceResult<WriteResult, WriteConfigurationProcessingInfo> serviceResult 
                 = writeConfigService.writeConfiguration(params);
         
-        assertEquals(serviceResult.getStatus(), ServiceResult.Status.ERROR);
+        assertEquals(ServiceResult.Status.ERROR, serviceResult.getStatus());
         assertNull(serviceResult.getProcessingInfo().getError());
         
         WriteResult writeResult = serviceResult.getResult();
@@ -372,7 +445,16 @@ public class WriteConfigurationServiceImplTest {
         testBytesToWriteMap(nodeResult.getBytesToWrite());
         
         Map<Integer, HWP_ConfigurationByte> writingFailedBytesMap = nodeResult.getWritingFailedBytes();
-        assertEquals(writingFailedBytesMap.size(), 12);
+        assertEquals(12, writingFailedBytesMap.size());
+        
+        // test security
+        WriteResult.SecurityResult secResult = nodeResult.getSecurityResult();
+        assertNotNull(secResult);
+        
+        assertTrue(secResult.isPasswordToWrite());
+        assertTrue(secResult.isKeyToWrite());
+        assertFalse(secResult.getPaswordWriteResult());
+        assertFalse(secResult.getKeyWriteResult());
     }
     
     /**
@@ -395,7 +477,7 @@ public class WriteConfigurationServiceImplTest {
         WriteConfigurationServiceImpl writeConfigService 
                 = new WriteConfigurationServiceImpl(new BaseNode("1", "1", deviceObjects));
         
-        String defFileName = "write_config_service" + File.separator + "TR_config_2_00.xml";
+        String defFileName = "write_config_service" + File.separator + "TR_config_3_00.xml";
         String userSettingsFileName = "write_config_service" + File.separator + "config.xml";
         Node node1 = new BaseNode("1", "1", deviceObjects);
         Collection<Node> nodes = new LinkedList<>();
@@ -406,7 +488,7 @@ public class WriteConfigurationServiceImplTest {
         ServiceResult<WriteResult, WriteConfigurationProcessingInfo> serviceResult 
                 = writeConfigService.writeConfiguration(params);
         
-        assertEquals(serviceResult.getStatus(), ServiceResult.Status.ERROR);
+        assertEquals(ServiceResult.Status.ERROR, serviceResult.getStatus());
         assertNull(serviceResult.getProcessingInfo().getError());
         
         WriteResult writeResult = serviceResult.getResult();
@@ -416,6 +498,15 @@ public class WriteConfigurationServiceImplTest {
         testBytesToWriteMap(nodeResult.getBytesToWrite());
         
         Map<Integer, HWP_ConfigurationByte> writingFailedBytesMap = nodeResult.getWritingFailedBytes();
-        assertEquals(writingFailedBytesMap.size(), 12);
+        assertEquals(12, writingFailedBytesMap.size());
+        
+        // test security
+        WriteResult.SecurityResult secResult = nodeResult.getSecurityResult();
+        assertNotNull(secResult);
+        
+        assertTrue(secResult.isPasswordToWrite());
+        assertTrue(secResult.isKeyToWrite());
+        assertFalse(secResult.getPaswordWriteResult());
+        assertFalse(secResult.getKeyWriteResult());
     }
 }

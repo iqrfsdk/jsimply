@@ -23,8 +23,117 @@ import java.util.Map;
  * Result of configuration bytes writing.
  * 
  * @author Michal Konopa
+ * 
+ * 8.3.2017 - incorporated security results
  */
 public final class WriteResult {
+    
+    // results of writing security information into specified node
+    public static interface SecurityResult {
+        
+        /**
+         * Indicates, whether there was password in configuration settings to
+         * write.
+         * 
+         * @return {@code true} if there was password in configuration settings to write  <br>
+         *         {@code false}, otherwise
+         */
+        boolean isPasswordToWrite();
+        
+        /**
+         * Result of writing password into node.
+         * 
+         * @return {@code true} if password was successfully written <br>
+         *         {@code false}, otherwise
+         */
+        boolean getPaswordWriteResult();
+        
+        /**
+         * Indicates, whether there was key in configuration settings to
+         * write.
+         * 
+         * @return {@code true} if there was key in configuration settings to write  <br>
+         *         {@code false}, otherwise
+         */
+        boolean isKeyToWrite();
+        
+        /**
+         * Result of writing key into node.
+         * 
+         * @return {@code true} if key was successfully written <br>
+         *         {@code false}, otherwise
+         */
+        boolean getKeyWriteResult();
+    }
+    
+    /**
+     * Simple implementation of {@link SecurityResult} interface.
+     */
+    static final class SecurityResultImpl implements SecurityResult {
+        
+        private final boolean passwordToWrite;
+        private final boolean passwordWriteResult;
+        private final boolean keyToWrite;
+        private final boolean keyWriteResult;
+        
+        
+        /**
+         * Creates new object of Security Result.
+         * 
+         * @param passwordToWrite if there was password in configuration settings to write
+         * @param passwordWriteResult result of writing password into node
+         * @param keyToWrite if there was key in configuration settings to write
+         * @param keyWriteResult result of writing key into node
+         */
+        public SecurityResultImpl(
+                boolean passwordToWrite, 
+                boolean passwordWriteResult,
+                boolean keyToWrite, 
+                boolean keyWriteResult
+        ) {
+            this.passwordToWrite = passwordToWrite;
+            this.passwordWriteResult = passwordWriteResult;
+            this.keyToWrite = keyToWrite;
+            this.keyWriteResult = keyWriteResult;
+        }
+        
+        
+        @Override
+        public boolean isPasswordToWrite() {
+            return passwordToWrite;
+        }
+
+        @Override
+        public boolean getPaswordWriteResult() {
+            return passwordWriteResult;
+        }
+
+        @Override
+        public boolean isKeyToWrite() {
+            return keyToWrite;
+        }
+
+        @Override
+        public boolean getKeyWriteResult() {
+            return keyWriteResult;
+        }
+        
+        @Override
+        public String toString() {
+            StringBuilder strBuilder = new StringBuilder();
+            String NEW_LINE = System.getProperty("line.separator");
+
+            strBuilder.append(this.getClass().getSimpleName() + " { " + NEW_LINE);
+            strBuilder.append("   password to write: " + passwordToWrite + NEW_LINE);
+            strBuilder.append("   password write result: " + passwordWriteResult + NEW_LINE);
+            strBuilder.append("   key to write: " + keyToWrite + NEW_LINE);
+            strBuilder.append("   key write result: " + keyWriteResult + NEW_LINE);
+            strBuilder.append("}");
+
+            return strBuilder.toString();
+        }
+        
+    }
     
     /**
      * Provides access to results of writing configuration bytes into specified 
@@ -46,10 +155,17 @@ public final class WriteResult {
          * @return map of configuration bytes, which failed to write into node
          */
         Map<Integer, HWP_ConfigurationByte> getWritingFailedBytes();
+        
+        /**
+         * Returns result of writing security items into node.
+         * 
+         * @return result of writing security items into node.
+         */
+        SecurityResult getSecurityResult();
     }
     
     /**
-     * Writing results on concrete node.
+     * Simple implementation of {@link NodeWriteResult} interface.
      */
     static final class NodeWriteResultImpl implements NodeWriteResult {
         
@@ -58,6 +174,10 @@ public final class WriteResult {
         
         // config bytes which failed to write
         private final Map<Integer, HWP_ConfigurationByte> writingFailedBytes;
+        
+        // security result
+        private final SecurityResult securityResult;
+        
         
         /**
          * Creates new instance of node write result.
@@ -68,10 +188,12 @@ public final class WriteResult {
          */
         public NodeWriteResultImpl(
                 Map<Integer, HWP_ConfigurationByte> bytesToWrite,
-                Map<Integer, HWP_ConfigurationByte> failedWritingBytes
+                Map<Integer, HWP_ConfigurationByte> failedWritingBytes,
+                SecurityResult securityResult
         ) {
             this.bytesToWrite = new HashMap<>(bytesToWrite);
             this.writingFailedBytes = new HashMap<>(failedWritingBytes);
+            this.securityResult = securityResult;
         }
         
         @Override
@@ -85,6 +207,11 @@ public final class WriteResult {
         }
         
         @Override
+        public SecurityResult getSecurityResult() {
+            return securityResult;
+        }
+        
+        @Override
         public String toString() {
             StringBuilder strBuilder = new StringBuilder();
             String NEW_LINE = System.getProperty("line.separator");
@@ -92,6 +219,7 @@ public final class WriteResult {
             strBuilder.append(this.getClass().getSimpleName() + " { " + NEW_LINE);
             strBuilder.append("   bytes to write: " + bytesToWrite + NEW_LINE);
             strBuilder.append("   writing failed bytes: " + writingFailedBytes + NEW_LINE);
+            strBuilder.append("   security result: " + securityResult + NEW_LINE);
             strBuilder.append("}");
 
             return strBuilder.toString();
