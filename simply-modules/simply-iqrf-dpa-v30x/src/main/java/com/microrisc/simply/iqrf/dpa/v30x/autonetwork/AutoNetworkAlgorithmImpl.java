@@ -49,6 +49,7 @@ import com.microrisc.simply.iqrf.dpa.v30x.types.RemotelyBondedModuleId;
 import com.microrisc.simply.iqrf.dpa.v30x.types.RoutingHops;
 import com.microrisc.simply.iqrf.types.VoidType;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -1170,18 +1171,48 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
         return prebondedMIDs;
     }
     
+    // result of authorization
+    private static final class AuthorizationResult {
+        final List<Integer> bondedAddresses;
+        final List<RemotelyBondedModuleId> failedBonds;
+        
+        
+        public AuthorizationResult(
+                List<Integer> bondedAddresses,
+                List<RemotelyBondedModuleId> failedBonds
+        ) {
+           this.bondedAddresses = bondedAddresses;
+           this.failedBonds = failedBonds;
+        }
+        
+        public String toString() {
+            StringBuilder strBuilder = new StringBuilder();
+            String NEW_LINE = System.getProperty("line.separator");
+        
+            strBuilder.append(this.getClass().getSimpleName() + " { " + NEW_LINE);
+            strBuilder.append(" Bonded address: " + StringUtils.join(bondedAddresses, ',') + NEW_LINE);
+            strBuilder.append(" Failed bonds: " + StringUtils.join(failedBonds, ',') + NEW_LINE);
+            strBuilder.append("}");
+
+            return strBuilder.toString();
+        }
+    }
+            
     
     // authorizes bonds
-    private List<Integer> authorizeBonds(
-            Coordinator coordinator, List<RemotelyBondedModuleId> prebondedMIDs
+    private AuthorizationResult authorizeBonds(
+            Coordinator coordinator, 
+            List<RemotelyBondedModuleId> prebondedMIDs
     ) throws Exception {
         logger.debug("authorizeBonds - start: coordinator={}, prebondedMIDs={}",
                 coordinator, prebondedMIDs
         );
         
         List<Integer> newAddrs = new LinkedList<>();
+        List<RemotelyBondedModuleId> failedAuthorBonds = new LinkedList<>();
+        
         int nextAddr = DPA_ProtocolProperties.NADR_Properties.IQMESH_NODE_ADDRESS_MAX;
-
+        
         for ( RemotelyBondedModuleId moduleId : prebondedMIDs ) {
             if ( newBondedNodesCount == numberOfNodesToBond ) {
                 logger.info(
@@ -1198,7 +1229,6 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
                 
                 BondedNode bondedNode = coordinator.authorizeBond(nextAddr, moduleId.getModuleId());
                 if ( bondedNode == null ) {
-                    
                     logger.error(
                         "Authorizing node {}, retries={}, authorization failed ...", 
                         toHexaFromLastByteString(moduleId.getModuleId()),
@@ -1211,6 +1241,8 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
                         if ( devCount == null ) {
                             logger.error("Error while removing bond");
                         }
+                        
+                        failedAuthorBonds.add(moduleId);
                     }
                     
                     continue;
@@ -1231,14 +1263,59 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
             }
         }
         
-        logger.debug("authorizeBonds - end: {}", StringUtils.join(newAddrs, ','));
-        return newAddrs;
+        AuthorizationResult result = new AuthorizationResult(newAddrs, failedAuthorBonds);
+        
+        logger.debug("authorizeBonds - end: {}", result);
+        return result;
+    }
+    
+    // removes prebonded nodes, which failed to authorize to the network
+    private void removeFailedAuthorizedNodes(
+            Coordinator coordinator,
+            List<RemotelyBondedModuleId> failedAuthorBonds
+    ) throws Exception {
+        logger.debug(
+                "removePrebondedNodes - start: coordinator={}, failedAuthorBonds={}",
+                coordinator, StringUtils.join(failedAuthorBonds, ',')
+        );
+        
+        for ( RemotelyBondedModuleId remoBondedModule : failedAuthorBonds ) {
+            Object result = coordinator.authorizeBond(0xFF, remoBondedModule.getModuleId());
+            if ( result == null ) {
+                logger.error(
+                        "Error while removing failed authorized node. Module ID = {}",
+                        Arrays.toString(remoBondedModule.getModuleId())
+                );
+            }
+        }
+        
+        String networkId = null;
+        synchronized ( synchroResultNetwork ) {
+            networkId = resultNetwork.id;
+        }
+        
+        // reference to all nodes with temporary address 0xFE
+        com.microrisc.simply.Node tempNode 
+            = NodeFactory.createNodeWithAllPeripherals(networkId, Integer.toString(0xFE), null);
+
+        // reference to OS peripheral
+        OS os = tempNode.getDeviceObject(OS.class);
+        VoidType resetResult = os.reset();
+
+        if ( resetResult == null ) {
+            logger.error("Error while reseting temporary bonded nodes.");
+        }
+        
+        logger.debug("removePrebondedNodes - end: ");
     }
     
     // checks new nodes, removes the nonresponding ones
     // returns IDs of nodes, which are responding
     private List<Integer> checkNewNodes(
-            String networkId, Coordinator coordinator, com.microrisc.simply.Node coordNode, List<Integer> newAddrs
+            String networkId, 
+            Coordinator coordinator, 
+            com.microrisc.simply.Node coordNode, 
+            List<Integer> newAddrs
     ) throws Exception {
         logger.debug("checkNewNodes - start: coordinator={}, coordNode={}, newAddrs={}",
                 coordinator, coordNode, StringUtils.join(newAddrs, ',')
@@ -1297,7 +1374,7 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
                         new DPA_Request( OS.class, OS.MethodID.RESTART, new Object[] {}, 0xFFFF ) }
                 );
                 
-                if( result == null ) {
+                if ( result == null ) {
                     logger.error("Removing bond of the remote node {} failed", newAddr);
                 }
                 
@@ -1317,7 +1394,9 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
     }
     
     // remove nodes with temporary address 0xFE
-    private void forceRemovalofNodesWithTemporaryAddress() throws Exception {
+    private void forceRemovalOfNodesWithTemporaryAddress() 
+            throws Exception 
+    {
         UUID nodesRemoveTAUid = null;
         
         if ( bondedNodes.getNodesNumber() > 0 ) {
@@ -1330,14 +1409,14 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
             }
             
             // reference to all nodes with temporary address 0xFE
-            com.microrisc.simply.Node temporaryNodes 
+            com.microrisc.simply.Node tempNode 
                 = NodeFactory.createNodeWithAllPeripherals(networkId, Integer.toString(0xFE), null);
             
             // reference to OS peripheral
-            OS tnsOS = temporaryNodes.getDeviceObject(OS.class);
+            OS os = tempNode.getDeviceObject(OS.class);
             
             // issue a batch for 0xFE nodes
-            nodesRemoveTAUid = tnsOS.call(
+            nodesRemoveTAUid = os.call(
                 OS.MethodID.BATCH,
                 new Object[] {
                     new DPA_Request[] {
@@ -1353,7 +1432,7 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
                 );
             }
         
-            // wait the whole above broadcast and little bit more
+            // wait the whole above broadcast and a little bit more
             Thread.sleep(
                 ( ( bondedNodes.getNodesNumber() + 1 ) * 60 ) + 150 
             );
@@ -1613,8 +1692,13 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
                 List<RemotelyBondedModuleId> prebondedMIDs = getPrebondedMIDs(coordinator, coordNode);
 
                 // authorize bonded nodes
-                List<Integer> newAddrs = authorizeBonds(coordinator, prebondedMIDs);
-
+                AuthorizationResult authorResult = authorizeBonds(coordinator, prebondedMIDs);
+                
+                // removing failed prebonded nodes
+                removeFailedAuthorizedNodes(coordinator, authorResult.failedBonds);
+                
+                List<Integer> newAddrs = authorResult.bondedAddresses;
+                
                 // no new addresses authorized - continue with next iteration
                 if ( newAddrs.isEmpty() ) {
                     round++;
@@ -1624,10 +1708,10 @@ public final class AutoNetworkAlgorithmImpl implements AutoNetworkAlgorithm {
                 if ( autoUseFrc ) {
                     logger.info("Running FRC to check new nodes and removing 0xFE nodes");
                     newAddrs = checkNewNodes(resultNetwork.getId(), coordinator, coordNode, newAddrs);
-                    forceRemovalofNodesWithTemporaryAddress();
+                    forceRemovalOfNodesWithTemporaryAddress();
                 }
 
-                if( !newAddrs.isEmpty()) {
+                if ( !newAddrs.isEmpty() ) {
                     logger.info( "Running discovery ...");
                     runDiscovery(coordinator);
                 }
