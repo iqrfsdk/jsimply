@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.microrisc.simply.devices.protronix.dpa22x.utils;
+package com.microrisc.simply.devices.protronix.dpa30x.utils;
 
 /**
  * Modbus CRC setter.

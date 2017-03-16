@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.microrisc.simply.devices.protronix.dpa22x.errors;
+package com.microrisc.simply.devices.protronix.dpa30x.errors;
 
 import com.microrisc.simply.errors.AbstractCallRequestProcessingError;
 import com.microrisc.simply.errors.CallRequestProcessingErrorType;

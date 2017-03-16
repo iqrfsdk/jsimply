@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
-package com.microrisc.simply.devices.protronix.dpa22x.impl;
+package com.microrisc.simply.devices.protronix.dpa30x.impl;
 
 import com.microrisc.simply.CallRequestProcessingState;
 import com.microrisc.simply.DeviceObject;
 import com.microrisc.simply.errors.CallRequestProcessingError;
 import com.microrisc.simply.compounddevices.CompoundDeviceObject;
-import com.microrisc.simply.iqrf.dpa.v22x.devices.UART;
-import com.microrisc.simply.devices.protronix.dpa22x.VOCSensor;
-import com.microrisc.simply.devices.protronix.dpa22x.errors.BadResponseDataError;
-import com.microrisc.simply.devices.protronix.dpa22x.types.VOCSensorData;
-import com.microrisc.simply.devices.protronix.dpa22x.utils.ModbusCRCSetter;
-import com.microrisc.simply.iqrf.dpa.v22x.types.DPA_AdditionalInfo;
+import com.microrisc.simply.iqrf.dpa.v30x.devices.UART;
+import com.microrisc.simply.devices.protronix.dpa30x.CO2Sensor;
+import com.microrisc.simply.devices.protronix.dpa30x.errors.BadResponseDataError;
+import com.microrisc.simply.devices.protronix.dpa30x.types.CO2SensorData;
+import com.microrisc.simply.devices.protronix.dpa30x.utils.ModbusCRCSetter;
+import com.microrisc.simply.iqrf.dpa.v30x.types.DPA_AdditionalInfo;
 import java.util.UUID;
 
 /**
- * Implementation of {@link com.microrisc.simply.devices.protronix.dpa22x.VOCSensor}
+ * Implementation of {@link com.microrisc.simply.iqrf.dpa.v22x.protronix.devices.CO2_Sensor}
  * using UART peripheral.
  * 
  * @author Michal Konopa
  */
-public class VOCSensorUARTImpl 
-extends CompoundDeviceObject implements VOCSensor {
+public class CO2SensorUARTImpl 
+extends CompoundDeviceObject implements CO2Sensor {
     
-    // used UART
+    // UART to use for communication
     private final UART uart;
     
     // UART read timeout
@@ -48,17 +48,17 @@ extends CompoundDeviceObject implements VOCSensor {
     
     // used data to send to UART
     private static final short[] MODBUSRequest 
-        = { 0x01, 0x42, 0x00, 0x03, 0x75, 0x34, 0x75, 0x33, 0x75, 0x32, 0x00, 0x00 }; 
+        = { 0x01, 0x42, 0x00, 0x03, 0x75, 0x31, 0x75, 0x33, 0x75, 0x32, 0x00, 0x00 }; 
     
     // reponse length
     private static final int MODBUS_RESPONSE_LENGTH = 18;
     
     
-    // parses data from UART to VOC Sensor Data 
+    // parses data from UART to CO2 Sensor Data 
     private static class UART_DataParser {
         
-        private static final int VOC_HIGH_BYTE_POS = 6;
-        private static final int VOC_LOW_BYTE_POS = 7;
+        private static final int CO2_HIGH_BYTE_POS = 6;
+        private static final int CO2_LOW_BYTE_POS = 7;
         
         private static final int TEMPERATURE_HIGH_BYTE_POS = 10;
         private static final int TEMPERATURE_LOW_BYTE_POS = 11;
@@ -67,14 +67,14 @@ extends CompoundDeviceObject implements VOCSensor {
         private static final int HUMIDITY_LOW_BYTE_POS = 15;
         
         
-        public static VOCSensorData parse(short[] uartData) {
-            int voc = (uartData[VOC_HIGH_BYTE_POS] << 8) + uartData[VOC_LOW_BYTE_POS];
+        public static CO2SensorData parse(short[] uartData) {
+            int co2 = (uartData[CO2_HIGH_BYTE_POS] << 8) + uartData[CO2_LOW_BYTE_POS];
             float temperature = ((uartData[TEMPERATURE_HIGH_BYTE_POS] << 8) + uartData[TEMPERATURE_LOW_BYTE_POS])
                     / (float) 10;
             float humidity = ((uartData[HUMIDITY_HIGH_BYTE_POS] << 8) + uartData[HUMIDITY_LOW_BYTE_POS])
                     / (float) 10;
             
-            return new VOCSensorData(voc, temperature, humidity);
+            return new CO2SensorData(co2, temperature, humidity);
         }
     }
             
@@ -84,30 +84,31 @@ extends CompoundDeviceObject implements VOCSensor {
             throw new IllegalArgumentException(
                 "Device Object doesn't implement UART Device Interface. "
                 + "Implemented Device Interface: " + uartDeviceObject.getImplementedDeviceInterface());
-        }        
+        }
         return (UART)uartDeviceObject;
     }
     
     // last response data error
-    private BadResponseDataError lastResponseDataError = null;
+    private BadResponseDataError lastResponseDataError = null; 
     
     
     /**
      * Creates a new object representing the CO2 sensor.
+     * 
      * @param networkId identifier of network, which this sensor belongs to.
      * @param nodeId identifier of node, which this sensor belongs to.
      * @param uartDeviceObject UART, which will be used for communication
      * @throws IllegalArgumentException if {@code uartDeviceObject} doesn't implement
      *         the {@link UART} Device Interface
      */
-    public VOCSensorUARTImpl(String networkId, String nodeId, DeviceObject uartDeviceObject) {
+    public CO2SensorUARTImpl(String networkId, String nodeId, DeviceObject uartDeviceObject) {
         super(networkId, nodeId, uartDeviceObject);
         this.uart = checkUartDeviceObject(uartDeviceObject);
         this.uart.setRequestHwProfile(HWPID);
     }
 
     @Override
-    public VOCSensorData get() {
+    public CO2SensorData get() {
         lastResponseDataError = null;
         
         short[] readData = uart.writeAndRead(READ_TIMEOUT, ModbusCRCSetter.set(MODBUSRequest));
@@ -177,5 +178,5 @@ extends CompoundDeviceObject implements VOCSensor {
     @Override
     public DPA_AdditionalInfo getDPA_AdditionalInfoOfLastCall() {
         return uart.getDPA_AdditionalInfoOfLastCall();
-    }
+    } 
 }

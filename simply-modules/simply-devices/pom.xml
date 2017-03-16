@@ -26,6 +26,6 @@
     </licenses>
 
     <modules>
-        <module>simply-devices-protronix-dpa22x</module>
+        <module>simply-devices-protronix-dpa30x</module>
     </modules>    
 </project>

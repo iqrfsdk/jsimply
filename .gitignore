@@ -29,3 +29,5 @@ simply-modules/simply-web-services/
 /simply-modules/simply-demos/monitoring/target/
 /simply-modules/simply-iqrf-dpa-v30x/target/
 /simply-modules/simply-iqrf-dpa-v30x-examples/target/
+/simply-modules/simply-devices-protronix-dpa30x/target/
+/simply-modules/simply-devices/simply-devices-protronix-dpa30x/target/

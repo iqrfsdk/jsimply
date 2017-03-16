@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.microrisc.simply.devices.protronix.dpa22x.types;
+package com.microrisc.simply.devices.protronix.dpa30x.types;
 
 /**
  * Data from CO2 sensor.

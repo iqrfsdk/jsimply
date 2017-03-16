@@ -110,5 +110,6 @@
         <module>simply-demos</module>
         <module>simply-iqrf-dpa-v22x-examples</module>
         <module>simply-iqrf-dpa-v30x-examples</module>
+        <module>simply-devices-protronix-dpa30x</module>
     </modules>
 </project>

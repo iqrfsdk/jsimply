@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microrisc.simply.devices.protronix.dpa22x;
+package com.microrisc.simply.devices.protronix.dpa30x;
 
 import com.microrisc.simply.DeviceInterface;
+import com.microrisc.simply.devices.protronix.dpa30x.types.CO2SensorData;
 import com.microrisc.simply.di_services.CallErrorsService_sync;
 import com.microrisc.simply.di_services.CallRequestProcessingService_sync;
 import com.microrisc.simply.di_services.WaitingTimeoutService;
-import com.microrisc.simply.iqrf.dpa.v22x.di_services.DPA_AdditionalInfoService;
-import com.microrisc.simply.devices.protronix.dpa22x.types.CO2SensorData;
+import com.microrisc.simply.iqrf.dpa.v30x.di_services.DPA_AdditionalInfoService;
 
 /**
  * CO2 Sensor Device Interface.
