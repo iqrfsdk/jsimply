@@ -107,5 +107,9 @@
         <module>simply-network-mqtt</module>
         <module>simply-services</module>
         <module>simply-devices</module>
+        <module>simply/simply-core</module>
+        <module>simply-dpa22x</module>
+        <module>simply-dpa30x</module>
+        <module>simply-dpa30x/simply-iqrf-dpa-v30x</module>
     </modules>
 </project>
