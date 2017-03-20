@@ -95,21 +95,13 @@
 
     <modules>
         <module>simply-core</module>
-        <module>simply-asynchrony</module>
-        <module>simply-compounddevices</module>
         <module>simply-iqrf</module>
-        <module>simply-iqrf-dpa</module>
-        <module>simply-iqrf-dpa-v22x</module>
-        <module>simply-network-serial-v2</module>
-        <module>simply-network-spi</module>
-        <module>simply-network-udp</module>
-        <module>simply-network-usbcdc</module>
-        <module>simply-network-mqtt</module>
+        <module>simply-asynchrony</module>
+        <module>simply-networks</module>
+        <module>simply-compounddevices</module>
         <module>simply-services</module>
-        <module>simply-devices</module>
-        <module>simply/simply-core</module>
-        <module>simply-dpa22x</module>
-        <module>simply-dpa30x</module>
-        <module>simply-dpa30x/simply-iqrf-dpa-v30x</module>
+        <module>simply-iqrf-dpa</module>
+        <module>simply-iqrf-dpa22x</module>
+        <module>simply-iqrf-dpa30x</module>
     </modules>
 </project>
