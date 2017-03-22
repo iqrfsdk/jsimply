@@ -3,7 +3,7 @@
     
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.microrisc.simply.demos</groupId>
-    <artifactId>automation</artifactId>
+    <artifactId>automation-dpa22x</artifactId>
     <version>0.0.1</version>
     <packaging>jar</packaging>
     
@@ -50,12 +50,12 @@
             <version>3.1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.microrisc.simply.iqrf.dpa</groupId>
+            <groupId>com.microrisc.simply.iqrf.dpa.v22x</groupId>
             <artifactId>simply-iqrf-dpa-v22x</artifactId>
             <version>2.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.microrisc.simply.devices</groupId>
+            <groupId>com.microrisc.simply.devices.protronix.dpa22x</groupId>
             <artifactId>simply-devices-protronix-dpa22x</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
@@ -148,7 +148,7 @@
         </dependency>
     </dependencies>
     
-    <name>automation</name>
+    <name>automation-dpa22x</name>
     
     <build>
         <plugins>
@@ -169,7 +169,7 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.4</version>
                 <configuration>
-                    <finalName>automation-0.0.1</finalName>
+                    <finalName>automation-dpa22x-0.0.1</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                     <archive>
                         <manifest>

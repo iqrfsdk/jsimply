@@ -9,7 +9,7 @@
 
     <artifactId>simply-iqrf-dpa30x</artifactId>
     <packaging>pom</packaging>
-
+    <version>1.0.0-SNAPSHOT</version>
     
     <modules>
         <module>simply-iqrf-dpa-v30x</module>

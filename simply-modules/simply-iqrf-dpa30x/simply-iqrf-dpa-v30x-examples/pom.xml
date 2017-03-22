@@ -103,11 +103,13 @@
         </dependency>
         
         <!--For MQTT broker - Insert Manually-->
+        <!--
         <dependency>
             <groupId>com.microrisc.simply.network.mqtt</groupId>
             <artifactId>simply-network-mqtt</artifactId>
             <version>1.0.1-SNAPSHOT</version>
         </dependency>
+        -->
         
         <!--Logger - download automatically-->
         <dependency>
@@ -160,8 +162,7 @@
     </dependencies>
     
     <build>
-        <plugins>
-            
+        <plugins>         
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId> 
                 <artifactId>maven-surefire-plugin</artifactId> 

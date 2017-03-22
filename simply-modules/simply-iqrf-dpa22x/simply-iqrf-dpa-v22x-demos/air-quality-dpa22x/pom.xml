@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.microrisc</groupId>
-    <artifactId>counter</artifactId>
+    <groupId>com.microrisc.simply.demos</groupId>
+    <artifactId>air-quality-dpa22x</artifactId>
     <version>0.0.1</version>
     <packaging>jar</packaging>
     
@@ -49,12 +49,12 @@
             <version>3.1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.microrisc.simply.iqrf.dpa</groupId>
+            <groupId>com.microrisc.simply.iqrf.dpa.v22x</groupId>
             <artifactId>simply-iqrf-dpa-v22x</artifactId>
             <version>2.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.microrisc.simply.devices</groupId>
+            <groupId>com.microrisc.simply.devices.protronix.dpa22x</groupId>
             <artifactId>simply-devices-protronix-dpa22x</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
@@ -147,7 +147,7 @@
         </dependency>
     </dependencies>
     
-    <name>counter</name>
+    <name>air-quality-dpa22x</name>
 
     <build>
         <plugins>
@@ -168,12 +168,12 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.4</version>
                 <configuration>
-                    <finalName>counter-0.0.1</finalName>
+                    <finalName>air-quality-dpa22x-0.0.1</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>com.microrisc.simply.counter.App</mainClass>
+                            <mainClass>com.microrisc.simply.demos.airquality.App</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

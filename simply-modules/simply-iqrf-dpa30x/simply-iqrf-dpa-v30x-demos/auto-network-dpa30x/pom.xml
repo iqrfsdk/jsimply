@@ -2,9 +2,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.microrisc.simply.iqrf.dpa.v30x</groupId>
-    <artifactId>auto-network-dpa300</artifactId>
-    <version>1.0.0</version>
+    <artifactId>auto-network-dpa30x</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
+    
     <dependencies>
         <!--Core, Asynchrony, IQRF, DPA - Insert manually -->
         <dependency>
@@ -181,12 +182,12 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.4</version>
                 <configuration>
-                    <finalName>auto-network-1.0.0</finalName>
+                    <finalName>auto-network-dpa30x-1.0.0</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>com.microrisc.simply.iqrf.dpa.v22x.autonetwork.demo.AutoNetworkDemo</mainClass>
+                            <mainClass>com.microrisc.simply.iqrf.dpa.v30x.autonetwork.demo.AutoNetworkDemo</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -213,5 +214,6 @@
         <maven.compiler.target>1.7</maven.compiler.target>
         <netbeans.hint.license>apache20</netbeans.hint.license>
     </properties>
-    <name>auto-network-dpa300</name>
+    
+    <name>auto-network-dpa30x</name>
 </project>

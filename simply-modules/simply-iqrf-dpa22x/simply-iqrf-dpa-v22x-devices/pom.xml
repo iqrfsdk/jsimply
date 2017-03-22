@@ -3,6 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.microrisc.simply.devices</groupId>
     <artifactId>simply-iqrf-dpa-v22x-devices</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     
     <parent>

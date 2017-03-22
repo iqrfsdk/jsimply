@@ -3,10 +3,10 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.microrisc.simply</groupId>
     <artifactId>simply-iqrf-dpa-v22x-demos</artifactId>
-    <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
     
-    <name>simply-iqrf-dpa22x-demos</name>
+    <name>simply-iqrf-dpa-v22x-demos</name>
     <description>Demo apps of jSimply framework</description>
     <url>http://iqrf.org/weben/index.php?sekce=products&amp;id=iqrf-sdk&amp;ot=development-tools&amp;ot2=development-sw</url>
     
@@ -35,11 +35,11 @@
     </distributionManagement>
 
     <modules>
-        <module>air-quality</module>
-        <module>automation</module>
-        <module>auto-network</module>
-        <module>counter</module>
-        <module>dustbin</module>
-        <module>monitoring</module>
+        <module>air-quality-dpa22x</module>
+        <module>automation-dpa22x</module>
+        <module>auto-network-dpa22x</module>
+        <module>counter-dpa22x</module>
+        <module>dustbin-dpa22x</module>
+        <module>monitoring-dpa22x</module>
     </modules>
 </project>
