@@ -12,9 +12,9 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <modules>
-        <module>simply-dpa22x-demos</module>
-        <module>simply-dpa22x-devices</module>
         <module>simply-iqrf-dpa-v22x</module>
+        <module>simply-iqrf-dpa-v22x-demos</module>
+        <module>simply-iqrf-dpa-v22x-devices</module>
         <module>simply-iqrf-dpa-v22x-examples</module>
     </modules>
 

@@ -3,11 +3,14 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.microrisc.simply.devices</groupId>
-        <artifactId>simply-devices</artifactId>
+        <artifactId>simply-iqrf-dpa-v30x-devices</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
+    
     <artifactId>simply-devices-protronix-dpa30x</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
+
     <dependencies>
         <dependency>
             <groupId>com.microrisc.simply.iqrf.dpa.v30x</groupId>
@@ -15,6 +18,7 @@
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
+    
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

@@ -6,9 +6,11 @@
         <artifactId>simply-iqrf-dpa30x</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
-    <artifactId>simply-iqrf-dpa30x-devices</artifactId>
+
+    <artifactId>simply-iqrf-dpa-v30x-devices</artifactId>
     <packaging>pom</packaging>
+
     <modules>
-        <module>simply-devices-protronix-dpa30</module>
+        <module>simply-devices-protronix-dpa30x</module>
     </modules>
 </project>
