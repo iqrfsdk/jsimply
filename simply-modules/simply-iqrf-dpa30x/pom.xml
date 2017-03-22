@@ -14,6 +14,8 @@
     <modules>
         <module>simply-iqrf-dpa-v30x</module>
         <module>simply-iqrf-dpa-v30x-examples</module>
+        <module>simply-iqrf-dpa30x-demos</module>
+        <module>simply-iqrf-dpa30x-devices</module>
     </modules>
     
     <properties>

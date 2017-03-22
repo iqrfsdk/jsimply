@@ -2,11 +2,11 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.microrisc.simply</groupId>
-    <artifactId>simply-dpa22x-demos</artifactId>
+    <artifactId>simply-iqrf-dpa22x-demos</artifactId>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
     
-    <name>simply-demos</name>
+    <name>simply-iqrf-dpa22x-demos</name>
     <description>Demo apps of jSimply framework</description>
     <url>http://iqrf.org/weben/index.php?sekce=products&amp;id=iqrf-sdk&amp;ot=development-tools&amp;ot2=development-sw</url>
     
@@ -36,10 +36,10 @@
 
     <modules>
         <module>air-quality</module>
-        <module>auto-network</module>
     	<module>automation</module>
         <module>counter</module>
         <module>dustbin</module>
         <module>monitoring</module>
+        <module>auto-network-dpa300</module>
     </modules>
 </project>

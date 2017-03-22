@@ -34,3 +34,10 @@ simply-modules/simply-web-services/
 /simply-modules/simply-dpa30x/simply-iqrf-dpa-v30x/target/
 /simply-modules/simply-dpa30x/simply-iqrf-dpa-v30x-examples/target/
 /simply-modules/simply-dpa22x/devices/simply-devices-protronix-dpa22x/target/
+/simply-modules/simply-iqrf-dpa22x/simply-dpa22x-demos/air-quality/target/
+/simply-modules/simply-iqrf-dpa22x/simply-dpa22x-demos/auto-network/target/
+/simply-modules/simply-iqrf-dpa22x/simply-dpa22x-demos/automation/target/
+/simply-modules/simply-iqrf-dpa22x/simply-dpa22x-demos/counter/target/
+/simply-modules/simply-iqrf-dpa22x/simply-dpa22x-demos/dustbin/target/
+/simply-modules/simply-iqrf-dpa22x/simply-dpa22x-demos/monitoring/target/
+/simply-modules/simply-iqrf-dpa22x/simply-dpa22x-devices/simply-devices-protronix-dpa22x/target/
