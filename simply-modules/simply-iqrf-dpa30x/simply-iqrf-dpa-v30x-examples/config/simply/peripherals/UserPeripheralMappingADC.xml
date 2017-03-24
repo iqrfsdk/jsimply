@@ -14,7 +14,7 @@
     <interfaces>
         <interface>            
             <!-- Name of interface class which mapping -->
-            <class>com.microrisc.simply.iqrf.dpa.v22x.examples.user_per.user_map.myadc.def.MyPotentiometer</class>
+            <class>com.microrisc.simply.iqrf.dpa.v30x.examples.user_per.user_map.myadc.def.MyPotentiometer</class>
             
             <!-- ID of mapped peripheral -->
             <peripheralId>0x20</peripheralId>
@@ -49,7 +49,7 @@
         
         <interface>            
             <!-- Name of interface class which mapping -->
-            <class>com.microrisc.simply.iqrf.dpa.v22x.examples.user_per.user_map.myadc.def.MyPhotoResistor</class>
+            <class>com.microrisc.simply.iqrf.dpa.v30x.examples.user_per.user_map.myadc.def.MyPhotoResistor</class>
             
             <!-- ID of mapped peripheral -->
             <peripheralId>0x21</peripheralId>

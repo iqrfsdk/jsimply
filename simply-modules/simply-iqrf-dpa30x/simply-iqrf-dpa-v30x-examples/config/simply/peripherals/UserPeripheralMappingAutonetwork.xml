@@ -16,7 +16,7 @@
 
       <interface>            
          <!-- Name of interface class which mapping -->
-         <class>com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def.AutonetworkPeripheral</class>
+         <class>com.microrisc.simply.iqrf.dpa.v30x.autonetwork.embedded.def.AutonetworkPeripheral</class>
             
          <!-- ID of mapped peripheral -->
          <peripheralId>0x20</peripheralId>
@@ -89,7 +89,7 @@
                </requestArguments>
                     
                <!-- Convertor used for response converting -->
-               <responseConvertor>com.microrisc.simply.iqrf.dpa.v22x.autonetwork.embedded.def.AutonetworkStateConvertor</responseConvertor>
+               <responseConvertor>com.microrisc.simply.iqrf.dpa.v30x.autonetwork.embedded.def.AutonetworkStateConvertor</responseConvertor>
             </method>                                        
                 
          </methods>                                    
