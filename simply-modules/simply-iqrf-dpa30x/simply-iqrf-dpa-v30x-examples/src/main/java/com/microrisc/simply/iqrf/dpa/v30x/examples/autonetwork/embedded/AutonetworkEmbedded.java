@@ -20,7 +20,7 @@ import com.microrisc.simply.Node;
 import com.microrisc.simply.SimplyException;
 import com.microrisc.simply.iqrf.dpa.DPA_Simply;
 import com.microrisc.simply.iqrf.dpa.v30x.DPA_SimplyFactory;
-import com.microrisc.simply.iqrf.dpa.v30x.autonetwork.embedded.def.AutonetworkValueType;
+import com.microrisc.simply.iqrf.dpa.v30x.autonetwork.embedded.def.ValueProperties;
 import com.microrisc.simply.iqrf.dpa.v30x.autonetwork.embedded.logic.NetworkBuilder;
 import com.microrisc.simply.iqrf.dpa.v30x.devices.Coordinator;
 import com.microrisc.simply.iqrf.dpa.v30x.devices.LEDG;
@@ -81,13 +81,18 @@ public class AutonetworkEmbedded {
         
         // clearing the coordinator
         VoidType result = coordinator.clearAllBonds();
-        if (result == null) {
+        if ( result == null ) {
             printMessageAndExit("Clearing the coordinator network memory failed");
         }
         
-        NetworkBuilder builder = new NetworkBuilder(network1, 
-                simply.getAsynchronousMessagingManager()
-        );
+        NetworkBuilder builder = null;
+        try {
+            builder = new NetworkBuilder(
+                    network1, simply.getAsynchronousMessagingManager()
+            );
+        } catch ( Exception ex ) {
+            printMessageAndExit("Some error while creating network builder: " + ex);
+        }
 
         // max. power => 7
         int discoveryTXPower = 7;
@@ -99,13 +104,17 @@ public class AutonetworkEmbedded {
         boolean unbondAndRestart = true;
         
         // optional setting - see default values in constructor of builder
-        builder.setValue(AutonetworkValueType.DISCOVERY_TX_POWER, discoveryTXPower);
-        builder.setValue(AutonetworkValueType.BONDING_TIME, bondingTime);
-        builder.setValue(AutonetworkValueType.TEMPORARY_ADDRESS_TIMEOUT, temporaryAddressTimeout);
-        builder.setValue(AutonetworkValueType.UNBOND_AND_RESTART, unbondAndRestart);
-        
-        // setting of node approver which deciding if should new node bonded
-        builder.setValue(AutonetworkValueType.APPROVER, new SimpleNodeApprover());
+        try {
+            builder.setValue(ValueProperties.DISCOVERY_TX_POWER, discoveryTXPower);
+            builder.setValue(ValueProperties.BONDING_TIME, bondingTime);
+            builder.setValue(ValueProperties.TEMPORARY_ADDRESS_TIMEOUT, temporaryAddressTimeout);
+            builder.setValue(ValueProperties.UNBOND_AND_RESTART, unbondAndRestart);
+
+            // setting of node approver which deciding if should new node bonded
+            builder.setValue(ValueProperties.APPROVER, new SimpleNodeApprover());
+        } catch ( Exception ex ) {
+            printMessageAndExit("Setting of builder's values failed: " + ex);
+        }
         
         // start first part algorithm with 2 waves
         System.out.println("First part:");
@@ -130,10 +139,10 @@ public class AutonetworkEmbedded {
         // generate 5 seconds time for turn on next unbonded module after 
         // LED on node 1 was light on
         try {
-          Thread.sleep(5000);
-       } catch (InterruptedException ex) {
-          System.out.println(ex);
-       }
+            Thread.sleep(5000);
+        } catch (InterruptedException ex) {
+            System.out.println(ex);
+        }
 
         
         System.out.println("\nSecond part:");

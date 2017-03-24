@@ -31,7 +31,7 @@ public class SimpleNodeApprover implements NodeApprover {
       // there can be implemented logic of approving based on parameters,
       // for more details {@see RemotelyBondedModuleId}
       
-      // if it's returned true, node with specified parameters will be approved
+      // if it is returned true, node with specified parameters will be approved
       return true;
    }
 }

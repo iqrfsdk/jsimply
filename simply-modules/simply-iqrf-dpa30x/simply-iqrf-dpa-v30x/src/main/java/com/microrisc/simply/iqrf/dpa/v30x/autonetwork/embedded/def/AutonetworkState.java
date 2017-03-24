@@ -26,57 +26,58 @@ import java.util.StringTokenizer;
  */
 public class AutonetworkState {
 
-   private AutonetworkStateType type;
-   private List<Integer> additionalData = new LinkedList<>();
+   private final AutonetworkStateType type;
+   private final List<Integer> additionalData = new LinkedList<>();
 
-   /**
-    * Creates a new AutonetworkState with predefined AutonetwrokStateType.
-    *
-    * @param type predefined type of state
-    */
-   public AutonetworkState(AutonetworkStateType type) {
-      this.type = type;
-   }
+   
+    /**
+     * Creates a new AutonetworkState with predefined AutonetwrokStateType.
+     *
+     * @param type predefined type of state
+     */
+    public AutonetworkState(AutonetworkStateType type) {
+       this.type = type;
+    }
 
-   /**
-    * Add additional data into AutonetworkState.
-    *
-    * @param dataToAdd number as integer
-    */
-   public void addAdditionalData(int dataToAdd) {
-      additionalData.add(dataToAdd);
-   }
+    /**
+     * Add additional data into AutonetworkState.
+     *
+     * @param dataToAdd number as integer
+     */
+    public void addAdditionalData(int dataToAdd) {
+       additionalData.add(dataToAdd);
+    }
 
-   public int getAdditionalData(int dataIndex) {
-      if (dataIndex < additionalData.size()) {
-         return additionalData.get(dataIndex);
-      } else {
-         throw new IllegalArgumentException("Data index is out of range!");
-      }
-   }
+    public int getAdditionalData(int dataIndex) {
+        if ( dataIndex < additionalData.size() ) {
+           return additionalData.get(dataIndex);
+        } else {
+           throw new IllegalArgumentException("Data index is out of range!");
+        }
+    }
 
-   public AutonetworkStateType getType() {
-      return type;
-   }
+    public AutonetworkStateType getType() {
+       return type;
+    }
 
-   @Override
-   public String toString() {
-      // count of parameters which are indetifaceted like %, see AutonetworkStateType
-      int countOfDataInInfo = new StringTokenizer(" " + type.getInfo() + " ",
-              "%").countTokens() - 1;
+    @Override
+    public String toString() {
+       // count of parameters which are indetifaceted like %, see AutonetworkStateType
+       int countOfDataInInfo = new StringTokenizer(" " + type.getInfo() + " ",
+               "%").countTokens() - 1;
 
-      // new string containg text value of this object
-      String newString = "(0x" + String.format("%02x", type.getId()) + ") ";
+       // new string containg text value of this object
+       String newString = "(0x" + String.format("%02x", type.getId()) + ") ";
 
-      newString += type.getInfo();
-      int additionalDataIndex = 0;
-      while (newString.contains("%") && additionalDataIndex < additionalData.
-              size()) {
-         newString = newString.replaceFirst("%",
-                 additionalData.get(additionalDataIndex++).toString()
-         );
-      }
+       newString += type.getInfo();
+       int additionalDataIndex = 0;
+       
+       while ( newString.contains("%") && additionalDataIndex < additionalData.size() ) {
+            newString = newString.replaceFirst("%",
+                    additionalData.get(additionalDataIndex++).toString()
+            );
+       }
 
-      return newString;
-   }
+       return newString;
+    }
 }

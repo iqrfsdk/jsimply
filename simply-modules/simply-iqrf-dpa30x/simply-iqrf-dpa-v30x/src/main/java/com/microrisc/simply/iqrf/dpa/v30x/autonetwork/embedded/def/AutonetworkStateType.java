@@ -56,6 +56,7 @@ public enum AutonetworkStateType {
    private final int stateId;
    private final String info;
 
+   
    /**
     * Private constructor for creating of states.
     *
