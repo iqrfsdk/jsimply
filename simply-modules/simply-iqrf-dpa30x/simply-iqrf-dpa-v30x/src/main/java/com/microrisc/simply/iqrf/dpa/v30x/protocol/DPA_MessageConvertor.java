@@ -149,7 +149,7 @@ public final class DPA_MessageConvertor extends SimpleMessageConvertor {
         logger.debug("convertToDOFormat - start: networkData={}", networkData);
         
         // conversion of asynchronous messages
-        if ( !DPA_ProtocolProperties.isAsynchronous(networkData.getData()) ) {
+        if ( DPA_ProtocolProperties.isAsynchronous(networkData.getData()) ) {
             return createAsynchronousMessage(networkData);
         }
         
