@@ -713,14 +713,14 @@ final class ProtocolStateMachine implements ManageableObject {
                                     return;
                                 }
                                 
-                                logger.debug("confirmation or response arrived");
-                                
                                 long endTime = System.currentTimeMillis();
-                                //logger.info("run - waiting for confirmation - after waiting");
                                 if ( (endTime - startTime) >= waitingTime ) {
                                     timeouted = true;
+                                    logger.debug("confirmation or response timeouted");
                                     // IMPORTANT !!! Go out of a while-cycle.
                                     break;
+                                } else {
+                                    logger.debug("confirmation or response arrived");
                                 }
                             } else {
                                 timeouted = true;
