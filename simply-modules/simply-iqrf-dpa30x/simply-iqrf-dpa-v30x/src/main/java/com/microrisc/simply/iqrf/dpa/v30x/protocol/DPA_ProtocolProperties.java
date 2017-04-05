@@ -516,7 +516,13 @@ public final class DPA_ProtocolProperties {
      *         {@code false} otherwise
      */
     public static boolean isAsynchronous(short[] protoMsg) {
-        int command = getCommand(protoMsg);
-        return (command == DPA_ResponseCode.ASYNC_RESPONSE.getCodeValue());
+        DPA_ResponseCode responseCode = null;
+        try {
+            responseCode = getResponseCode(protoMsg);
+        } catch ( ValueConversionException ex ) {
+            return false;
+        }
+        
+        return ( responseCode == DPA_ResponseCode.ASYNC_RESPONSE );
     }
 }
