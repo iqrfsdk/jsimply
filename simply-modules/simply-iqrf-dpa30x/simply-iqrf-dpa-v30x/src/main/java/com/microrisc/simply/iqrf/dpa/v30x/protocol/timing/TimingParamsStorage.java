@@ -28,6 +28,8 @@ import com.microrisc.simply.iqrf.dpa.v30x.di_services.method_id_transformers.FRC
 import com.microrisc.simply.iqrf.dpa.v30x.di_services.method_id_transformers.PeripheralInfoGetterStandardTransformer;
 import com.microrisc.simply.iqrf.dpa.v30x.types.BondedNode;
 import com.microrisc.simply.iqrf.dpa.v30x.types.BondedNodes;
+import com.microrisc.simply.iqrf.dpa.v30x.types.DiscoveredNodes;
+import com.microrisc.simply.iqrf.dpa.v30x.types.DiscoveryResult;
 import com.microrisc.simply.iqrf.dpa.v30x.types.FRC_Configuration;
 import com.microrisc.simply.iqrf.dpa.v30x.types.FRC_Configuration.FRC_RESPONSE_TIME;
 import com.microrisc.simply.iqrf.dpa.v30x.types.PeripheralEnumeration;
@@ -60,6 +62,9 @@ public final class TimingParamsStorage {
         
         // number of bonded nodes
         private int bondedNodesNum;
+        
+        // number of discovered nodes
+        private int discoveredNodesNum;
 
         // RF mode
         private RF_Mode rfMode;
@@ -76,6 +81,7 @@ public final class TimingParamsStorage {
         
         public MutableFRC_TimingParams() {
            this.bondedNodesNum = FRC_TimingParams.DEFAULT_BONDED_NODES_NUM;
+           this.discoveredNodesNum = FRC_TimingParams.DEFAULT_DISCOVERED_NODES_NUM;
            this.rfMode = FRC_TimingParams.DEFAULT_RF_MODE;
            this.responseTime = FRC_TimingParams.DEFAULT_RESPONSE_TIME;
            
@@ -86,6 +92,11 @@ public final class TimingParamsStorage {
         public void setBondedNodesNum(int bondedNodesNum) {
             changedFromLastReturn = (this.bondedNodesNum != bondedNodesNum);
             this.bondedNodesNum = bondedNodesNum;
+        }
+        
+        public void setDiscoveredNodesNum(int discoveredNodesNum) {
+            changedFromLastReturn = (this.discoveredNodesNum != discoveredNodesNum);
+            this.discoveredNodesNum = discoveredNodesNum;
         }
         
         public void setRfMode(RF_Mode rfMode) {
@@ -107,7 +118,7 @@ public final class TimingParamsStorage {
             }
             
             lastReturnedTimingParams = new FRC_TimingParams(
-                    bondedNodesNum, rfMode, responseTime
+                    bondedNodesNum, discoveredNodesNum, rfMode, responseTime
             );
             this.changedFromLastReturn = false;
             
@@ -238,6 +249,13 @@ public final class TimingParamsStorage {
             frcTimingParams.setBondedNodesNum(bondedNodes.getNodesNumber());
         }
         
+        private void processGetDiscoveredNodes(
+            CallRequest request, BaseCallResponse response, MutableFRC_TimingParams frcTimingParams
+        ) {
+            DiscoveredNodes discoveredNodes = (DiscoveredNodes)response.getMainData();
+            frcTimingParams.setDiscoveredNodesNum(discoveredNodes.getNodesNumber());
+        }
+        
         private void processClearAllBonds(
             CallRequest request, BaseCallResponse response, MutableFRC_TimingParams frcTimingParams
         ) {
@@ -265,6 +283,13 @@ public final class TimingParamsStorage {
             frcTimingParams.setBondedNodesNum(bondedNodesNum);
         }
         
+        private void processDiscovery(
+            CallRequest request, BaseCallResponse response, MutableFRC_TimingParams frcTimingParams
+        ) {
+            DiscoveryResult discoveryResult = (DiscoveryResult)response.getMainData();
+            frcTimingParams.setDiscoveredNodesNum(discoveryResult.getDiscoveredNodesNum());
+        }
+        
         @Override
         public void update(CallRequest request, BaseCallResponse response) {
             NetworkTimingParamsMap networkTimingParamsMap 
@@ -287,6 +312,9 @@ public final class TimingParamsStorage {
                 case GET_BONDED_NODES:
                     processGetBondedNodes(request, response, frcTimingParams);
                     break;
+                case GET_DISCOVERED_NODES:
+                    processGetDiscoveredNodes(request, response, frcTimingParams);
+                    break;
                 case CLEAR_ALL_BONDS:
                     processClearAllBonds(request, response, frcTimingParams);
                     break;
@@ -298,6 +326,9 @@ public final class TimingParamsStorage {
                     break;
                 case REBOND_NODE:
                     processRebondNode(request, response, frcTimingParams);
+                    break;
+                case RUN_DISCOVERY:
+                    processDiscovery(request, response, frcTimingParams);
                     break;
                 default:
                     break;
@@ -475,7 +506,7 @@ public final class TimingParamsStorage {
                 continue;
             }
             
-            MutableFRC_TimingParams mutFrcTimingParams=  new MutableFRC_TimingParams();
+            MutableFRC_TimingParams mutFrcTimingParams = new MutableFRC_TimingParams();
             configureFRC_TimingParams(mutFrcTimingParams, networkInitSetting);
             
             NetworkTimingParamsMap networkTimingParamsMap = new NetworkTimingParamsMap();

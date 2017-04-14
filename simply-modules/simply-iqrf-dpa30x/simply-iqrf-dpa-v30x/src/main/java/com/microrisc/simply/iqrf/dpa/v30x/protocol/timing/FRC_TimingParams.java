@@ -28,6 +28,9 @@ public final class FRC_TimingParams extends TimingParams {
     // number of bonded nodes
     private final int bondedNodesNum;
     
+    // number of discovered nodes
+    private final int discoveredNodesNum;
+    
     // RF mode
     private final RF_Mode rfMode;
     
@@ -39,6 +42,9 @@ public final class FRC_TimingParams extends TimingParams {
     /** Default value for number of bonded nodes. */
     public static final int DEFAULT_BONDED_NODES_NUM = 0;
     
+    /** Default value for number of dicovered nodes. */
+    public static final int DEFAULT_DISCOVERED_NODES_NUM = 0;
+    
     /** Default value for RF mode. */
     public static final RF_Mode DEFAULT_RF_MODE = RF_Mode.LP;
     
@@ -49,27 +55,36 @@ public final class FRC_TimingParams extends TimingParams {
     
     /**
      * Creates new object of FRC timing parameters.
+     * 
      * Timing parameters will be set to their default values, specifically: <br>
      * - number of bonded nodes = {@code DEFAULT_BONDED_NODES_NUM} <br>
+     * - number of discovered nodes = {@code DEFAULT_DISCOVERED_NODES_NUM} <br>
      * - RF mode = {@code DEFAULT_RF_MODE} <br>
      * - response time = {@code DEFAULT_RESPONSE_TIME}
      */
     public FRC_TimingParams() {
         this.bondedNodesNum = DEFAULT_BONDED_NODES_NUM;
+        this.discoveredNodesNum = DEFAULT_DISCOVERED_NODES_NUM;
         this.rfMode = DEFAULT_RF_MODE;
         this.reponseTime = DEFAULT_RESPONSE_TIME;
     }
     
     /**
      * Creates new object of FRC timing parameters according to specified values.
+     * 
      * @param bondedNodesNum number of bonded nodes
+     * @param discoveredNodesNum number of discovered nodes
      * @param rfMode actual RF mode
      * @param responseTime response time
      */
     public FRC_TimingParams(
-        int bondedNodesNum, RF_Mode rfMode, FRC_Configuration.FRC_RESPONSE_TIME responseTime
+            int bondedNodesNum,
+            int discoveredNodesNum,
+            RF_Mode rfMode, 
+            FRC_Configuration.FRC_RESPONSE_TIME responseTime
     ) {
         this.bondedNodesNum = bondedNodesNum;
+        this.discoveredNodesNum = discoveredNodesNum;
         this.rfMode = rfMode;
         this.reponseTime = responseTime;
     }
@@ -79,6 +94,13 @@ public final class FRC_TimingParams extends TimingParams {
      */
     public int getBondedNodesNum() {
         return bondedNodesNum;
+    }
+    
+    /**
+     * @return number of discovered nodes
+     */
+    public int getDiscoveredNodesNum() {
+        return discoveredNodesNum;
     }
     
     /**
@@ -95,12 +117,14 @@ public final class FRC_TimingParams extends TimingParams {
         return this.reponseTime;
     }
     
+    @Override
     public String toString() {
         StringBuilder strBuilder = new StringBuilder();
         String NEW_LINE = System.getProperty("line.separator");
         
         strBuilder.append(this.getClass().getSimpleName() + " { " + NEW_LINE);
         strBuilder.append(" Number of bonded nodes: " + this.bondedNodesNum + NEW_LINE);
+        strBuilder.append(" Number of discovered nodes: " + this.discoveredNodesNum + NEW_LINE);
         strBuilder.append(" RF mode: " + this.rfMode + NEW_LINE);
         strBuilder.append(" Response time: " + this.reponseTime + NEW_LINE);
         strBuilder.append("}");

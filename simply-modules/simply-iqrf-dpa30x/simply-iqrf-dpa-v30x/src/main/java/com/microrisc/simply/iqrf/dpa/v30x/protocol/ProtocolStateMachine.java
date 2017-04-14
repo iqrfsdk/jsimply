@@ -313,7 +313,11 @@ final class ProtocolStateMachine implements ManageableObject {
             
             switch ( frcMode ) {
                 case STANDARD:
-                    return timingParams.getBondedNodesNum() * 130 + coordWaitingTimeInInt + 250;
+                    return 
+                            timingParams.getBondedNodesNum() * 30
+                            + (timingParams.getDiscoveredNodesNum() + 2) * 100
+                            + coordWaitingTimeInInt 
+                            + 210;
                 case ADVANCED:
                     if ( timingParams.getRfMode() == null ) {
                         throw new IllegalStateException("RF mode uknown.");
@@ -321,11 +325,17 @@ final class ProtocolStateMachine implements ManageableObject {
                     
                     switch ( timingParams.getRfMode() ) {
                         case STD:
-                            return timingParams.getBondedNodesNum() * 150 
-                                    + coordWaitingTimeInInt + 290;
+                            return 
+                                    timingParams.getBondedNodesNum() * 30
+                                    + (timingParams.getDiscoveredNodesNum() + 2) * 110
+                                    + coordWaitingTimeInInt 
+                                    + 220;
                         case LP:
-                            return timingParams.getBondedNodesNum() * 200 
-                                    + coordWaitingTimeInInt + 390;
+                            return 
+                                    timingParams.getBondedNodesNum() * 30
+                                    + (timingParams.getDiscoveredNodesNum() + 2) * 160
+                                    + coordWaitingTimeInInt 
+                                    + 260;
                         default:
                             throw new IllegalStateException("RF mode not supported: " + timingParams.getRfMode());
                     }
