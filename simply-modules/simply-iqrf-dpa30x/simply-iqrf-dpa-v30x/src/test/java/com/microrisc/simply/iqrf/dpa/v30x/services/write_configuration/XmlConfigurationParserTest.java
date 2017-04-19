@@ -121,4 +121,45 @@ public class XmlConfigurationParserTest {
         
     }
     
+    /**
+     * Test of parse method.
+     */
+    @Test
+    public void testCoordinator() throws Exception {
+        System.out.println("parse");
+        String defFileName = "write_config_service" + File.separator + "TR_config_3_00.xml";
+        String userSettingsFileName = "write_config_service" + File.separator + "coordinator.xml";
+        
+        ConfigSettings configSettings = XmlConfigurationParser.parse(defFileName, userSettingsFileName);
+        assertNotNull(configSettings);
+        
+        HWP_ConfigurationByte[] configBytes = configSettings.getHwpConfigBytes();
+        assertNotNull(configBytes);
+        
+        HWP_ConfigurationByte[] expConfigBytes = new HWP_ConfigurationByte[12];
+        expConfigBytes[0] = new HWP_ConfigurationByte(1, 0b11111000, 0b11111000);
+        expConfigBytes[1] = new HWP_ConfigurationByte(2, 0b00110110, 0b00110111);
+        expConfigBytes[2] = new HWP_ConfigurationByte(5, 0b00000000, 0b00111111);
+        expConfigBytes[3] = new HWP_ConfigurationByte(6, 42, 0xFF);
+        expConfigBytes[4] = new HWP_ConfigurationByte(8, 1, 0xFF);
+        expConfigBytes[5] = new HWP_ConfigurationByte(9, 5, 0xFF);
+        expConfigBytes[6] = new HWP_ConfigurationByte(10, 6, 0xFF);
+        expConfigBytes[7] = new HWP_ConfigurationByte(11, 3, 0b00000111);
+        expConfigBytes[8] = new HWP_ConfigurationByte(12, 0, 0xFF);
+        expConfigBytes[9] = new HWP_ConfigurationByte(17, 40, 0xFF);
+        expConfigBytes[10] = new HWP_ConfigurationByte(18, 20, 0xFF);
+        expConfigBytes[11] = new HWP_ConfigurationByte(0x20, 0b00000011, 0b11010111);
+        
+        /*
+        System.out.println("Configuration bytes: ");
+        for ( HWP_ConfigurationByte configByte : configBytes ) {
+            System.out.println(configByte);
+        }
+        */
+        
+        assertEquals(expConfigBytes.length, configBytes.length);
+        assertArrayEquals(expConfigBytes, configBytes);
+        
+    }
+    
 }

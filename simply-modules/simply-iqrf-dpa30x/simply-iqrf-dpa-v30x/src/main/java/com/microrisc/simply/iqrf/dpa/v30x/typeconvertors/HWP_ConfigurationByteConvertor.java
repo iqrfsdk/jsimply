@@ -71,11 +71,11 @@ public class HWP_ConfigurationByteConvertor extends PrimitiveConvertor{
         HWP_ConfigurationByte[] configByte = (HWP_ConfigurationByte[])value;
         short[] protoValue = new short[TYPE_SIZE * configByte.length];
         
-       for (int i = 0; i < configByte.length; i++) {
-          protoValue[ADDRESS_POS] = (short) configByte[i].getAddress();
-          protoValue[VALUE_POS] = (short) configByte[i].getValue();
-          protoValue[MASK_POS] = (short) configByte[i].getMask();
-       }
+        for (int i = 0; i < configByte.length; i++) {
+            protoValue[i * TYPE_SIZE + ADDRESS_POS] = (short) configByte[i].getAddress();
+            protoValue[i * TYPE_SIZE + VALUE_POS] = (short) configByte[i].getValue();
+            protoValue[i * TYPE_SIZE + MASK_POS] = (short) configByte[i].getMask();
+        }
                
         logger.debug("toProtoValue - end: {}", protoValue);
         return protoValue;

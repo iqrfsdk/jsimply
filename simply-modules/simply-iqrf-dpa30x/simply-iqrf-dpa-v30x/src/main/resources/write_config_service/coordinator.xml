@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ConfigGroup Name="TR" Version="3.00">
+	<ConfigBit ID="4" Name="EEPROM" Value="True"/>
+	<ConfigBit ID="5" Name="EEEPROM" Value="True"/>
+	<ConfigBit ID="6" Name="RAM" Value="True"/>
+	<ConfigBit ID="7" Name="LEDR" Value="True"/>
+	<ConfigBit ID="8" Name="LEDG" Value="True"/>
+	<ConfigBit ID="9" Name="SPI" Value="False"/>
+	<ConfigBit ID="10" Name="IO" Value="True"/>
+	<ConfigBit ID="11" Name="THERMOMETER" Value="True"/>
+	<ConfigBit ID="13" Name="UART" Value="True"/>
+	<ConfigByte ID="16" Name="RF channel 2nd network" Value="42"/>
+	<ConfigByte ID="17" Name="TX power" Value="1"/>
+	<ConfigByte ID="18" Name="RX filter" Value="5"/>
+	<ConfigBit ID="20" Name="Custom DPA Handler" Value="False"/>
+	<ConfigBit ID="21" Name="Node DPA interface" Value="False"/>
+	<ConfigBit ID="22" Name="Autoexec" Value="False"/>
+	<ConfigBit ID="23" Name="Routing off" Value="False"/>
+	<ConfigBit ID="24" Name="IO Setup" Value="False"/>
+	<ConfigBit ID="25" Name="FRC" Value="True"/>
+	<ConfigByte ID="26" Name="LP RX timeout" Value="6"/>
+	<ConfigBits ID="28" Name="UART interface baud rate" Value="3"/>
+	<ConfigBit ID="32" Name="Allow peer-to-peer" Value="False"/>
+	<ConfigByte ID="33" Name="Alternative DSM channel" Value="0"/>
+	<ConfigBits ID="101" Name="RF band" Value="0"/>
+	<ConfigByte ID="102" Name="RF channel A" Value="40"/>
+	<ConfigByte ID="103" Name="RF channel B" Value="20"/>
+	<ConfigBit ID="106" Name="Enable after reset" Value="False"/>
+	<ConfigBit ID="107" Name="Termination after ~1 minute" Value="False"/>
+	<ConfigBit ID="108" Name="Termination by MCU pin" Value="False"/>
+	<ConfigBit ID="109" Name="Dual channel" Value="True"/>
+	<ConfigBit ID="117" Name="LP mode" Value="False"/>
+	<ConfigText ID="201" Name="Note" Value=""/>
+	<ConfigFrameCheck ID="300" Name="Access Password" Value="False"/>
+	<ConfigBits ID="301" Name="Input format" Value="1"/>
+	<ConfigEditPwd ID="302" Name="Password" Value=""/>
+	<ConfigFrameCheck ID="303" Name="User Key" Value="False"/>
+	<ConfigBits ID="304" Name="Input format" Value="1"/>
+	<ConfigEditPwd ID="305" Name="Key" Value=""/>
+</ConfigGroup>
