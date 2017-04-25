@@ -31,6 +31,7 @@ import com.microrisc.simply.services.ServiceResult;
 import java.io.File;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Using broadcast in Write Configuration Service.
@@ -73,6 +74,13 @@ public final class WriteConfigurationServiceExample_Broadcast {
         // target nodes to write configuration into
         String[] nodeIds = new String[] { "1", "2", "3" };
         Collection<Node> targetNodes = getNodes(network1, nodeIds);
+        
+        // getting all nodes except for node 0
+        /*
+        Map<String, Node> allNodesMap = network1.getNodesMap();
+        allNodesMap.remove("0");
+        targetNodes = allNodesMap.values();
+        */
         
         // getting Write Configuration Service on node 0
         WriteConfigurationService writeConfigService = node0.getService(WriteConfigurationService.class);
