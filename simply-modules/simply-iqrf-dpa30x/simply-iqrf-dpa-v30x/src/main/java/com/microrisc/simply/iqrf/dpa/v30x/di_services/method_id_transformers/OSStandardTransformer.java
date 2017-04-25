@@ -39,10 +39,11 @@ public final class OSStandardTransformer implements MethodIdTransformer {
         methodIdsMap.put(OS.MethodID.RUN_RFPGM, "4");
         methodIdsMap.put(OS.MethodID.SLEEP, "5");
         methodIdsMap.put(OS.MethodID.BATCH, "6");
-        methodIdsMap.put(OS.MethodID.RESTART, "7");
-        methodIdsMap.put(OS.MethodID.WRITE_HWP_CONFIGURATION, "8");
-        methodIdsMap.put(OS.MethodID.WRITE_HWP_CONFIGURATION_BYTE, "9");
-        methodIdsMap.put(OS.MethodID.LOAD_CODE, "10");
+        methodIdsMap.put(OS.MethodID.SET_SECURITY, "7");
+        methodIdsMap.put(OS.MethodID.RESTART, "8");
+        methodIdsMap.put(OS.MethodID.WRITE_HWP_CONFIGURATION, "9");
+        methodIdsMap.put(OS.MethodID.WRITE_HWP_CONFIGURATION_BYTE, "10");
+        methodIdsMap.put(OS.MethodID.LOAD_CODE, "11");
     }
     
     static  {
