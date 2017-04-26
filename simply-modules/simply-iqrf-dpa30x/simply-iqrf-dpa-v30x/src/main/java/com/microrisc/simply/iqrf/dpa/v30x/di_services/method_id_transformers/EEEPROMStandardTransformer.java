@@ -30,8 +30,8 @@ public final class EEEPROMStandardTransformer implements MethodIdTransformer {
     /**
      * Mapping of method IDs to theirs string representations.
      */
-    private static final Map<EEEPROM.MethodID, String> methodIdsMap = 
-            new EnumMap<EEEPROM.MethodID, String>(EEEPROM.MethodID.class);
+    private static final Map<EEEPROM.MethodID, String> methodIdsMap 
+            = new EnumMap<>(EEEPROM.MethodID.class);
     
     private static void initMethodIdsMap() {
         methodIdsMap.put(EEEPROM.MethodID.EXTENDED_READ, "1");

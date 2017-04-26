@@ -54,31 +54,12 @@ extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
      * Identifiers of this device interface's methods.
      */
     enum MethodID implements DeviceInterfaceMethodId {
-        READ,
-        WRITE,
         EXTENDED_READ,
         EXTENDED_WRITE
     }
     
     
     // ASYNCHRONOUS METHODS
-    
-    /**
-     * Sends method call request for reading from peripheral.
-     * @param blockNumber number of (zero based) block to read from
-     * @param length length of the data to read (in bytes), must be equal to the block size
-     * @return unique identifier of sent request
-     */
-    UUID async_read(int blockNumber, int length);
-    
-    /**
-     * Sends method call request for writing to peripheral.
-     * @param blockNumber number of (zero based) block to write the data into
-     * @param data actual data to be written to the memory, its length must be 
-     *             equal to the block size
-     * @return unique identifier of sent request
-     */
-    UUID async_write(int blockNumber, short[] data);
     
     /**
      * Sends method call request for reading from peripheral.
@@ -107,23 +88,6 @@ extends DPA_StandardServices, GenericAsyncCallable, MethodIdTransformer {
     // SYNCHRONOUS WRAPPERS
     
     /**
-     * Synchronous wrapper for {@link #async_read(int, int) async_read} method.
-     * @param blockNumber number of (zero based) block to read from
-     * @param length length of the data to read (in bytes), must be equal to the block size
-     * @return read data
-     */
-    short[] read(int blockNumber, int length);
-    
-    /**
-     * Synchronous wrapper for {@link #async_write(int, short[])  async_write} method.
-     * @param blockNumber number of (zero based) block to write the data into
-     * @param data actual data to be written to the memory, its length must be 
-     *             equal to the block size
-     * @return {@code VoidType} object, if method call has processed allright
-     */
-    VoidType write(int blockNumber, short[] data);
-    
-        /**
      * Synchronous wrapper for {@link #async_read(int, int) async_read} method.
      * @param address number of (zero based) block to read from
      * @param length length of the data to read (in bytes), must be equal to the block size

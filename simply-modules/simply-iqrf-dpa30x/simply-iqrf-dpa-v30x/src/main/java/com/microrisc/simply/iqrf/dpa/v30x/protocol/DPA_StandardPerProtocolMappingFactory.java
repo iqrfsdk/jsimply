@@ -690,7 +690,7 @@ public final class DPA_StandardPerProtocolMappingFactory implements ProtocolMapp
         Map<String, MethodToPacketMapping> methodMappings = new HashMap<>();
 
         methodMappings.put("1", createEEEPROMExtendedReadMapping());
-        methodMappings.put("2", createEEEPROMExtendedWriteMapping());        
+        methodMappings.put("2", createEEEPROMExtendedWriteMapping()); 
 
         return new InterfaceToPacketMapping(constMappings, methodMappings);
     }
