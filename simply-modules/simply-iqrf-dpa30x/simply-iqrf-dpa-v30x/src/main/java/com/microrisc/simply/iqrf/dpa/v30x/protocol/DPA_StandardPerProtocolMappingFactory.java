@@ -1577,26 +1577,6 @@ public final class DPA_StandardPerProtocolMappingFactory implements ProtocolMapp
     }
 
     // EEEPROM interface
-    static private PacketToMethodMapping createResponseEEEPROMRead() {
-        List<PacketPositionValues> packetValues = new LinkedList<>();
-        packetValues.add(new PacketPositionValues(3, (short) 0x80));
-
-        PacketToValueMapping resultMapping = new PacketToValueMapping(
-                8, PrimArrayUns8Convertor.getInstance()
-        );
-        return new PacketToMethodMapping("1", packetValues, resultMapping);
-    }
-
-    static private PacketToMethodMapping createResponseEEEPROMWrite() {
-        List<PacketPositionValues> packetValues = new LinkedList<>();
-        packetValues.add(new PacketPositionValues(3, (short) 0x81));
-
-        PacketToValueMapping resultMapping = new PacketToValueMapping(
-                8, 0, VoidTypeConvertor.getInstance()
-        );
-        return new PacketToMethodMapping("2", packetValues, resultMapping);
-    }
-    
     static private PacketToMethodMapping createResponseEEEPROMExtendedRead() {
         List<PacketPositionValues> packetValues = new LinkedList<>();
         packetValues.add(new PacketPositionValues(3, (short) 0x82));
@@ -1604,7 +1584,7 @@ public final class DPA_StandardPerProtocolMappingFactory implements ProtocolMapp
         PacketToValueMapping resultMapping = new PacketToValueMapping(
                 8, PrimArrayUns8Convertor.getInstance()
         );
-        return new PacketToMethodMapping("3", packetValues, resultMapping);
+        return new PacketToMethodMapping("1", packetValues, resultMapping);
     }
 
     static private PacketToMethodMapping createResponseEEEPROMExtendedWrite() {
@@ -1614,20 +1594,17 @@ public final class DPA_StandardPerProtocolMappingFactory implements ProtocolMapp
         PacketToValueMapping resultMapping = new PacketToValueMapping(
                 8, 0, VoidTypeConvertor.getInstance()
         );
-        return new PacketToMethodMapping("4", packetValues, resultMapping);
+        return new PacketToMethodMapping("2", packetValues, resultMapping);
     }
 
     static private PacketToInterfaceMapping createResponseEEEPROMMapping() {
         List<PacketPositionValues> packetValues = new LinkedList<>();
         packetValues.add(new PacketPositionValues(2, (short) 4));
 
-        Map<String, PacketToMethodMapping> methodMappings
-                = new HashMap<>();
+        Map<String, PacketToMethodMapping> methodMappings = new HashMap<>();
 
-        methodMappings.put("1", createResponseEEEPROMRead());
-        methodMappings.put("2", createResponseEEEPROMWrite());
-        methodMappings.put("3", createResponseEEEPROMExtendedRead());
-        methodMappings.put("4", createResponseEEEPROMExtendedWrite());
+        methodMappings.put("1", createResponseEEEPROMExtendedRead());
+        methodMappings.put("2", createResponseEEEPROMExtendedWrite());
 
         return new PacketToInterfaceMapping(EEEPROM.class, packetValues, methodMappings);
     }
