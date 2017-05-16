@@ -76,6 +76,7 @@ public final class WriteConfigurationServiceExample {
         WriteConfigurationServiceParameters serviceParams 
                 = new WriteConfigurationServiceParameters(
                         "config" + File.separator + "dctr-configs" + File.separator + "dpa-3xx" + File.separator + "TR_config_3_00.xml",
+//                      "config" + File.separator + "dctr-configs" + File.separator + "coordinator.xml"
                         "config" + File.separator + "dctr-configs" + File.separator + "node.xml"
         );
         
@@ -131,5 +132,4 @@ public final class WriteConfigurationServiceExample {
             System.out.println();
         }
     }
-    
 }

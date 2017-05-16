@@ -94,8 +94,8 @@ public class AutonetworkEmbedded {
             printMessageAndExit("Some error while creating network builder: " + ex);
         }
 
-        // max. power => 7
-        int discoveryTXPower = 7;
+        // max. power => 0
+        int discoveryTXPower = 0;
         // bonding time => 2.56*8 = 20.48 s
         int bondingTime = 8;
         // temporary address timeout => 25.6 * 3 = 76.8 s

@@ -78,7 +78,7 @@ public class LoadCodeServiceExample {
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
             = loadCodeService.loadCode( 
                     new LoadCodeServiceParameters(
-                        "config" + File.separator + "custom-dpa-handlers" + File.separator + "CustomDpaHandler-LED-Green-On-7xD-V228-160912.hex",
+                        "config" + File.separator + "custom-dpa-handlers" + File.separator + "CustomDpaHandler-LED-Green-On-7xD-V300-170314.hex",
                         0x0800,
                         LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithCodeLoading,
                         LoadingCodeProperties.LoadingContent.Hex
@@ -89,7 +89,7 @@ public class LoadCodeServiceExample {
         ServiceResult<LoadCodeResult, LoadCodeProcessingInfo> serviceResult 
             = loadCodeService.loadCode( 
                     new LoadCodeServiceParameters(
-                        "config" + File.separator + "custom-dpa-handlers" + File.separator + "CustomDpaHandler-LED-Red-On-7xD-V228-160912.hex"
+                        "config" + File.separator + "custom-dpa-handlers" + File.separator + "CustomDpaHandler-LED-Red-On-7xD-V300-170314.hex"
                         0x0800,
                         LoadingCodeProperties.LoadingAction.ComputeAndMatchChecksumWithCodeLoading,
                         LoadingCodeProperties.LoadingContent.Hex
