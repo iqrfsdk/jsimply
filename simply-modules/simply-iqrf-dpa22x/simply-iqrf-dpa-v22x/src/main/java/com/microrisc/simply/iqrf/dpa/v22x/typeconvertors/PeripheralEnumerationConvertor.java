@@ -130,7 +130,7 @@ public final class PeripheralEnumerationConvertor extends PrimitiveConvertor {
     
     // returns BCD code for specified value
     private short getBCD_Code(short value) {
-        return Short.parseShort(Integer.toHexString(value));
+        return Short.parseShort(Integer.toHexString(value), 16);
     }
     
     
